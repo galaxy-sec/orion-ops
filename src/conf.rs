@@ -1,0 +1,222 @@
+use std::{fs, path::PathBuf};
+
+use crate::{
+    addr::{AddrType, path_file_name},
+    error::RunResult,
+    software::FileFormat,
+    types::{AsyncUpdateable, TomlAble},
+};
+use async_trait::async_trait;
+use derive_getters::Getters;
+use orion_error::{ErrorOwe, ErrorWith, WithContext};
+use serde_derive::{Deserialize, Serialize};
+#[derive(Clone, Debug, Getters, Deserialize, Serialize)]
+pub struct ConfSpec {
+    version: String,
+    files: Vec<ConfFile>,
+}
+
+#[derive(Clone, Debug, Getters, Deserialize, Serialize)]
+pub struct ConfFile {
+    format: FileFormat,
+    path: String,
+    addr: Option<AddrType>,
+}
+
+#[derive(Getters, Clone, Debug, Serialize)]
+pub struct ConfSpecRef {
+    path: String,
+    #[serde(skip_serializing)] // 序列化时跳过
+    obj: ConfSpec,
+}
+
+impl ConfSpecRef {
+    pub fn files(&self) -> &Vec<ConfFile> {
+        self.obj.files()
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ConfSpecRef {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // 定义临时结构体用于反序列化
+        #[derive(Deserialize)]
+        struct RawRef {
+            path: String,
+        }
+        // 先执行标准反序列化
+        let raw = RawRef::deserialize(deserializer)?;
+        // 构建实例
+        let config = ConfSpecRef {
+            obj: ConfSpecRef::load_ref(raw.path.as_str()),
+            path: raw.path,
+        };
+        Ok(config)
+    }
+}
+
+impl ConfSpecRef {
+    pub fn new<S: Into<String>>(path: S) -> Self {
+        let path = path.into();
+        let file_path = PathBuf::from(path.as_str());
+        let obj = ConfSpec::from_toml(&file_path).unwrap();
+        Self { path, obj }
+    }
+    fn load_ref(path: &str) -> ConfSpec {
+        let path = PathBuf::from(path);
+        ConfSpec::from_toml(&path).unwrap()
+    }
+}
+
+impl ConfFile {
+    pub fn new<S: Into<String>>(format: FileFormat, path: S) -> Self {
+        Self {
+            format,
+            path: path.into(),
+            addr: None,
+        }
+    }
+    pub fn with_addr<A: Into<AddrType>>(mut self, addr: A) -> Self {
+        self.addr = Some(addr.into());
+        self
+    }
+}
+impl ConfSpec {
+    pub fn try_load(path: &PathBuf) -> RunResult<Self> {
+        let mut ctx = WithContext::want("load conf spec");
+        ctx.with("path", format!("path: {}", path.display()));
+        let file_content = fs::read_to_string(path).owe_conf().with(&ctx)?;
+        let loaded: Self = toml::from_str(file_content.as_str())
+            .owe_conf()
+            .with(&ctx)?;
+        Ok(loaded)
+    }
+    pub fn save(&self, path: &PathBuf) -> RunResult<()> {
+        let mut ctx = WithContext::want("save conf spec");
+        ctx.with("path", format!("path: {}", path.display()));
+        let data_content = toml::to_string(self).owe_data().with(&ctx)?;
+        fs::write(path, data_content).owe_res().with(&ctx)?;
+        Ok(())
+    }
+
+    pub fn new<S: Into<String>>(version: S) -> Self {
+        Self {
+            version: version.into(),
+            files: Vec::new(),
+        }
+    }
+    pub fn add(&mut self, file: ConfFile) {
+        self.files.push(file);
+    }
+    pub fn from_files(values: Vec<(FileFormat, &str)>) -> Self {
+        let mut ins = ConfSpec::new("1.0");
+        for item in values {
+            ins.add(ConfFile::new(item.0, item.1));
+        }
+        ins
+    }
+}
+
+#[async_trait]
+impl AsyncUpdateable for ConfSpec {
+    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+        let root = path.join("confs");
+        std::fs::create_dir_all(&root).owe_res()?;
+        for f in &self.files {
+            if let Some(addr) = f.addr() {
+                let filename = path_file_name(&PathBuf::from(f.path.as_str()))?;
+                addr.update_rename(&root, filename.as_str()).await?;
+            }
+        }
+        Ok(root)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::addr::{HttpAddr, LocalAddr};
+
+    use super::*;
+    use httpmock::{Method::GET, MockServer};
+    use tokio::fs;
+
+    #[test]
+    fn test_conf_spec_new() {
+        let spec = ConfSpec::new("1.0");
+        assert_eq!(spec.version(), "1.0");
+        assert!(spec.files().is_empty());
+    }
+
+    #[test]
+    fn test_conf_file_creation() {
+        let file = ConfFile::new(FileFormat::Toml, "config.toml");
+        assert_eq!(file.format(), &FileFormat::Toml);
+        assert_eq!(file.path(), "config.toml");
+        assert!(file.addr().is_none());
+
+        let with_addr = file.with_addr(AddrType::Local(LocalAddr::from("/tmp")));
+        assert!(with_addr.addr().is_some());
+    }
+    #[tokio::test]
+    async fn test_async_update() -> RunResult<()> {
+        let src_dir = PathBuf::from("./temp/src");
+        let dst_dir = PathBuf::from("./temp/dst");
+
+        // 创建带地址的配置
+        let mut spec = ConfSpec::new("3.0");
+        spec.add(
+            ConfFile::new(FileFormat::Toml, "db.toml")
+                .with_addr(AddrType::Local(LocalAddr::from("./temp/src/db.toml"))),
+        );
+
+        // 模拟本地文件
+
+        fs::create_dir_all(&src_dir).await.owe_res()?;
+        fs::create_dir_all(&dst_dir).await.owe_res()?;
+        fs::write(src_dir.join("db.toml"), "[database]\nurl=\"localhost\"")
+            .await
+            .owe_res()?;
+
+        // 执行更新
+        let _ = spec.update_local(&dst_dir).await?;
+        assert!(dst_dir.join("confs/db.toml").exists());
+
+        // 清理
+        fs::remove_dir_all(dst_dir).await.owe_res()?;
+        fs::remove_dir_all(src_dir).await.owe_res()?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_conf_with_http_addr() -> RunResult<()> {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/global.toml");
+            then.status(200).body("[settings]\nenv=\"test\"");
+        });
+
+        // 创建包含HttpAddr的配置
+        let mut conf = ConfSpec::new("1.0");
+        conf.add(
+            ConfFile::new(FileFormat::Toml, "remote.toml")
+                .with_addr(HttpAddr::from(server.url("/global.toml"))),
+        );
+
+        // 测试更新
+        //let src_dir = PathBuf::from("./temp/src");
+        let dst_dir = PathBuf::from("./temp/dst");
+        //let temp_dir = tempfile::tempdir()?;
+        let updated_path = conf.update_local(&dst_dir).await?;
+
+        // 验证下载的文件
+        let content = fs::read_to_string(updated_path.join("remote.toml"))
+            .await
+            .owe_res()
+            .with(format!("path: {}", updated_path.display()))?;
+        assert!(content.contains("env=\"test\""));
+        fs::remove_dir_all(dst_dir).await.owe_res()?;
+        Ok(())
+    }
+}

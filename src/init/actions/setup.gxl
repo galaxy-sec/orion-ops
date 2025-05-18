@@ -1,0 +1,32 @@
+mod setup {
+
+    #[auto_load(entry)]
+    flow __into  {
+    }
+    env _dev {
+        spec_home = "${HOME}/Devspace/dss-space/dss-startup/dayu-dss/sys-model";
+        mdl_spec  = "${ENV_SPEC_HOME}/warp-flow";
+        mod_spec  = "${ENV_MDL_SPEC}/mods/warpflow/";
+    }
+    env _alpha {
+        spec_home = "${HOME}/dayu-dss/sys-model";
+        mdl_spec  = "${ENV_SPEC_HOME}/warp-flow";
+        mod_spec  = "${ENV_MDL_SPEC}/mods/warpflow/";
+    }
+    env _common {
+            run       = "./.run";
+            gx.read { ini = "${ENV_MOD_SPEC}/artifact.ini" }
+    }
+    env dev  : setup._dev,setup._common   {
+    }
+    env alpha  : setup._alpha,setup._common   {
+    }
+
+    flow dry {
+        gx.echo { value = "${ENV_MOD_SPEC}" }
+        gx.echo { value = "${AF_BIN}" }
+    }
+    flow do {
+      gx.tpl { tpl = "${ENV_MOD_SPEC}/confs/"; dst = "./running/"; file = "./values.json" }
+    }
+}

@@ -1,0 +1,8 @@
+version = "1.0.0"
+
+[[files]]
+format = "Dsl"
+path = "my.cnf"
+
+[files.addr.Local]
+path = "./example/knowlege/mysql/my.cnf"
