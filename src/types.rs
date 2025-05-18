@@ -21,6 +21,11 @@ pub trait AsyncUpdateable {
     }
 }
 
+#[async_trait]
+pub trait Localizeable {
+    async fn localize(&self, path: &PathBuf) -> RunResult<()>;
+}
+
 pub trait TomlAble<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,

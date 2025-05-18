@@ -259,7 +259,7 @@ pub mod tests {
 
     use crate::{
         addr::LocalAddr,
-        const_vars::{MODULES_ROOT, SYS_MODEL_SPC_ROOT},
+        const_vars::{MODULES_SPC_ROOT, SYS_MODEL_SPC_ROOT},
         modul::NodeType,
         resource::CaculateResSpec,
     };
@@ -287,13 +287,13 @@ pub mod tests {
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             "warpflow",
             //GitAddr::from("http://github").tag("v1.0.0"),
-            LocalAddr::from(format!("{}/warpflow", MODULES_ROOT)),
+            LocalAddr::from(format!("{}/warpflow", MODULES_SPC_ROOT)),
             NodeType::Host,
         ));
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             "mysql",
             //GitAddr::from("http://github").tag("v1.0.0"),
-            LocalAddr::from(format!("{}/mysql", MODULES_ROOT)),
+            LocalAddr::from(format!("{}/mysql", MODULES_SPC_ROOT)),
             NodeType::K8s,
         ));
         Ok(modul_spec)

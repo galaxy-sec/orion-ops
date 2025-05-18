@@ -219,6 +219,7 @@ impl NodeSetupTaskBuilder for ModuleSpec {
         }
     }
 }
+
 impl SetupTaskBuilder for ModTargetSpec {
     fn make_setup_task(&self) -> RunResult<TaskHandle> {
         if let Some(pkg) = self.artifact.af_bin() {
@@ -406,6 +407,7 @@ impl SaveAble<BashAction> for BashAction {
         })
     }
 }
+
 #[cfg(test)]
 pub mod test {
     use std::net::Ipv4Addr;
@@ -413,7 +415,7 @@ pub mod test {
     use orion_exchange::vars::VarType;
 
     use crate::{
-        addr::LocalAddr, conf::ConfFile, const_vars::MODULES_ROOT, error::RunResult,
+        addr::LocalAddr, conf::ConfFile, const_vars::MODULES_SPC_ROOT, error::RunResult,
         software::FileFormat, system::NetResSpace,
     };
 
@@ -487,11 +489,11 @@ pub mod test {
     #[test]
     fn build_mod_warpflow() -> RunResult<()> {
         let spec = make_mod_spec_warp()?;
-        spec.save_to(&PathBuf::from(MODULES_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_ROOT).join("warpflow"))?;
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
+        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join("warpflow"))?;
         let spec = make_mod_spec_mysql()?;
-        spec.save_to(&PathBuf::from(MODULES_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_ROOT).join("mysql"))?;
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
+        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join("mysql"))?;
         Ok(())
     }
 }
