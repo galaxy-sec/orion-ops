@@ -13,7 +13,7 @@ use std::rc::Weak;
 use derive_getters::Getters;
 use serde_derive::Serialize;
 
-use crate::error::RunResult;
+use crate::error::SpecResult;
 
 #[derive(Debug, Clone)]
 pub enum ResAddress {
@@ -83,7 +83,7 @@ impl ResourceNode {
     pub fn add<R: Into<ResouceTypes>>(&mut self, res: R) {
         self.items.push(res.into())
     }
-    pub fn try_load(path: &PathBuf) -> RunResult<Self> {
+    pub fn try_load(path: &PathBuf) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load res node");
         ctx.with("path", format!("path: {}", path.display()));
         let file_content = fs::read_to_string(path).owe_conf().with(&ctx)?;
@@ -93,7 +93,7 @@ impl ResourceNode {
             .with(&ctx)?;
         Ok(loaded)
     }
-    pub fn save(&self, path: &PathBuf) -> RunResult<()> {
+    pub fn save(&self, path: &PathBuf) -> SpecResult<()> {
         let data_content = toml::to_string(self).owe_data()?;
         fs::write(path, data_content)
             .owe_conf()

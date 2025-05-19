@@ -7,10 +7,10 @@ use std::{
 
 use handlebars::Handlebars;
 use log::debug;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsReason, WithContext};
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use serde::Serialize;
 
-use crate::error::RunResult;
+use crate::error::SpecResult;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub enum TPlEngineType {
@@ -45,7 +45,7 @@ impl TplRender {
         tpl: &PathBuf,
         dst: &PathBuf,
         data: &PathBuf,
-    ) -> RunResult<()> {
+    ) -> SpecResult<()> {
         let mut err_ctx = WithContext::want("render tpl path");
         // 处理目录模板
         if engine != TPlEngineType::Handlebars {
@@ -71,7 +71,7 @@ impl TplRender {
         tpl_dir: &PathBuf,
         dst: &PathBuf,
         data: &T,
-    ) -> RunResult<()> {
+    ) -> SpecResult<()> {
         debug!("tpl dir: {}", tpl_dir.display());
         for entry in walkdir::WalkDir::new(tpl_dir) {
             let entry = entry.owe_data()?;
@@ -97,7 +97,7 @@ impl TplRender {
         tpl: &PathBuf,
         dst: &PathBuf,
         data: &T,
-    ) -> RunResult<()> {
+    ) -> SpecResult<()> {
         debug!("tpl:{}", tpl.display());
         debug!("dst:{}", dst.display());
 
@@ -106,9 +106,7 @@ impl TplRender {
         // 2. 验证模板文件
         let tpl_path = Path::new(&tpl);
         if !tpl_path.exists() {
-            return Err(StructError::from_uvs_rs(UvsReason::from_conf(
-                "tpl path not exists".to_string(),
-            )));
+            return Err(StructError::from_conf("tpl path not exists".to_string()));
         }
         err_ctx.with("dst", dst.to_string_lossy());
         // 3. 准备目标文件

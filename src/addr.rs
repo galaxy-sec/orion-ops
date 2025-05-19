@@ -3,13 +3,11 @@ use std::path::PathBuf;
 use async_trait::async_trait;
 use derive_getters::Getters;
 use fs_extra::dir::CopyOptions;
-use orion_error::{
-    ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsReason, UvsResFrom, WithContext,
-};
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 
-use crate::{error::RunResult, types::AsyncUpdateable};
+use crate::{error::SpecResult, types::AsyncUpdateable};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct GitAddr {
@@ -47,7 +45,7 @@ pub struct LocalAddr {
 }
 #[async_trait]
 impl AsyncUpdateable for LocalAddr {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -67,23 +65,21 @@ impl AsyncUpdateable for LocalAddr {
         Ok(dst)
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> RunResult<()> {
+    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         let target = self.update_local(path).await?;
         rename_path(&target, name)?;
         Ok(())
     }
 }
 
-pub fn path_file_name(path: &PathBuf) -> RunResult<String> {
+pub fn path_file_name(path: &PathBuf) -> SpecResult<String> {
     let file_name = path
         .file_name()
         .and_then(|f| f.to_str())
-        .ok_or(StructError::from_uvs_rs(UvsReason::from_conf(
-            "get file_name error".to_string(),
-        )))?;
+        .ok_or(StructError::from_conf("get file_name error".to_string()))?;
     Ok(file_name.to_string())
 }
-pub fn rename_path(local: &PathBuf, name: &str) -> RunResult<()> {
+pub fn rename_path(local: &PathBuf, name: &str) -> SpecResult<()> {
     let mut ctx = WithContext::want("rename path");
     let new_src = local
         .parent()
@@ -123,7 +119,7 @@ impl HttpAddr {
 }
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, dest_dir: &PathBuf) -> SpecResult<PathBuf> {
         let client = reqwest::Client::new();
 
         // 构建请求
@@ -184,7 +180,7 @@ impl GitAddr {}
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let mut ctx = WithContext::want("git clone repository");
         ctx.with("repo", &self.repo);
         ctx.with("dest", format!("{}", path.display()));
@@ -222,7 +218,7 @@ impl AsyncUpdateable for GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for AddrType {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         match self {
             AddrType::Git(addr) => addr.update_local(path).await,
             AddrType::Http(addr) => addr.update_local(path).await,
@@ -230,7 +226,7 @@ impl AsyncUpdateable for AddrType {
         }
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> RunResult<()> {
+    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         match self {
             AddrType::Git(addr) => addr.update_rename(path, name).await,
             AddrType::Http(addr) => addr.update_rename(path, name).await,
@@ -264,7 +260,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[tokio::test]
-    async fn test_local() -> RunResult<()> {
+    async fn test_local() -> SpecResult<()> {
         let path = PathBuf::from("./test/temp");
         std::fs::remove_dir_all(&path).owe_conf()?;
         std::fs::create_dir_all(&path).owe_conf()?;
@@ -277,7 +273,7 @@ mod tests {
         Ok(())
     }
     #[tokio::test]
-    async fn test_http_auth_download() -> RunResult<()> {
+    async fn test_http_auth_download() -> SpecResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
@@ -306,7 +302,7 @@ mod tests {
     }
     #[ignore = "need more time"]
     #[tokio::test]
-    async fn test_http_addr() -> RunResult<()> {
+    async fn test_http_addr() -> SpecResult<()> {
         let path = PathBuf::from("/tmp");
         let addr = HttpAddr::from("https://dy-sec-generic.pkg.coding.net/sec-hub/generic/warp-flow/wpflow?version=1.0.89-alpha")
             .with_credentials(
@@ -318,7 +314,7 @@ mod tests {
     }
     #[ignore = "need more time"]
     #[tokio::test]
-    async fn test_git_addr_update_local() -> RunResult<()> {
+    async fn test_git_addr_update_local() -> SpecResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().owe_res()?;
         let dest_path = temp_dir.path().to_path_buf();

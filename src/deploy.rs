@@ -1,5 +1,5 @@
 use crate::{
-    error::RunResult,
+    error::SpecResult,
     resource::ResourceNode,
     system::SysModelSpec,
     task::{SetupTaskBuilder, TaskHandle},
@@ -23,7 +23,7 @@ pub struct CustomModelConf {
 }
 
 impl CustomModelConf {
-    pub fn make_task(&self) -> RunResult<TaskHandle> {
+    pub fn make_task(&self) -> SpecResult<TaskHandle> {
         self.model_spec.make_setup_task()
     }
 
@@ -41,11 +41,11 @@ pub struct DeployJob {}
 #[cfg(test)]
 mod tests {
     use super::CustomModelConf;
-    use crate::{error::RunResult, resource::ResourceNode, system::tests::gateway_spec};
+    use crate::{error::SpecResult, resource::ResourceNode, system::tests::gateway_spec};
     use orion_exchange::vars::{VarCollection, VarType};
 
     #[test]
-    fn test_seup() -> RunResult<()> {
+    fn test_seup() -> SpecResult<()> {
         let spec = gateway_spec()?;
         let res_node = ResourceNode::localhost(2, 4);
         let run_vars = VarCollection::define(vec![VarType::from(("IP", "127.0.0.1"))]);

@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
 use derive_getters::Getters;
-use orion_error::ErrorOwe;
+use orion_error::{ErrorOwe, ErrorWith};
 use orion_exchange::vars::ValueDict;
 
 use crate::{
     addr::path_file_name,
-    error::RunResult,
+    error::SpecResult,
     system::SysModelSpecRef,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, SaveAble, TomlAble},
@@ -19,7 +19,7 @@ pub struct SysRunning {
     value: ValueDict,
 }
 impl SaveAble<SysRunning> for SysRunning {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
         let spec_path = root.join("spec.toml");
@@ -29,7 +29,7 @@ impl SaveAble<SysRunning> for SysRunning {
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> RunResult<Self> {
+    fn load_from(path: &PathBuf) -> SpecResult<Self> {
         let name = path_file_name(path)?;
         let spec_path = path.join("spec.toml");
         let spec = SysModelSpecRef::from_toml(&spec_path)?;
@@ -43,15 +43,22 @@ impl SysRunning {
         let name = spec.name().clone();
         Self { name, spec, value }
     }
+    pub async fn update(&self, path: &PathBuf) -> SpecResult<()> {
+        let root = path.join(self.name());
+        let tpl = root.join("spec");
+        if tpl.exists() {
+            std::fs::remove_dir_all(&tpl).owe_res().with(&tpl)?;
+        }
+        self.spec.update_rename(&root, "spec").await?;
+        Ok(())
+    }
 
-    pub async fn localize(&self, path: &PathBuf) -> RunResult<()> {
+    pub async fn localize(&self, path: &PathBuf) -> SpecResult<()> {
         let root = path.join(self.name());
         let tpl = root.join("spec");
         let dst = root.join("local");
         let data = root.join("value.json");
         std::fs::create_dir_all(&dst).owe_res()?;
-        std::fs::remove_dir_all(&tpl).owe_res()?;
-        self.spec.update_rename(&root, "spec").await?;
         TplRender::render_path(TPlEngineType::Handlebars, &tpl, &dst, &data)?;
         Ok(())
     }
@@ -66,7 +73,7 @@ pub mod tests {
     use crate::{
         addr::LocalAddr,
         const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
-        error::RunResult,
+        error::SpecResult,
         system::SysModelSpecRef,
         types::SaveAble,
     };
@@ -74,7 +81,7 @@ pub mod tests {
     use super::SysRunning;
 
     #[tokio::test]
-    async fn test_sys_running() -> RunResult<()> {
+    async fn test_sys_running() -> SpecResult<()> {
         let spec = SysModelSpecRef::from(
             "x-gateway",
             LocalAddr::from(format!("{}/x-gateway", SYS_MODEL_SPC_ROOT)),
@@ -84,6 +91,7 @@ pub mod tests {
         let sys = SysRunning::new(spec, dict);
         let path = PathBuf::from(SYS_MODEL_INS_ROOT);
         sys.save_to(&path)?;
+        sys.update(&path).await?;
         sys.localize(&path).await?;
         Ok(())
     }

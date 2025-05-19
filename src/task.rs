@@ -1,6 +1,6 @@
 use derive_getters::Getters;
 
-use crate::{error::RunResult, modul::NodeType};
+use crate::{error::SpecResult, modul::NodeType};
 
 #[derive(Clone, Debug)]
 pub enum OperationType {
@@ -8,20 +8,20 @@ pub enum OperationType {
     Update,
 }
 pub trait Task {
-    fn exec(&self) -> RunResult<()>;
+    fn exec(&self) -> SpecResult<()>;
 }
 
 pub type TaskHandle = Box<dyn Task>;
 pub trait SetupTaskBuilder {
-    fn make_setup_task(&self) -> RunResult<TaskHandle>;
+    fn make_setup_task(&self) -> SpecResult<TaskHandle>;
 }
 
 pub trait NodeSetupTaskBuilder {
-    fn make_setup_task(&self, node: &NodeType) -> RunResult<TaskHandle>;
+    fn make_setup_task(&self, node: &NodeType) -> SpecResult<TaskHandle>;
 }
 
 pub trait UpdateTaskMaker {
-    fn make_update_task(&self) -> RunResult<TaskHandle>;
+    fn make_update_task(&self) -> SpecResult<TaskHandle>;
 }
 
 #[derive(Getters)]
@@ -41,7 +41,7 @@ impl CombinedTask {
     }
 }
 impl Task for CombinedTask {
-    fn exec(&self) -> RunResult<()> {
+    fn exec(&self) -> SpecResult<()> {
         for task in &self.subs {
             task.exec()?;
         }
@@ -59,7 +59,7 @@ impl EchoTask {
 }
 
 impl Task for EchoTask {
-    fn exec(&self) -> RunResult<()> {
+    fn exec(&self) -> SpecResult<()> {
         println!("echo task:\n{}\n", self.cmd);
         Ok(())
     }

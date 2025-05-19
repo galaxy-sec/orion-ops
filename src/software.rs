@@ -90,7 +90,7 @@ mod tests {
 
     use crate::{
         conf::{ConfFile, ConfSpec},
-        error::RunResult,
+        error::SpecResult,
         types::TomlAble,
     };
 
@@ -105,7 +105,7 @@ mod tests {
 
     // 序列化测试
     #[test]
-    fn confspec_save_load() -> RunResult<()> {
+    fn confspec_save_load() -> SpecResult<()> {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
         let mut redis = ConfSpec::new("1.0");
@@ -129,7 +129,7 @@ mod tests {
 
     // 序列化测试
     #[test]
-    fn software_save_load() -> RunResult<()> {
+    fn software_save_load() -> SpecResult<()> {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
 

@@ -2,12 +2,12 @@ use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
-use orion_error::{ErrorOwe, StructError, UvsConfFrom, UvsReason};
+use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     addr::AddrType,
-    error::RunResult,
+    error::SpecResult,
     modul::{ModuleSpec, ModuleSpecRef},
     resource::{ResouceTypes, Vps},
     software::FileFormat,
@@ -41,11 +41,11 @@ impl SysModelSpecRef {
 
 #[async_trait]
 impl AsyncUpdateable for SysModelSpecRef {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         self.addr.update_local(path).await
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> RunResult<()> {
+    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         self.addr.update_rename(path, name).await
     }
 }
@@ -64,7 +64,7 @@ impl ModulesList {
 
 #[async_trait]
 impl AsyncUpdateable for ModulesList {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let root = path.join("mods");
         std::fs::create_dir_all(&root).owe_data()?;
         for m in &self.list {
@@ -92,10 +92,10 @@ impl SysModelSpec {
     pub fn add_mod_ref(&mut self, modx: ModuleSpecRef) {
         self.mod_list.add_ref(modx)
     }
-    pub fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    pub fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         self.save_local(path, &self.name())
     }
-    pub fn save_local(&self, path: &PathBuf, name: &str) -> RunResult<()> {
+    pub fn save_local(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         let root = path.join(name);
         std::fs::create_dir_all(&root).owe_conf()?;
         let list_path = root.join("mod_list.toml");
@@ -110,28 +110,14 @@ impl SysModelSpec {
         Ok(())
     }
 
-    pub fn load_from(root: &PathBuf) -> RunResult<Self> {
-        let name = root.file_name().and_then(|f| f.to_str()).ok_or_else(|| {
-            StructError::from_uvs_rs(UvsReason::from_conf("bad name".to_string()))
-        })?;
+    pub fn load_from(root: &PathBuf) -> SpecResult<Self> {
+        let name = root
+            .file_name()
+            .and_then(|f| f.to_str())
+            .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        //let name = root.file_name().and_then(| x| x.to_string_lossy().to_string()).ok_or()
-        //let mods_path = root.join("mods");
         let list_path = root.join("mod_list.toml");
         let mod_list = ModulesList::from_toml(&list_path)?;
-        /*
-        let mut mods = HashMap::new();
-        if std::fs::exists(&mods_path).owe_conf()? {
-            let mod_vec = get_subdirectories(&mods_path)
-                .owe_conf()
-                .with(format!("path:{}", mods_path.to_string_lossy()))?;
-            //找到 mods_path 的目录，
-            for mod_item in mod_vec {
-                let mod_spec = ModuleSpec::load_from(&mods_path.join(mod_item.as_str()))?;
-                mods.insert(mod_spec.name().clone(), mod_spec);
-            }
-        }
-        */
         let res_path = root.join("resource.toml");
         let res = ModelResource::from_toml(&res_path)?;
         let net_path = root.join("net_res.toml");
@@ -162,20 +148,20 @@ impl SysModelSpec {
         }
     }
 
-    pub async fn assemble(&self, path: &PathBuf) -> RunResult<()> {
+    pub async fn assemble(&self, path: &PathBuf) -> SpecResult<()> {
         let root = path.join(self.name());
         self.mod_list.update_local(&root).await?;
         Ok(())
     }
 }
 impl SetupTaskBuilder for SysModelSpec {
-    fn make_setup_task(&self) -> RunResult<TaskHandle> {
+    fn make_setup_task(&self) -> SpecResult<TaskHandle> {
         self.mod_list().make_setup_task()
     }
 }
 
 impl SetupTaskBuilder for ModulesList {
-    fn make_setup_task(&self) -> RunResult<TaskHandle> {
+    fn make_setup_task(&self) -> SpecResult<TaskHandle> {
         let mut task = CombinedTask::new("model setup");
         for item in &self.list {
             if let Some(modx) = self.mods().get(item.name()) {
@@ -265,7 +251,7 @@ pub mod tests {
     };
 
     use super::*;
-    pub fn gateway_spec() -> RunResult<SysModelSpec> {
+    pub fn gateway_spec() -> SpecResult<SysModelSpec> {
         let net = NetResSpace::new(
             Ipv4Addr::new(10, 0, 0, 1),
             (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
@@ -300,7 +286,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn build_warpflow() -> RunResult<()> {
+    async fn build_warpflow() -> SpecResult<()> {
         let spec = gateway_spec()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;

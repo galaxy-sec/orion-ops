@@ -3,17 +3,17 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf, str::FromStr};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use log::warn;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsReason, WithContext};
-use orion_exchange::vars::VarCollection;
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
+use orion_exchange::vars::{VarCollection, VarType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    addr::{AddrType, path_file_name},
+    addr::{AddrType, LocalAddr, path_file_name},
     artifact::Artifact,
-    conf::ConfSpec,
-    error::RunResult,
+    conf::{ConfFile, ConfSpec},
+    error::SpecResult,
     resource::CaculateResSpec,
-    software::LogsSpec,
+    software::{FileFormat, LogsSpec},
     task::{EchoTask, NodeSetupTaskBuilder, OperationType, SetupTaskBuilder, TaskHandle},
     types::{AsyncUpdateable, IniAble, SaveAble, TomlAble},
 };
@@ -62,7 +62,7 @@ impl ModuleSpecRef {
 }
 #[async_trait]
 impl AsyncUpdateable for ModuleSpecRef {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let spec_path = self.addr.update_local(&path).await?;
         let mod_path = path.join(self.name.as_str());
         let spec = ModuleSpec::load_from(&mod_path)?;
@@ -70,7 +70,7 @@ impl AsyncUpdateable for ModuleSpecRef {
         Ok(spec_path)
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> RunResult<()> {
+    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         self.addr.update_rename(&path, name).await
     }
 }
@@ -104,7 +104,7 @@ impl ModuleSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModuleSpec {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         self.host.update_local(&path.join("host")).await?;
         self.k8s.update_local(&path.join("k8s")).await?;
         Ok(path.clone())
@@ -113,14 +113,14 @@ impl AsyncUpdateable for ModuleSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModTargetSpec {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         self.conf_spec.update_local(path).await?;
         Ok(path.clone())
     }
 }
 
 impl SaveAble<ModuleSpec> for ModuleSpec {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let mod_path = path.join(self.name());
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
@@ -130,7 +130,7 @@ impl SaveAble<ModuleSpec> for ModuleSpec {
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> RunResult<Self> {
+    fn load_from(path: &PathBuf) -> SpecResult<Self> {
         let name = path_file_name(&path)?;
         let k8s = ModTargetSpec::load_from(&path.join("k8s"))?;
         let host = ModTargetSpec::load_from(&path.join("host"))?;
@@ -138,7 +138,7 @@ impl SaveAble<ModuleSpec> for ModuleSpec {
     }
 }
 impl SaveAble<ModTargetSpec> for ModTargetSpec {
-    fn save_to(&self, root: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, root: &PathBuf) -> SpecResult<()> {
         let target_path = root.join(self.target());
         std::fs::create_dir_all(&target_path)
             .owe_conf()
@@ -160,7 +160,7 @@ impl SaveAble<ModTargetSpec> for ModTargetSpec {
         Ok(())
     }
 
-    fn load_from(target_path: &PathBuf) -> RunResult<Self> {
+    fn load_from(target_path: &PathBuf) -> SpecResult<Self> {
         //target: &str
         let mut ctx = WithContext::want("load mod spec");
         //let target_path = root.join(target);
@@ -212,7 +212,7 @@ impl ModTargetSpec {
 }
 
 impl NodeSetupTaskBuilder for ModuleSpec {
-    fn make_setup_task(&self, node: &NodeType) -> RunResult<TaskHandle> {
+    fn make_setup_task(&self, node: &NodeType) -> SpecResult<TaskHandle> {
         match node {
             NodeType::Host => self.host.make_setup_task(),
             NodeType::K8s => self.k8s.make_setup_task(),
@@ -221,7 +221,7 @@ impl NodeSetupTaskBuilder for ModuleSpec {
 }
 
 impl SetupTaskBuilder for ModTargetSpec {
-    fn make_setup_task(&self) -> RunResult<TaskHandle> {
+    fn make_setup_task(&self) -> SpecResult<TaskHandle> {
         if let Some(pkg) = self.artifact.af_bin() {
             let shell = format!("gx setup -e local {}", pkg);
             return Ok(Box::new(EchoTask::new(shell)));
@@ -257,7 +257,7 @@ impl Actions {
 }
 
 impl SaveAble<Actions> for Actions {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         std::fs::create_dir_all(path)
             .owe_res()
             .with(path.to_string_lossy().to_string())?;
@@ -268,7 +268,7 @@ impl SaveAble<Actions> for Actions {
     }
 
     //加载 path 目录的文件
-    fn load_from(path: &PathBuf) -> RunResult<Actions> {
+    fn load_from(path: &PathBuf) -> SpecResult<Actions> {
         let mut actions = Vec::new();
         for entry in std::fs::read_dir(path).owe_res()? {
             let entry = entry.owe_res()?;
@@ -298,24 +298,24 @@ pub enum ActionType {
 }
 
 impl SaveAble<ActionType> for ActionType {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         match self {
             ActionType::Bash(act) => act.save_to(path),
             ActionType::Gxl(act) => act.save_to(path),
         }
     }
 
-    fn load_from(path: &PathBuf) -> RunResult<ActionType> {
+    fn load_from(path: &PathBuf) -> SpecResult<ActionType> {
         if path.ends_with(".sh") {
             return Ok(ActionType::Bash(BashAction::load_from(path)?));
         }
         if path.ends_with(".gxl") {
             return Ok(ActionType::Gxl(GxlAction::load_from(path)?));
         }
-        Err(StructError::from_uvs_rs(UvsReason::from_conf(format!(
+        Err(StructError::from_conf(format!(
             "bad filename :{}",
             path.display()
-        ))))
+        )))
     }
 }
 
@@ -342,16 +342,17 @@ impl GxlAction {
     }
 }
 impl SaveAble<GxlAction> for GxlAction {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let path_file = path.join("setup.gxl");
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> RunResult<GxlAction> {
-        let file_name = path.file_name().and_then(|f| f.to_str()).ok_or_else(|| {
-            StructError::from_uvs_rs(UvsReason::from_conf("bad file name".to_string()))
-        })?;
+    fn load_from(path: &PathBuf) -> SpecResult<GxlAction> {
+        let file_name = path
+            .file_name()
+            .and_then(|f| f.to_str())
+            .ok_or_else(|| StructError::from_conf("bad file name".to_string()))?;
 
         let task_type = match file_name {
             "setup.gxl" => OperationType::Setup,
@@ -384,16 +385,17 @@ impl BashAction {
 }
 
 impl SaveAble<BashAction> for BashAction {
-    fn save_to(&self, path: &PathBuf) -> RunResult<()> {
+    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let path_file = path.join("setup.sh");
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> RunResult<Self> {
-        let file_name = path.file_name().and_then(|f| f.to_str()).ok_or_else(|| {
-            StructError::from_uvs_rs(UvsReason::from_conf("bad file name".to_string()))
-        })?;
+    fn load_from(path: &PathBuf) -> SpecResult<Self> {
+        let file_name = path
+            .file_name()
+            .and_then(|f| f.to_str())
+            .ok_or_else(|| StructError::from_conf("bad file name".to_string()))?;
 
         let task_type = match file_name {
             "setup.sh" => OperationType::Setup,
@@ -408,6 +410,31 @@ impl SaveAble<BashAction> for BashAction {
     }
 }
 
+pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
+    let mut conf = ConfSpec::new("1.0.0");
+    conf.add(
+        ConfFile::new(FileFormat::Dsl, "my.cnf")
+            .with_addr(LocalAddr::from("./example/knowlege/mysql/my.cnf")),
+    );
+
+    let k8s = ModTargetSpec::init(
+        "k8s",
+        Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+        conf.clone(),
+        CaculateResSpec::new(2, 4),
+        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+    );
+
+    let host = ModTargetSpec::init(
+        "host",
+        Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+        conf.clone(),
+        CaculateResSpec::new(2, 4),
+        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+    );
+    Ok(ModuleSpec::init("mysql", k8s, host))
+}
+
 #[cfg(test)]
 pub mod test {
     use std::net::Ipv4Addr;
@@ -415,13 +442,13 @@ pub mod test {
     use orion_exchange::vars::VarType;
 
     use crate::{
-        addr::LocalAddr, conf::ConfFile, const_vars::MODULES_SPC_ROOT, error::RunResult,
+        addr::LocalAddr, conf::ConfFile, const_vars::MODULES_SPC_ROOT, error::SpecResult,
         software::FileFormat, system::NetResSpace,
     };
 
     use super::*;
 
-    pub fn make_mod_spec_warp() -> RunResult<ModuleSpec> {
+    pub fn make_mod_spec_warp() -> SpecResult<ModuleSpec> {
         let _net = NetResSpace::new(
             Ipv4Addr::new(10, 0, 0, 1),
             (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
@@ -461,7 +488,7 @@ pub mod test {
 
         Ok(ModuleSpec::init("warpflow", k8s, host))
     }
-    pub fn make_mod_spec_mysql() -> RunResult<ModuleSpec> {
+    pub fn make_mod_spec_mysql() -> SpecResult<ModuleSpec> {
         let mut conf = ConfSpec::new("1.0.0");
         conf.add(
             ConfFile::new(FileFormat::Dsl, "my.cnf")
@@ -487,7 +514,7 @@ pub mod test {
     }
 
     #[test]
-    fn build_mod_warpflow() -> RunResult<()> {
+    fn build_mod_warpflow() -> SpecResult<()> {
         let spec = make_mod_spec_warp()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
         let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join("warpflow"))?;

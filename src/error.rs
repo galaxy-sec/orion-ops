@@ -1,28 +1,25 @@
-use orion_error::{DomainReason, ErrorCode, StructError};
+use derive_more::From;
+use orion_error::{ErrorCode, StructError, UvsReason};
 use serde_derive::Serialize;
-use std::fmt::Display;
-#[derive(Clone, Debug, Serialize, PartialEq)]
-pub enum RunReason {
+use thiserror::Error;
+#[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
+pub enum SpecReason {
+    #[error("unknow")]
     UnKnow,
+    #[error("{0}")]
     What(String),
+    #[error("{0}")]
+    Uvs(UvsReason),
 }
 
-impl Display for RunReason {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RunReason::UnKnow => todo!(),
-            RunReason::What(msg) => {
-                write!(f, "{}", msg)?;
-            }
-        }
-        Ok(())
-    }
-}
-impl DomainReason for RunReason {}
-impl ErrorCode for RunReason {
+impl ErrorCode for SpecReason {
     fn error_code(&self) -> i32 {
-        500
+        match self {
+            SpecReason::UnKnow => 500,
+            SpecReason::What(_) => 501,
+            SpecReason::Uvs(uvs_reason) => uvs_reason.error_code(),
+        }
     }
 }
 
-pub type RunResult<T> = Result<T, StructError<RunReason>>;
+pub type SpecResult<T> = Result<T, StructError<SpecReason>>;

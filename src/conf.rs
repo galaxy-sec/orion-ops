@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use crate::{
     addr::{AddrType, path_file_name},
-    error::RunResult,
+    error::SpecResult,
     software::FileFormat,
     types::{AsyncUpdateable, TomlAble},
 };
@@ -84,7 +84,7 @@ impl ConfFile {
     }
 }
 impl ConfSpec {
-    pub fn try_load(path: &PathBuf) -> RunResult<Self> {
+    pub fn try_load(path: &PathBuf) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load conf spec");
         ctx.with("path", format!("path: {}", path.display()));
         let file_content = fs::read_to_string(path).owe_conf().with(&ctx)?;
@@ -93,7 +93,7 @@ impl ConfSpec {
             .with(&ctx)?;
         Ok(loaded)
     }
-    pub fn save(&self, path: &PathBuf) -> RunResult<()> {
+    pub fn save(&self, path: &PathBuf) -> SpecResult<()> {
         let mut ctx = WithContext::want("save conf spec");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = toml::to_string(self).owe_data().with(&ctx)?;
@@ -121,7 +121,7 @@ impl ConfSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
-    async fn update_local(&self, path: &PathBuf) -> RunResult<PathBuf> {
+    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let root = path.join("confs");
         std::fs::create_dir_all(&root).owe_res()?;
         for f in &self.files {
@@ -160,7 +160,7 @@ mod tests {
         assert!(with_addr.addr().is_some());
     }
     #[tokio::test]
-    async fn test_async_update() -> RunResult<()> {
+    async fn test_async_update() -> SpecResult<()> {
         let src_dir = PathBuf::from("./temp/src");
         let dst_dir = PathBuf::from("./temp/dst");
 
@@ -190,7 +190,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_conf_with_http_addr() -> RunResult<()> {
+    async fn test_conf_with_http_addr() -> SpecResult<()> {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/global.toml");
