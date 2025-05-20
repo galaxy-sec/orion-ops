@@ -10,6 +10,7 @@ use tokio::io::AsyncWriteExt;
 use crate::{error::SpecResult, types::AsyncUpdateable};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[serde(rename = "git")]
 pub struct GitAddr {
     repo: String,
     res: Option<String>,
@@ -40,6 +41,7 @@ impl GitAddr {
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename = "local")]
 pub struct LocalAddr {
     path: String,
 }
@@ -96,6 +98,7 @@ impl LocalAddr {
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename = "http")]
 pub struct HttpAddr {
     url: String,
     username: Option<String>,
@@ -172,8 +175,11 @@ impl AsyncUpdateable for HttpAddr {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum AddrType {
+    #[serde(rename = "git")]
     Git(GitAddr),
+    #[serde(rename = "http")]
     Http(HttpAddr),
+    #[serde(rename = "local")]
     Local(LocalAddr),
 }
 impl GitAddr {}

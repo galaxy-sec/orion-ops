@@ -4,5 +4,5 @@ version = "1.0.0"
 format = "Dsl"
 path = "my.cnf"
 
-[files.addr.Local]
+[files.addr.local]
 path = "./example/knowlege/mysql/my.cnf"

@@ -89,6 +89,8 @@ mod tests {
     use orion_error::ErrorOwe;
 
     use crate::{
+        addr::LocalAddr,
+        artifact::AfType,
         conf::{ConfFile, ConfSpec},
         error::SpecResult,
         types::TomlAble,
@@ -135,7 +137,11 @@ mod tests {
 
         let conf_path = "./example/spec/redis/config_spec.toml";
 
-        let artifact = Artifact::from(("redis-7.0.1", "redis::alpine3.10", "redis-linux-7.tar.gz"));
+        let artifact = Artifact::new(
+            "redis-7.0.1",
+            AfType::Bin,
+            LocalAddr::from("redis-linux-7.tar.gz"),
+        );
         let redis = SoftWare::new(
             artifact,
             WorkSpec::new("redis"),

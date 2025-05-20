@@ -8,8 +8,8 @@ use orion_exchange::vars::{VarCollection, VarType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    addr::{AddrType, LocalAddr, path_file_name},
-    artifact::Artifact,
+    addr::{AddrType, HttpAddr, LocalAddr, path_file_name},
+    artifact::{AfType, Artifact},
     conf::{ConfFile, ConfSpec},
     error::SpecResult,
     resource::CaculateResSpec,
@@ -154,8 +154,8 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
-        let artifact_path = target_path.join("artifact.ini");
-        self.artifact.save_ini(&artifact_path)?;
+        let artifact_path = target_path.join("artifact.toml");
+        self.artifact.save_toml(&artifact_path)?;
 
         let actions_path = target_path.join("actions");
         self.actions.save_to(&actions_path)?;
@@ -175,9 +175,9 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         //target: &str
         let mut ctx = WithContext::want("load mod spec");
         //let target_path = root.join(target);
-        let artifact_path = target_path.join("artifact.ini");
+        let artifact_path = target_path.join("artifact.toml");
         ctx.with("artifact", format!("{}", artifact_path.display()));
-        let artifact = Artifact::from_ini(&artifact_path).with(&ctx)?;
+        let artifact = Artifact::from_toml(&artifact_path).with(&ctx)?;
 
         let actions_path = target_path.join("actions");
         let actions = Actions::load_from(&actions_path)?;
@@ -233,10 +233,6 @@ impl NodeSetupTaskBuilder for ModuleSpec {
 
 impl SetupTaskBuilder for ModTargetSpec {
     fn make_setup_task(&self) -> SpecResult<TaskHandle> {
-        if let Some(pkg) = self.artifact.af_bin() {
-            let shell = format!("gx setup -e local {}", pkg);
-            return Ok(Box::new(EchoTask::new(shell)));
-        }
         todo!()
     }
 }
@@ -430,7 +426,11 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 
     let k8s = ModTargetSpec::init(
         "k8s",
-        Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+        Artifact::new(
+            "mysql-4.0",
+            AfType::Image,
+            LocalAddr::from("${HOME}/Devspace/mysql"),
+        ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -438,7 +438,11 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 
     let host = ModTargetSpec::init(
         "host",
-        Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+        Artifact::new(
+            "mysql-4.0",
+            AfType::Bin,
+            HttpAddr::from("${HOME}/Devspace/mysql"),
+        ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -475,11 +479,11 @@ pub mod test {
         ]);
         let k8s = ModTargetSpec::init(
             "k8s",
-            Artifact::from((
+            Artifact::new(
                 "warp-7",
-                "warp-flow::latest",
-                "${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow",
-            )),
+                AfType::Image,
+                LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
+            ),
             warp_conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -487,11 +491,11 @@ pub mod test {
 
         let host = ModTargetSpec::init(
             "host",
-            Artifact::from((
+            Artifact::new(
                 "warp-7",
-                "warp-flow::latest",
-                "${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow",
-            )),
+                AfType::Bin,
+                LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
+            ),
             warp_conf,
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -508,7 +512,11 @@ pub mod test {
 
         let k8s = ModTargetSpec::init(
             "k8s",
-            Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+            Artifact::new(
+                "mysql-4.0",
+                AfType::Image,
+                LocalAddr::from("${HOME}/Devspace/mysql"),
+            ),
             conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -516,7 +524,11 @@ pub mod test {
 
         let host = ModTargetSpec::init(
             "host",
-            Artifact::from(("mysql-4.0", "mysql::latest", "${HOME}/Devspace/mysql")),
+            Artifact::new(
+                "mysql-4.0",
+                AfType::Bin,
+                LocalAddr::from("${HOME}/Devspace/mysql"),
+            ),
             conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
