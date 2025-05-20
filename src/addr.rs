@@ -83,10 +83,10 @@ pub fn rename_path(local: &PathBuf, name: &str) -> SpecResult<()> {
     let mut ctx = WithContext::want("rename path");
     let new_src = local
         .parent()
-        .and_then(|x| Some(x.join(name)))
+        .map(|x| x.join(name))
         .ok_or(StructError::from_conf("bad path".to_string()))?;
     ctx.with("new-from", format!("{}", new_src.display()));
-    std::fs::rename(&local, &new_src).owe_conf().with(&ctx)?;
+    std::fs::rename(local, &new_src).owe_conf().with(&ctx)?;
     Ok(())
 }
 impl LocalAddr {
