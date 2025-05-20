@@ -1,24 +1,25 @@
 use std::path::PathBuf;
 
 use derive_getters::Getters;
-use orion_error::{ErrorOwe, ErrorWith};
+use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::ValueDict;
 
 use crate::{
     addr::path_file_name,
-    error::SpecResult,
+    error::{SpecReason, SpecResult, ToErr},
     system::SysModelSpecRef,
     tpl::{TPlEngineType, TplRender},
-    types::{AsyncUpdateable, JsonAble, SaveAble, TomlAble},
+    types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
 };
 
 #[derive(Getters, Clone, Debug)]
-pub struct SysRunning {
+pub struct RunningSystem {
     name: String,
     spec: SysModelSpecRef,
     value: ValueDict,
+    local: Option<PathBuf>,
 }
-impl SaveAble<SysRunning> for SysRunning {
+impl Persistable<RunningSystem> for RunningSystem {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
@@ -35,30 +36,51 @@ impl SaveAble<SysRunning> for SysRunning {
         let spec = SysModelSpecRef::from_toml(&spec_path)?;
         let json_path = path.join("value.json");
         let value = ValueDict::from_json(&json_path)?;
-        Ok(Self { name, spec, value })
+        Ok(Self {
+            name,
+            spec,
+            value,
+            local: Some(path.clone()),
+        })
     }
 }
-impl SysRunning {
+impl RunningSystem {
     pub fn new(spec: SysModelSpecRef, value: ValueDict) -> Self {
         let name = spec.name().clone();
-        Self { name, spec, value }
-    }
-    pub async fn update(&self, path: &PathBuf) -> SpecResult<()> {
-        let root = path.join(self.name());
-        let tpl = root.join("spec");
-        if tpl.exists() {
-            std::fs::remove_dir_all(&tpl).owe_res().with(&tpl)?;
+        Self {
+            name,
+            spec,
+            value,
+            local: None,
         }
-        self.spec.update_rename(&root, "spec").await?;
+    }
+    pub async fn update(&self) -> SpecResult<()> {
+        let mut ctx = WithContext::want("sys spec update");
+        let local = self
+            .local
+            .clone()
+            .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
+        let spec = local.join("spec");
+        if spec.exists() {
+            ctx.with_path("spec", &spec);
+            std::fs::remove_dir_all(&spec).owe_res().with(&ctx)?;
+        }
+        self.spec.update_rename(&local, "spec").await?;
         Ok(())
     }
 
-    pub async fn localize(&self, path: &PathBuf) -> SpecResult<()> {
-        let root = path.join(self.name());
-        let tpl = root.join("spec");
-        let dst = root.join("local");
-        let data = root.join("value.json");
-        std::fs::create_dir_all(&dst).owe_res()?;
+    pub async fn localize(&self) -> SpecResult<()> {
+        let mut ctx = WithContext::want("modul localize");
+        let local = self
+            .local
+            .clone()
+            .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
+        let tpl = local.join("spec");
+        let dst = local.join("local");
+        let data = local.join("value.json");
+
+        ctx.with_path("local", &dst);
+        std::fs::create_dir_all(&dst).owe_res().with(&ctx)?;
         TplRender::render_path(TPlEngineType::Handlebars, &tpl, &dst, &data)?;
         Ok(())
     }
@@ -75,10 +97,10 @@ pub mod tests {
         const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
         error::SpecResult,
         system::SysModelSpecRef,
-        types::SaveAble,
+        types::Persistable,
     };
 
-    use super::SysRunning;
+    use super::RunningSystem;
 
     #[tokio::test]
     async fn test_sys_running() -> SpecResult<()> {
@@ -88,11 +110,12 @@ pub mod tests {
         );
         let mut dict = ValueDict::new();
         dict.insert("key", ValueType::from("abc"));
-        let sys = SysRunning::new(spec, dict);
+        let sys = RunningSystem::new(spec, dict);
         let path = PathBuf::from(SYS_MODEL_INS_ROOT);
         sys.save_to(&path)?;
-        sys.update(&path).await?;
-        sys.localize(&path).await?;
+        let sys = RunningSystem::load_from(&path.join("x-gateway"))?;
+        sys.update().await?;
+        sys.localize().await?;
         Ok(())
     }
 }

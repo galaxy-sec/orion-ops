@@ -15,7 +15,7 @@ use crate::{
     resource::CaculateResSpec,
     software::{FileFormat, LogsSpec},
     task::{EchoTask, NodeSetupTaskBuilder, OperationType, SetupTaskBuilder, TaskHandle},
-    types::{AsyncUpdateable, IniAble, SaveAble, TomlAble},
+    types::{AsyncUpdateable, IniAble, Persistable, TomlAble},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -119,7 +119,7 @@ impl AsyncUpdateable for ModTargetSpec {
     }
 }
 
-impl SaveAble<ModuleSpec> for ModuleSpec {
+impl Persistable<ModuleSpec> for ModuleSpec {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let mod_path = path.join(self.name());
         std::fs::create_dir_all(&mod_path)
@@ -137,7 +137,7 @@ impl SaveAble<ModuleSpec> for ModuleSpec {
         Ok(Self { name, k8s, host })
     }
 }
-impl SaveAble<ModTargetSpec> for ModTargetSpec {
+impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn save_to(&self, root: &PathBuf) -> SpecResult<()> {
         let target_path = root.join(self.target());
         std::fs::create_dir_all(&target_path)
@@ -256,7 +256,7 @@ impl Actions {
     }
 }
 
-impl SaveAble<Actions> for Actions {
+impl Persistable<Actions> for Actions {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         std::fs::create_dir_all(path)
             .owe_res()
@@ -297,7 +297,7 @@ pub enum ActionType {
     Gxl(GxlAction),
 }
 
-impl SaveAble<ActionType> for ActionType {
+impl Persistable<ActionType> for ActionType {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         match self {
             ActionType::Bash(act) => act.save_to(path),
@@ -341,7 +341,7 @@ impl GxlAction {
         }
     }
 }
-impl SaveAble<GxlAction> for GxlAction {
+impl Persistable<GxlAction> for GxlAction {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let path_file = path.join("setup.gxl");
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
@@ -384,7 +384,7 @@ impl BashAction {
     }
 }
 
-impl SaveAble<BashAction> for BashAction {
+impl Persistable<BashAction> for BashAction {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let path_file = path.join("setup.sh");
         std::fs::write(path_file, self.code.as_str()).owe_res()?;

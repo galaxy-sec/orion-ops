@@ -6,7 +6,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{addr::rename_path, error::SpecResult};
 
-pub trait SaveAble<T> {
+pub trait Persistable<T> {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()>;
     fn load_from(path: &PathBuf) -> SpecResult<T>;
 }
@@ -22,8 +22,8 @@ pub trait AsyncUpdateable {
 }
 
 #[async_trait]
-pub trait Localizeable {
-    async fn localize(&self, path: &PathBuf) -> SpecResult<()>;
+pub trait Localizable {
+    async fn localize(&self) -> SpecResult<()>;
 }
 
 pub trait TomlAble<T>
