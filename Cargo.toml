@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-#orion-error =  "0.1.14"
-orion-error= {path = "../orion-error/"}
+orion-error =  "0.2"
+#orion-error= {path = "../orion-error/"}
 orion-exchange = {path = "../orion-exchange/"}
 anyhow = "~1.0"
 comfy-table = "~7.1"
