@@ -46,7 +46,9 @@ pub struct ModuleSpecRef {
     name: String,
     addr: AddrType,
     node: NodeType,
+    effective: Option<bool>,
 }
+
 impl ModuleSpecRef {
     pub fn from<S: Into<String>, A: Into<AddrType>>(
         name: S,
@@ -57,17 +59,26 @@ impl ModuleSpecRef {
             name: name.into(),
             addr: addr.into(),
             node,
+            effective: None,
         }
+    }
+    pub fn with_effective(mut self, effective: bool) -> Self {
+        self.effective = Some(effective);
+        self
     }
 }
 #[async_trait]
 impl AsyncUpdateable for ModuleSpecRef {
     async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
-        let spec_path = self.addr.update_local(&path).await?;
-        let mod_path = path.join(self.name.as_str());
-        let spec = ModuleSpec::load_from(&mod_path)?;
-        let _x = spec.update_local(&mod_path).await?;
-        Ok(spec_path)
+        if self.effective.is_none_or(|x| x) {
+            let spec_path = self.addr.update_local(&path).await?;
+            let mod_path = path.join(self.name.as_str());
+            let spec = ModuleSpec::load_from(&mod_path)?;
+            let _x = spec.update_local(&mod_path).await?;
+            Ok(spec_path)
+        } else {
+            Ok(path.clone())
+        }
     }
 
     async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {

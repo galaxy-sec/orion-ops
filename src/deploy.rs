@@ -41,12 +41,12 @@ pub struct DeployJob {}
 #[cfg(test)]
 mod tests {
     use super::CustomModelConf;
-    use crate::{error::SpecResult, resource::ResourceNode, system::tests::gateway_spec};
+    use crate::{error::SpecResult, resource::ResourceNode, system::make_sys_spec_example};
     use orion_exchange::vars::{VarCollection, VarType};
 
     #[test]
     fn test_seup() -> SpecResult<()> {
-        let spec = gateway_spec()?;
+        let spec = make_sys_spec_example()?;
         let res_node = ResourceNode::localhost(2, 4);
         let run_vars = VarCollection::define(vec![VarType::from(("IP", "127.0.0.1"))]);
         let deploy_plan = CustomModelConf::new(spec, res_node, run_vars);

@@ -2,10 +2,11 @@ use std::path::PathBuf;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
-use orion_exchange::vars::ValueDict;
+use orion_exchange::vars::{ValueDict, ValueType};
 
 use crate::{
-    addr::path_file_name,
+    addr::{LocalAddr, path_file_name},
+    const_vars::SYS_MODEL_SPC_ROOT,
     error::{SpecReason, SpecResult, ToErr},
     system::SysModelSpecRef,
     tpl::{TPlEngineType, TplRender},
@@ -85,18 +86,23 @@ impl RunningSystem {
         Ok(())
     }
 }
-
+pub fn make_runsystem_example() -> RunningSystem {
+    let spec = SysModelSpecRef::from(
+        "example-sys",
+        LocalAddr::from(format!("{}/example-sys", SYS_MODEL_SPC_ROOT)),
+    );
+    let mut dict = ValueDict::new();
+    dict.insert("SYS_KEY", ValueType::from("example-sys"));
+    dict.insert("INS_MAX_MEM", ValueType::from(100));
+    let sys = RunningSystem::new(spec, dict);
+    sys
+}
 #[cfg(test)]
 pub mod tests {
     use std::path::PathBuf;
 
-    use orion_exchange::vars::{ValueDict, ValueType};
-
     use crate::{
-        addr::LocalAddr,
-        const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
-        error::SpecResult,
-        system::SysModelSpecRef,
+        const_vars::SYS_MODEL_INS_ROOT, error::SpecResult, sys_run::make_runsystem_example,
         types::Persistable,
     };
 
@@ -104,16 +110,10 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_sys_running() -> SpecResult<()> {
-        let spec = SysModelSpecRef::from(
-            "x-gateway",
-            LocalAddr::from(format!("{}/x-gateway", SYS_MODEL_SPC_ROOT)),
-        );
-        let mut dict = ValueDict::new();
-        dict.insert("key", ValueType::from("abc"));
-        let sys = RunningSystem::new(spec, dict);
         let path = PathBuf::from(SYS_MODEL_INS_ROOT);
+        let sys = make_runsystem_example();
         sys.save_to(&path)?;
-        let sys = RunningSystem::load_from(&path.join("x-gateway"))?;
+        let sys = RunningSystem::load_from(&path.join(sys.name()))?;
         sys.update().await?;
         sys.localize().await?;
         Ok(())

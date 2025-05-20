@@ -6,7 +6,10 @@ use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    addr::AddrType,
+    addr::LocalAddr, const_vars::MODULES_SPC_ROOT, modul::NodeType, resource::CaculateResSpec,
+};
+use crate::{
+    addr::{AddrType, GitAddr},
     error::SpecResult,
     modul::{ModuleSpec, ModuleSpecRef},
     resource::{ResouceTypes, Vps},
@@ -15,7 +18,7 @@ use crate::{
     types::{AsyncUpdateable, TomlAble},
 };
 
-use orion_exchange::vars::VarCollection;
+use orion_exchange::vars::{ValueConstraint, VarCollection, VarType};
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
     name: String,
@@ -52,13 +55,13 @@ impl AsyncUpdateable for SysModelSpecRef {
 
 #[derive(Getters, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ModulesList {
-    list: Vec<ModuleSpecRef>,
+    mods: Vec<ModuleSpecRef>,
     #[serde(skip)]
-    mods: HashMap<String, ModuleSpec>,
+    mod_map: HashMap<String, ModuleSpec>,
 }
 impl ModulesList {
     pub fn add_ref(&mut self, spec_ref: ModuleSpecRef) {
-        self.list.push(spec_ref);
+        self.mods.push(spec_ref);
     }
 }
 
@@ -67,7 +70,7 @@ impl AsyncUpdateable for ModulesList {
     async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         let root = path.join("mods");
         std::fs::create_dir_all(&root).owe_data()?;
-        for m in &self.list {
+        for m in &self.mods {
             m.update_local(&root).await?;
         }
         Ok(root)
@@ -81,7 +84,7 @@ pub enum NoneValue<T> {
 }
 impl ModulesList {
     pub fn add_mod(&mut self, modx: ModuleSpec) {
-        self.mods.insert(modx.name().clone(), modx);
+        self.mod_map.insert(modx.name().clone(), modx);
     }
 }
 
@@ -163,8 +166,8 @@ impl SetupTaskBuilder for SysModelSpec {
 impl SetupTaskBuilder for ModulesList {
     fn make_setup_task(&self) -> SpecResult<TaskHandle> {
         let mut task = CombinedTask::new("model setup");
-        for item in &self.list {
-            if let Some(modx) = self.mods().get(item.name()) {
+        for item in &self.mods {
+            if let Some(modx) = self.mod_map().get(item.name()) {
                 task.add_sub(modx.make_setup_task(item.node())?);
             }
         }
@@ -238,60 +241,62 @@ impl NetAllocator {
         None
     }
 }
+pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
+    let net = NetResSpace::new(
+        Ipv4Addr::new(10, 0, 0, 1),
+        (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
+    );
+
+    let mut allocator = NetAllocator::new(net.clone());
+
+    let res = ModelResource::from(vec![Vps::new(
+        CaculateResSpec::new(4, 8),
+        vec![allocator.alloc_master()],
+    )]);
+    let vars = VarCollection::define(vec![
+        VarType::from(("IP", "10.0.0.1")),
+        VarType::from(("pass", false)),
+        VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
+    ]);
+
+    let mut modul_spec = SysModelSpec::new("example-sys", net, res, vars);
+    modul_spec.add_mod_ref(ModuleSpecRef::from(
+        "warpflow",
+        //GitAddr::from("http://github").tag("v1.0.0"),
+        LocalAddr::from(format!("{}/warpflow", MODULES_SPC_ROOT)),
+        NodeType::Host,
+    ));
+    modul_spec.add_mod_ref(ModuleSpecRef::from(
+        "mysql",
+        LocalAddr::from(format!("{}/mysql", MODULES_SPC_ROOT)),
+        NodeType::K8s,
+    ));
+    modul_spec.add_mod_ref(
+        ModuleSpecRef::from(
+            "mysql-example",
+            GitAddr::from("http://github").tag("v1.0.0"),
+            NodeType::K8s,
+        )
+        .with_effective(false),
+    );
+
+    Ok(modul_spec)
+}
 
 #[cfg(test)]
 pub mod tests {
-    use orion_exchange::vars::{ValueConstraint, VarType};
 
-    use crate::{
-        addr::LocalAddr,
-        const_vars::{MODULES_SPC_ROOT, SYS_MODEL_SPC_ROOT},
-        modul::NodeType,
-        resource::CaculateResSpec,
-    };
+    use crate::const_vars::SYS_MODEL_SPC_ROOT;
 
     use super::*;
-    pub fn gateway_spec() -> SpecResult<SysModelSpec> {
-        let net = NetResSpace::new(
-            Ipv4Addr::new(10, 0, 0, 1),
-            (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
-        );
-
-        let mut allocator = NetAllocator::new(net.clone());
-
-        let res = ModelResource::from(vec![Vps::new(
-            CaculateResSpec::new(4, 8),
-            vec![allocator.alloc_master()],
-        )]);
-        let vars = VarCollection::define(vec![
-            VarType::from(("IP", "10.0.0.1")),
-            VarType::from(("pass", false)),
-            VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
-        ]);
-
-        let mut modul_spec = SysModelSpec::new("x-gateway", net, res, vars);
-        modul_spec.add_mod_ref(ModuleSpecRef::from(
-            "warpflow",
-            //GitAddr::from("http://github").tag("v1.0.0"),
-            LocalAddr::from(format!("{}/warpflow", MODULES_SPC_ROOT)),
-            NodeType::Host,
-        ));
-        modul_spec.add_mod_ref(ModuleSpecRef::from(
-            "mysql",
-            //GitAddr::from("http://github").tag("v1.0.0"),
-            LocalAddr::from(format!("{}/mysql", MODULES_SPC_ROOT)),
-            NodeType::K8s,
-        ));
-        Ok(modul_spec)
-    }
 
     #[tokio::test]
-    async fn build_warpflow() -> SpecResult<()> {
-        let spec = gateway_spec()?;
+    async fn build_example_sys_spec() -> SpecResult<()> {
+        let spec = make_sys_spec_example()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;
         spec.assemble(&spec_root).await?;
-        let _loaded = SysModelSpec::load_from(&spec_root.join("x-gateway"))?;
+        let _loaded = SysModelSpec::load_from(&spec_root.join(spec.name()))?;
         Ok(())
     }
 }
