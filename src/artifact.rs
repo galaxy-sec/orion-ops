@@ -9,7 +9,7 @@ pub enum OsType {
 }
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
 pub struct Artifact {
-    cep: String,
+    cpe: String,
     meta: OsType,
     addr: AddrType,
 }
@@ -17,7 +17,7 @@ impl Artifact {
     pub fn new<S: Into<String>, A: Into<AddrType>>(cep: S, meta: OsType, addr: A) -> Self {
         Self {
             meta,
-            cep: cep.into(),
+            cpe: cep.into(),
             addr: addr.into(),
         }
     }

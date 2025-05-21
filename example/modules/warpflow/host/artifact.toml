@@ -1,4 +1,4 @@
-cep = "warp-7"
+cpe = "warp-7"
 meta = "MacOs"
 
 [addr.local]

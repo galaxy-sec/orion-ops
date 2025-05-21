@@ -426,10 +426,11 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     );
     */
 
+    let cpe = "galaxy-flow";
     let k8s = ModTargetSpec::init(
         "k8s",
         Artifact::new(
-            "galaxy-flow",
+            cpe,
             OsType::MacOs,
             HttpAddr::from(
                 "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.2.5/galaxy-flow-v0.2.5-aarch64-apple-darwin.tar.gz ",
@@ -443,15 +444,17 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     let host = ModTargetSpec::init(
         "host",
         Artifact::new(
-            "mysql-4.0",
+            cpe,
             OsType::MacOs,
-            HttpAddr::from("${HOME}/Devspace/mysql"),
+            HttpAddr::from(
+                "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.2.5/galaxy-flow-v0.2.5-aarch64-apple-darwin.tar.gz ",
+            ),
         ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
     );
-    Ok(ModuleSpec::init("mysql", k8s, host))
+    Ok(ModuleSpec::init("gflow", k8s, host))
 }
 
 #[cfg(test)]

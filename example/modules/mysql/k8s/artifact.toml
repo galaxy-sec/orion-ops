@@ -1,4 +1,4 @@
-cep = "mysql-4.0"
+cpe = "mysql-4.0"
 meta = "Ubuntu"
 
 [addr.local]
