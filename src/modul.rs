@@ -2,19 +2,19 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf, str::FromStr};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
-use log::warn;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
+use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{VarCollection, VarType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
+    action::act::Actions,
     addr::{AddrType, HttpAddr, path_file_name},
     artifact::{Artifact, OsType},
     conf::{ConfFile, ConfSpec},
     error::SpecResult,
     resource::CaculateResSpec,
     software::LogsSpec,
-    task::{NodeSetupTaskBuilder, OperationType, SetupTaskBuilder, TaskHandle},
+    task::{NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},
     types::{AsyncUpdateable, Persistable, TomlAble},
 };
 
@@ -157,8 +157,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let artifact_path = target_path.join("artifact.toml");
         self.artifact.save_toml(&artifact_path)?;
 
-        let actions_path = target_path.join("actions");
-        self.actions.save_to(&actions_path)?;
+        self.actions.save_to(&target_path)?;
         let spec_path = target_path.join("conf_spec.toml");
         self.conf_spec.save_toml(&spec_path)?;
         let spec_path = target_path.join("logs_spec.toml");
@@ -179,8 +178,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         ctx.with("artifact", format!("{}", artifact_path.display()));
         let artifact = Artifact::from_toml(&artifact_path).with(&ctx)?;
 
-        let actions_path = target_path.join("actions");
-        let actions = Actions::load_from(&actions_path)?;
+        let actions = Actions::load_from(&target_path)?;
         let spec_path = target_path.join("conf_spec.toml");
         let conf_spec = ConfSpec::from_toml(&spec_path)?;
         let spec_path = target_path.join("logs_spec.toml");
@@ -206,13 +204,14 @@ impl ModTargetSpec {
     pub fn init<S: Into<String>>(
         target: S,
         artifact: Artifact,
+        actions: Actions,
         conf_spec: ConfSpec,
         res_spec: CaculateResSpec,
         vars: VarCollection,
     ) -> Self {
         Self {
             target: target.into(),
-            actions: Actions::tpl_init(),
+            actions,
             artifact,
             conf_spec,
             logs_spec: LogsSpec::tpl_init(),
@@ -248,174 +247,6 @@ impl WorkLoad {
         Self { metrics }
     }
 }
-#[derive(Getters, Clone, Debug)]
-pub struct Actions {
-    actions: Vec<ActionType>,
-}
-
-impl Actions {
-    pub fn tpl_init() -> Self {
-        let actions = vec![
-            ActionType::Gxl(GxlAction::setup_tpl()),
-            ActionType::Gxl(GxlAction::update_tpl()),
-        ];
-        Self { actions }
-    }
-}
-
-impl Persistable<Actions> for Actions {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
-        std::fs::create_dir_all(path)
-            .owe_res()
-            .with(path.to_string_lossy().to_string())?;
-        for item in &self.actions {
-            item.save_to(path)?;
-        }
-        Ok(())
-    }
-
-    //加载 path 目录的文件
-    fn load_from(path: &PathBuf) -> SpecResult<Actions> {
-        let mut actions = Vec::new();
-        for entry in std::fs::read_dir(path).owe_res()? {
-            let entry = entry.owe_res()?;
-            let path = entry.path();
-
-            if path.is_file() {
-                let action = ActionType::load_from(&path);
-                match action {
-                    Ok(act) => {
-                        actions.push(act);
-                    }
-                    Err(e) => {
-                        warn!("load ignore : {}\n {}", path.display(), e);
-                    }
-                }
-            }
-        }
-
-        Ok(Actions { actions })
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum ActionType {
-    Bash(BashAction),
-    Gxl(GxlAction),
-}
-
-impl Persistable<ActionType> for ActionType {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
-        match self {
-            ActionType::Bash(act) => act.save_to(path),
-            ActionType::Gxl(act) => act.save_to(path),
-        }
-    }
-
-    fn load_from(path: &PathBuf) -> SpecResult<ActionType> {
-        if path.ends_with(".sh") {
-            return Ok(ActionType::Bash(BashAction::load_from(path)?));
-        }
-        if path.ends_with(".gxl") {
-            return Ok(ActionType::Gxl(GxlAction::load_from(path)?));
-        }
-        Err(StructError::from_conf(format!(
-            "bad filename :{}",
-            path.display()
-        )))
-    }
-}
-
-const SETUP_GXL: &str = include_str!("init/actions/setup.gxl");
-
-#[derive(Getters, Clone, Debug)]
-pub struct GxlAction {
-    task: OperationType,
-    code: String,
-}
-
-impl GxlAction {
-    pub fn setup_tpl() -> Self {
-        Self {
-            task: OperationType::Setup,
-            code: SETUP_GXL.to_string(),
-        }
-    }
-    pub fn update_tpl() -> Self {
-        Self {
-            task: OperationType::Update,
-            code: SETUP_GXL.to_string(),
-        }
-    }
-}
-impl Persistable<GxlAction> for GxlAction {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
-        let path_file = path.join("setup.gxl");
-        std::fs::write(path_file, self.code.as_str()).owe_res()?;
-        Ok(())
-    }
-
-    fn load_from(path: &PathBuf) -> SpecResult<GxlAction> {
-        let file_name = path
-            .file_name()
-            .and_then(|f| f.to_str())
-            .ok_or_else(|| StructError::from_conf("bad file name".to_string()))?;
-
-        let task_type = match file_name {
-            "setup.gxl" => OperationType::Setup,
-            "update.gxl" => OperationType::Update,
-            _ => todo!(),
-        };
-        let code = std::fs::read_to_string(path).owe_res()?;
-        Ok(Self {
-            task: task_type,
-            code,
-        })
-    }
-}
-
-const SETUP_SH: &str = include_str!("init/actions/setup.sh");
-
-#[derive(Getters, Clone, Debug)]
-pub struct BashAction {
-    task: OperationType,
-    code: String,
-}
-
-impl BashAction {
-    pub fn setup_tpl() -> Self {
-        Self {
-            task: OperationType::Setup,
-            code: SETUP_SH.to_string(),
-        }
-    }
-}
-
-impl Persistable<BashAction> for BashAction {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
-        let path_file = path.join("setup.sh");
-        std::fs::write(path_file, self.code.as_str()).owe_res()?;
-        Ok(())
-    }
-
-    fn load_from(path: &PathBuf) -> SpecResult<Self> {
-        let file_name = path
-            .file_name()
-            .and_then(|f| f.to_str())
-            .ok_or_else(|| StructError::from_conf("bad file name".to_string()))?;
-
-        let task_type = match file_name {
-            "setup.sh" => OperationType::Setup,
-            "update.sh" => OperationType::Update,
-            _ => todo!(),
-        };
-        let code = std::fs::read_to_string(path).owe_res()?;
-        Ok(Self {
-            task: task_type,
-            code,
-        })
-    }
-}
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     let mut conf = ConfSpec::new("1.0.0");
@@ -431,6 +262,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             OsType::MacOs,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
+        Actions::k8s_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -443,6 +275,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             OsType::MacOs,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
+        Actions::host_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -484,6 +317,7 @@ pub mod test {
                 OsType::Ubuntu,
                 LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
             ),
+            Actions::k8s_tpl_init(),
             warp_conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -496,6 +330,7 @@ pub mod test {
                 OsType::MacOs,
                 LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
             ),
+            Actions::host_tpl_init(),
             warp_conf,
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -516,6 +351,7 @@ pub mod test {
                 OsType::Ubuntu,
                 LocalAddr::from("${HOME}/Devspace/mysql"),
             ),
+            Actions::k8s_tpl_init(),
             conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -528,6 +364,7 @@ pub mod test {
                 OsType::MacOs,
                 LocalAddr::from("${HOME}/Devspace/mysql"),
             ),
+            Actions::host_tpl_init(),
             conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -536,13 +373,13 @@ pub mod test {
     }
 
     #[test]
-    fn build_mod_warpflow() -> SpecResult<()> {
-        let spec = make_mod_spec_warp()?;
+    fn build_mod_example() -> SpecResult<()> {
+        let spec = make_mod_spec_example()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join("warpflow"))?;
+        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
         let spec = make_mod_spec_mysql()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join("mysql"))?;
+        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
         Ok(())
     }
 }

@@ -1,0 +1,5 @@
+cpe = "postgresql"
+meta = "MacOs"
+
+[addr.http]
+url = "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"

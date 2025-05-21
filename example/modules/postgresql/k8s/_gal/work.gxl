@@ -1,0 +1,9 @@
+extern mod setup,update { path = "./actions"; }
+
+
+mod main   {
+    env default : setup.dev ;
+
+    flow setup  : setup.do ;
+    flow update : update.do ;
+}

@@ -1,4 +1,4 @@
-mod setup {
+mod update {
     env _dev {
     }
     env _alpha {
@@ -8,11 +8,11 @@ mod setup {
     env _common {
             run       = "./.run";
     }
-    env dev  : setup._dev,setup._common   {
+    env dev  : _dev,_common   {
     }
-    env alpha  : setup._alpha,setup._common   {
+    env alpha  : _alpha,_common   {
     }
     flow do {
-      gx.echo { value= "this is  host setup" }
+      gx.echo { value= "this is k8s update" }
     }
 }

@@ -1,0 +1,7 @@
+version = "1.0.0"
+
+[[files]]
+path = "postgresql.conf"
+
+[files.addr.http]
+url = "https://github.com/galaxy-sec/module-specs/blob/main/postgresql/conf/postgresql.conf"

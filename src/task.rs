@@ -1,10 +1,13 @@
 use derive_getters::Getters;
+use derive_more::Display;
 
 use crate::{error::SpecResult, modul::NodeType};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Display)]
 pub enum OperationType {
+    #[display("setup")]
     Setup,
+    #[display("update")]
     Update,
 }
 pub trait Task {
