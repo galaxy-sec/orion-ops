@@ -3,18 +3,18 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::addr::AddrType;
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum AfType {
-    Bin,
-    Image,
+pub enum OsType {
+    MacOs,
+    Ubuntu,
 }
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
 pub struct Artifact {
     cep: String,
-    meta: AfType,
+    meta: OsType,
     addr: AddrType,
 }
 impl Artifact {
-    pub fn new<S: Into<String>, A: Into<AddrType>>(cep: S, meta: AfType, addr: A) -> Self {
+    pub fn new<S: Into<String>, A: Into<AddrType>>(cep: S, meta: OsType, addr: A) -> Self {
         Self {
             meta,
             cep: cep.into(),

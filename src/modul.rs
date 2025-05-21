@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     addr::{AddrType, HttpAddr, LocalAddr, path_file_name},
-    artifact::{AfType, Artifact},
+    artifact::{Artifact, OsType},
     conf::{ConfFile, ConfSpec},
     error::SpecResult,
     resource::CaculateResSpec,
@@ -419,17 +419,21 @@ impl Persistable<BashAction> for BashAction {
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     let mut conf = ConfSpec::new("1.0.0");
+    /*
     conf.add(
         ConfFile::new(FileFormat::Dsl, "my.cnf")
             .with_addr(LocalAddr::from("./example/knowlege/mysql/my.cnf")),
     );
+    */
 
     let k8s = ModTargetSpec::init(
         "k8s",
         Artifact::new(
-            "mysql-4.0",
-            AfType::Image,
-            LocalAddr::from("${HOME}/Devspace/mysql"),
+            "galaxy-flow",
+            OsType::MacOs,
+            HttpAddr::from(
+                "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.2.5/galaxy-flow-v0.2.5-aarch64-apple-darwin.tar.gz ",
+            ),
         ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
@@ -440,7 +444,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         "host",
         Artifact::new(
             "mysql-4.0",
-            AfType::Bin,
+            OsType::MacOs,
             HttpAddr::from("${HOME}/Devspace/mysql"),
         ),
         conf.clone(),
@@ -481,7 +485,7 @@ pub mod test {
             "k8s",
             Artifact::new(
                 "warp-7",
-                AfType::Image,
+                OsType::Ubuntu,
                 LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
             ),
             warp_conf.clone(),
@@ -493,7 +497,7 @@ pub mod test {
             "host",
             Artifact::new(
                 "warp-7",
-                AfType::Bin,
+                OsType::MacOs,
                 LocalAddr::from("${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"),
             ),
             warp_conf,
@@ -514,7 +518,7 @@ pub mod test {
             "k8s",
             Artifact::new(
                 "mysql-4.0",
-                AfType::Image,
+                OsType::Ubuntu,
                 LocalAddr::from("${HOME}/Devspace/mysql"),
             ),
             conf.clone(),
@@ -526,7 +530,7 @@ pub mod test {
             "host",
             Artifact::new(
                 "mysql-4.0",
-                AfType::Bin,
+                OsType::MacOs,
                 LocalAddr::from("${HOME}/Devspace/mysql"),
             ),
             conf.clone(),
