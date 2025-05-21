@@ -3,7 +3,6 @@ use std::{fs, path::PathBuf};
 use crate::{
     addr::{AddrType, path_file_name},
     error::SpecResult,
-    software::FileFormat,
     types::{AsyncUpdateable, TomlAble},
 };
 use async_trait::async_trait;
@@ -18,7 +17,6 @@ pub struct ConfSpec {
 
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
 pub struct ConfFile {
-    format: FileFormat,
     path: String,
     addr: Option<AddrType>,
 }
@@ -71,9 +69,8 @@ impl ConfSpecRef {
 }
 
 impl ConfFile {
-    pub fn new<S: Into<String>>(format: FileFormat, path: S) -> Self {
+    pub fn new<S: Into<String>>(path: S) -> Self {
         Self {
-            format,
             path: path.into(),
             addr: None,
         }
@@ -110,10 +107,10 @@ impl ConfSpec {
     pub fn add(&mut self, file: ConfFile) {
         self.files.push(file);
     }
-    pub fn from_files(values: Vec<(FileFormat, &str)>) -> Self {
+    pub fn from_files(values: Vec<&str>) -> Self {
         let mut ins = ConfSpec::new("1.0");
         for item in values {
-            ins.add(ConfFile::new(item.0, item.1));
+            ins.add(ConfFile::new(item));
         }
         ins
     }
@@ -151,8 +148,7 @@ mod tests {
 
     #[test]
     fn test_conf_file_creation() {
-        let file = ConfFile::new(FileFormat::Toml, "config.toml");
-        assert_eq!(file.format(), &FileFormat::Toml);
+        let file = ConfFile::new("config.toml");
         assert_eq!(file.path(), "config.toml");
         assert!(file.addr().is_none());
 
@@ -167,7 +163,7 @@ mod tests {
         // 创建带地址的配置
         let mut spec = ConfSpec::new("3.0");
         spec.add(
-            ConfFile::new(FileFormat::Toml, "db.toml")
+            ConfFile::new("db.toml")
                 .with_addr(AddrType::Local(LocalAddr::from("./temp/src/db.toml"))),
         );
 
@@ -200,8 +196,7 @@ mod tests {
         // 创建包含HttpAddr的配置
         let mut conf = ConfSpec::new("1.0");
         conf.add(
-            ConfFile::new(FileFormat::Toml, "remote.toml")
-                .with_addr(HttpAddr::from(server.url("/global.toml"))),
+            ConfFile::new("remote.toml").with_addr(HttpAddr::from(server.url("/global.toml"))),
         );
 
         // 测试更新

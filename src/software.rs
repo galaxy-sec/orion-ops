@@ -111,7 +111,7 @@ mod tests {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
         let mut redis = ConfSpec::new("1.0");
-        redis.add(ConfFile::new(FileFormat::Dsl, "./nginx.conf"));
+        redis.add(ConfFile::new("./nginx.conf"));
 
         let path = root_path.join("config_spec.toml");
         redis.save_toml(&path).unwrap();
@@ -119,9 +119,9 @@ mod tests {
         assert_eq!(redis.version(), loaded.version());
 
         let warpflow = ConfSpec::from_files(vec![
-            (FileFormat::Toml, "./conf/dvron.toml"),
-            (FileFormat::Toml, "./conf/dvgen.toml"),
-            (FileFormat::Toml, "./sink/framework.toml"),
+            "./conf/dvron.toml",
+            "./conf/dvgen.toml",
+            "./sink/framework.toml",
         ]);
 
         let path = root_path.join("config_spec.toml");

@@ -1,7 +1,6 @@
 version = "1.0.0"
 
 [[files]]
-format = "Dsl"
 path = "my.cnf"
 
 [files.addr.local]

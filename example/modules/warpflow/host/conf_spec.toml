@@ -1,25 +1,19 @@
 version = "1.0"
 
 [[files]]
-format = "Toml"
 path = "./conf/dvron.toml"
 
 [[files]]
-format = "Dsl"
 path = "./conf/dvadm.oml"
 
 [[files]]
-format = "Toml"
 path = "./conf/knowdb.toml"
 
 [[files]]
-format = "Toml"
 path = "./sink/framework.toml"
 
 [[files]]
-format = "Toml"
 path = "./sink/privacy.toml"
 
 [[files]]
-format = "Toml"
 path = "./source/dysrc.toml"

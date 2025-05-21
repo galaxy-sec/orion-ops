@@ -10,7 +10,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     addr::{AddrType, HttpAddr, path_file_name},
     artifact::{Artifact, OsType},
-    conf::ConfSpec,
+    conf::{ConfFile, ConfSpec},
     error::SpecResult,
     resource::CaculateResSpec,
     software::LogsSpec,
@@ -418,23 +418,18 @@ impl Persistable<BashAction> for BashAction {
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
-    let conf = ConfSpec::new("1.0.0");
-    /*
-    conf.add(
-        ConfFile::new(FileFormat::Dsl, "my.cnf")
-            .with_addr(LocalAddr::from("./example/knowlege/mysql/my.cnf")),
-    );
-    */
+    let mut conf = ConfSpec::new("1.0.0");
+    conf.add(ConfFile::new("postgresql.conf").with_addr(HttpAddr::from(
+        "https://github.com/galaxy-sec/module-specs/blob/main/postgresql/conf/postgresql.conf",
+    )));
 
-    let cpe = "galaxy-flow";
+    let cpe = "postgresql";
     let k8s = ModTargetSpec::init(
         "k8s",
         Artifact::new(
             cpe,
             OsType::MacOs,
-            HttpAddr::from(
-                "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.2.5/galaxy-flow-v0.2.5-aarch64-apple-darwin.tar.gz ",
-            ),
+            HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
@@ -446,15 +441,13 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         Artifact::new(
             cpe,
             OsType::MacOs,
-            HttpAddr::from(
-                "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.2.5/galaxy-flow-v0.2.5-aarch64-apple-darwin.tar.gz ",
-            ),
+            HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
     );
-    Ok(ModuleSpec::init("gflow", k8s, host))
+    Ok(ModuleSpec::init("postgresql", k8s, host))
 }
 
 #[cfg(test)]
@@ -465,7 +458,7 @@ pub mod test {
 
     use crate::{
         addr::LocalAddr, conf::ConfFile, const_vars::MODULES_SPC_ROOT, error::SpecResult,
-        software::FileFormat, system::NetResSpace,
+        system::NetResSpace,
     };
 
     use super::*;
@@ -477,12 +470,12 @@ pub mod test {
         );
 
         let warp_conf = ConfSpec::from_files(vec![
-            (FileFormat::Toml, "./conf/dvron.toml"),
-            (FileFormat::Dsl, "./conf/dvadm.oml"),
-            (FileFormat::Toml, "./conf/knowdb.toml"),
-            (FileFormat::Toml, "./sink/framework.toml"),
-            (FileFormat::Toml, "./sink/privacy.toml"),
-            (FileFormat::Toml, "./source/dysrc.toml"),
+            "./conf/dvron.toml",
+            "./conf/dvadm.oml",
+            "./conf/knowdb.toml",
+            "./sink/framework.toml",
+            "./sink/privacy.toml",
+            "./source/dysrc.toml",
         ]);
         let k8s = ModTargetSpec::init(
             "k8s",
@@ -513,8 +506,7 @@ pub mod test {
     pub fn make_mod_spec_mysql() -> SpecResult<ModuleSpec> {
         let mut conf = ConfSpec::new("1.0.0");
         conf.add(
-            ConfFile::new(FileFormat::Dsl, "my.cnf")
-                .with_addr(LocalAddr::from("./example/knowlege/mysql/my.cnf")),
+            ConfFile::new("my.cnf").with_addr(LocalAddr::from("./example/knowlege/mysql/my.cnf")),
         );
 
         let k8s = ModTargetSpec::init(
