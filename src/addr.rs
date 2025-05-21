@@ -120,82 +120,25 @@ impl HttpAddr {
         self
     }
 }
-/*
-#[async_trait]
-impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &PathBuf) -> SpecResult<PathBuf> {
-        let client = reqwest::Client::new();
-
-        // 构建请求
-        let mut request = client.get(&self.url);
-
-        // 添加Basic Auth
-        if let (Some(u), Some(p)) = (&self.username, &self.password) {
-            request = request.basic_auth(u, Some(p));
-        }
-
-        // 发送请求（-fL 等效于 follow redirects + fail on error）
-        let response = request
-            .send()
-            .await
-            .owe_res()
-            .with(format!("Failed to download {}", self.url))?;
-
-        // 检查状态码（-f 选项行为）
-        if !response.status().is_success() {
-            return Err(StructError::from_res(format!(
-                "HTTP request failed: {}",
-                response.status()
-            )));
-        }
-
-        // 获取文件名（从URL或Content-Disposition头）
-        let file_name = response
-            .url()
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .unwrap_or("downloaded_file");
-
-        // 创建目标文件（-o 选项行为）
-        let dest_path = dest_dir.join(file_name);
-        let mut file = tokio::fs::File::create(&dest_path)
-            .await
-            .owe_conf()
-            .with(format!("Failed to create {}", dest_path.display()))?;
-
-        // 流式写入文件
-        let stream = response.bytes().await.owe_data()?;
-        file.write_all(&stream)
-            .await
-            .owe_sys()
-            .with(format!("Failed to write to {}", dest_path.display()))?;
-
-        Ok(dest_path)
-    }
-}
-*/
 
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
     async fn update_local(&self, dest_dir: &PathBuf) -> SpecResult<PathBuf> {
-        let client = reqwest::Client::new();
+        use indicatif::{ProgressBar, ProgressStyle};
 
-        // 构建请求
+        let client = reqwest::Client::new();
         let mut request = client.get(&self.url);
 
-        // 添加Basic Auth
         if let (Some(u), Some(p)) = (&self.username, &self.password) {
             request = request.basic_auth(u, Some(p));
         }
 
-        // 发送请求
         let mut response = request
             .send()
             .await
             .owe_res()
             .with(format!("Failed to download {}", self.url))?;
 
-        // 检查状态码
         if !response.status().is_success() {
             return Err(StructError::from_res(format!(
                 "HTTP request failed: {}",
@@ -203,26 +146,26 @@ impl AsyncUpdateable for HttpAddr {
             )));
         }
 
-        // 获取文件总大小（如果服务器提供了Content-Length）
         let total_size = response.content_length().unwrap_or(0);
-
-        // 获取文件名
         let file_name = response
             .url()
             .path_segments()
             .and_then(|segments| segments.last())
             .unwrap_or("downloaded_file");
 
-        // 创建目标文件
         let dest_path = dest_dir.join(file_name);
         let mut file = tokio::fs::File::create(&dest_path)
             .await
             .owe_conf()
             .with(format!("Failed to create {}", dest_path.display()))?;
 
-        // 流式下载并显示进度
+        // 创建进度条
+        let pb = ProgressBar::new(total_size);
+        pb.set_style(ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})").owe_logic()?
+            .progress_chars("#>-"));
+
         let mut downloaded: u64 = 0;
-        let mut last_log_time = std::time::Instant::now();
 
         while let Some(chunk) = response.chunk().await.owe_data()? {
             file.write_all(&chunk)
@@ -231,23 +174,10 @@ impl AsyncUpdateable for HttpAddr {
                 .with(format!("Failed to write to {}", dest_path.display()))?;
 
             downloaded += chunk.len() as u64;
-
-            // 每500ms更新一次进度，避免过于频繁的打印
-            if last_log_time.elapsed().as_millis() > 500 {
-                if total_size > 0 {
-                    let percentage = (downloaded as f64 / total_size as f64) * 100.0;
-                    println!(
-                        "下载进度: {:.2}% ({}/{})",
-                        percentage, downloaded, total_size
-                    );
-                } else {
-                    println!("已下载: {} bytes", downloaded);
-                }
-                last_log_time = std::time::Instant::now();
-            }
+            pb.set_position(downloaded);
         }
 
-        println!("下载完成: {} bytes", downloaded);
+        pb.finish_with_message("下载完成");
         Ok(dest_path)
     }
 }
