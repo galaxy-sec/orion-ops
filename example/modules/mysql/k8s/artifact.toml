@@ -1,5 +1,5 @@
 cep = "mysql-4.0"
-meta = "Image"
+meta = "Ubuntu"
 
 [addr.local]
 path = "${HOME}/Devspace/mysql"

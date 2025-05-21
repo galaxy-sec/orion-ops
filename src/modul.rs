@@ -8,14 +8,14 @@ use orion_exchange::vars::{VarCollection, VarType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    addr::{AddrType, HttpAddr, LocalAddr, path_file_name},
+    addr::{AddrType, HttpAddr, path_file_name},
     artifact::{Artifact, OsType},
-    conf::{ConfFile, ConfSpec},
+    conf::ConfSpec,
     error::SpecResult,
     resource::CaculateResSpec,
-    software::{FileFormat, LogsSpec},
-    task::{EchoTask, NodeSetupTaskBuilder, OperationType, SetupTaskBuilder, TaskHandle},
-    types::{AsyncUpdateable, IniAble, Persistable, TomlAble},
+    software::LogsSpec,
+    task::{NodeSetupTaskBuilder, OperationType, SetupTaskBuilder, TaskHandle},
+    types::{AsyncUpdateable, Persistable, TomlAble},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -418,7 +418,7 @@ impl Persistable<BashAction> for BashAction {
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
-    let mut conf = ConfSpec::new("1.0.0");
+    let conf = ConfSpec::new("1.0.0");
     /*
     conf.add(
         ConfFile::new(FileFormat::Dsl, "my.cnf")

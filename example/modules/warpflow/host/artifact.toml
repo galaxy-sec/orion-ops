@@ -1,5 +1,5 @@
 cep = "warp-7"
-meta = "Bin"
+meta = "MacOs"
 
 [addr.local]
 path = "${HOME}/Devspace/dy-sec/warp-flow/target/release/wpflow"
