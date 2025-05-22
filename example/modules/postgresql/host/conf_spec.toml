@@ -4,4 +4,4 @@ version = "1.0.0"
 path = "postgresql.conf"
 
 [files.addr.http]
-url = "https://github.com/galaxy-sec/module-specs/blob/main/postgresql/conf/postgresql.conf"
+url = "https://raw.githubusercontent.com/galaxy-sec/module-specs/refs/heads/main/postgresql/conf/postgresql.conf"

@@ -1,5 +1,0 @@
-cpe = "mysql-4.0"
-meta = "MacOs"
-
-[addr.local]
-path = "${HOME}/Devspace/mysql"

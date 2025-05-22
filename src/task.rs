@@ -1,7 +1,7 @@
 use derive_getters::Getters;
 use derive_more::Display;
 
-use crate::{error::SpecResult, modul::NodeType};
+use crate::{error::SpecResult, module::NodeType};
 
 #[derive(Clone, Debug, PartialEq, Display)]
 pub enum OperationType {

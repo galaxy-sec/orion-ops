@@ -1,5 +1,5 @@
 [[vars]]
 
 [vars.int]
-name = "SPEED_LIMIT"
+name = "EXAMPLE_SIZE"
 value = 1000

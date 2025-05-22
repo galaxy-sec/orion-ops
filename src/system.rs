@@ -5,13 +5,14 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use serde_derive::{Deserialize, Serialize};
 
+use crate::module::refs::ModuleSpecRef;
+use crate::module::spec::ModuleSpec;
 use crate::{
-    addr::LocalAddr, const_vars::MODULES_SPC_ROOT, modul::NodeType, resource::CaculateResSpec,
+    addr::LocalAddr, const_vars::MODULES_SPC_ROOT, module::NodeType, resource::CaculateResSpec,
 };
 use crate::{
     addr::{AddrType, GitAddr},
     error::SpecResult,
-    modul::{ModuleSpec, ModuleSpecRef},
     resource::{ResouceTypes, Vps},
     software::FileFormat,
     task::{CombinedTask, NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},

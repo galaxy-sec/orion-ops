@@ -1,7 +1,0 @@
-version = "1.0.0"
-
-[[files]]
-path = "my.cnf"
-
-[files.addr.local]
-path = "./example/knowlege/mysql/my.cnf"

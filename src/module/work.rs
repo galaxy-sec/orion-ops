@@ -6,13 +6,15 @@ use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{ValueDict, ValueType};
 
 use crate::{
-    addr::{GitAddr, path_file_name},
-    error::ToErr,
-    error::{SpecReason, SpecResult},
-    modul::{ModuleSpecRef, NodeType},
+    addr::{LocalAddr, path_file_name},
+    const_vars::MODULES_SPC_ROOT,
+    error::{SpecReason, SpecResult, ToErr},
+    module::NodeType,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Localizable, Persistable, TomlAble},
 };
+
+use super::{refs::ModuleSpecRef, spec::ModuleSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct RunningModule {
@@ -69,6 +71,7 @@ impl RunningModule {
         }
         ctx.with_path("local", &local);
         self.spec.update_rename(&local, "spec").await.with(&ctx)?;
+
         Ok(())
     }
 }
@@ -85,19 +88,21 @@ impl Localizable for RunningModule {
         let dst = local.join("local");
         let data = local.join("value.json");
         ctx.with_path("dst", &dst);
+        let spec = ModuleSpec::load_from(&tpl)?;
+        spec.update_local(&tpl).await?;
         TplRender::render_path(TPlEngineType::Handlebars, &tpl, &dst, &data).with(&ctx)?;
         Ok(())
     }
 }
 pub fn make_modins_example() -> SpecResult<RunningModule> {
     let spec = ModuleSpecRef::from(
-        "mysql",
-        //LocalAddr::from(format!("{}/mysql", MODULES_SPC_ROOT)),
-        GitAddr::from("https://github/galaxy-sec/demo-mod").branch("master"),
+        "postgresql",
+        LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
         NodeType::Host,
     );
     let mut dict = ValueDict::new();
-    dict.insert("key", ValueType::from("abc"));
+    dict.insert("KEY", ValueType::from("postgresql"));
+    dict.insert("CACHE_SIZE", ValueType::from(4));
     let sys = RunningModule::new(spec, dict);
     Ok(sys)
 }
@@ -105,13 +110,10 @@ pub fn make_modins_example() -> SpecResult<RunningModule> {
 pub mod tests {
     use std::path::PathBuf;
 
-    use orion_exchange::vars::{ValueDict, ValueType};
-
     use crate::{
-        addr::LocalAddr,
         const_vars::{MODULES_INS_ROOT, MODULES_SPC_ROOT},
         error::SpecResult,
-        modul::{ModuleSpecRef, NodeType},
+        module::work::make_modins_example,
         types::{Localizable, Persistable},
     };
 
@@ -119,17 +121,10 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_mod_running() -> SpecResult<()> {
-        let spec = ModuleSpecRef::from(
-            "mysql",
-            LocalAddr::from(format!("{}/mysql", MODULES_SPC_ROOT)),
-            NodeType::Host,
-        );
-        let mut dict = ValueDict::new();
-        dict.insert("key", ValueType::from("abc"));
-        let sys = RunningModule::new(spec, dict);
+        let sys = make_modins_example()?;
         let path = PathBuf::from(MODULES_INS_ROOT);
         sys.save_to(&path)?;
-        let sys = RunningModule::load_from(&path.join("mysql"))?;
+        let sys = RunningModule::load_from(&path.join(sys.spec.name()))?;
         sys.update().await?;
         sys.localize().await?;
         Ok(())
