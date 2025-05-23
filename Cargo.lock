@@ -1969,6 +1969,7 @@ dependencies = [
 [[package]]
 name = "orion-exchange"
 version = "0.1.1"
+source = "git+https://github.com/galaxy-sec/orion-exchange.git?branch=main#b441bba1ceb4ebda2752a7e8c1ff9d54a2ca1faa"
 dependencies = [
  "derive-getters",
  "serde",

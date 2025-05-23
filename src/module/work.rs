@@ -9,7 +9,7 @@ use crate::{
     addr::{LocalAddr, path_file_name},
     const_vars::MODULES_SPC_ROOT,
     error::{SpecReason, SpecResult, ToErr},
-    module::NodeType,
+    module::TargetNodeType,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Localizable, Persistable, TomlAble},
 };
@@ -98,7 +98,7 @@ pub fn make_modins_example() -> SpecResult<RunningModule> {
     let spec = ModuleSpecRef::from(
         "postgresql",
         LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
-        NodeType::Host,
+        TargetNodeType::Host,
     );
     let mut dict = ValueDict::new();
     dict.insert("KEY", ValueType::from("postgresql"));

@@ -16,7 +16,7 @@ use crate::{
     types::{AsyncUpdateable, Persistable},
 };
 
-use super::{NodeType, target::ModTargetSpec};
+use super::{TargetNodeType, target::ModTargetSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
@@ -38,16 +38,16 @@ impl ModuleSpec {
             local: None,
         }
     }
-    pub fn clean_other(&mut self, node: &NodeType) -> SpecResult<()> {
+    pub fn clean_other(&mut self, node: &TargetNodeType) -> SpecResult<()> {
         match node {
-            NodeType::Host => {
+            TargetNodeType::Host => {
                 self.host = None;
                 self.local
                     .as_ref()
                     .map(|x| x.join("k8s"))
                     .map(Self::clean_path);
             }
-            NodeType::K8s => {
+            TargetNodeType::K8s => {
                 self.k8s = None;
                 self.local
                     .as_ref()
@@ -116,14 +116,14 @@ impl Persistable<ModuleSpec> for ModuleSpec {
     }
 }
 impl NodeSetupTaskBuilder for ModuleSpec {
-    fn make_setup_task(&self, node: &NodeType) -> SpecResult<TaskHandle> {
+    fn make_setup_task(&self, node: &TargetNodeType) -> SpecResult<TaskHandle> {
         match node {
-            NodeType::Host => self
+            TargetNodeType::Host => self
                 .host
                 .as_ref()
                 .map(|x| x.make_setup_task())
                 .ok_or(SpecReason::Miss("host spec".into()).to_err())?,
-            NodeType::K8s => self
+            TargetNodeType::K8s => self
                 .k8s
                 .as_ref()
                 .map(|x| x.make_setup_task())

@@ -8,25 +8,25 @@ use std::{fmt::Display, str::FromStr};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum NodeType {
+pub enum TargetNodeType {
     Host,
     K8s,
 }
-impl FromStr for NodeType {
+impl FromStr for TargetNodeType {
     type Err = ();
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
-            "host" => Ok(NodeType::Host),
-            "k8s" => Ok(NodeType::K8s),
+            "host" => Ok(TargetNodeType::Host),
+            "k8s" => Ok(TargetNodeType::K8s),
             _ => Err(()),
         }
     }
 }
-impl Display for NodeType {
+impl Display for TargetNodeType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NodeType::Host => write!(f, "host"),
-            NodeType::K8s => write!(f, "k8s"),
+            TargetNodeType::Host => write!(f, "host"),
+            TargetNodeType::K8s => write!(f, "k8s"),
         }
     }
 }

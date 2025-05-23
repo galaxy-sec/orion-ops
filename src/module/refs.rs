@@ -11,13 +11,13 @@ use crate::{
     types::{AsyncUpdateable, Persistable},
 };
 
-use super::{NodeType, spec::ModuleSpec};
+use super::{TargetNodeType, spec::ModuleSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
     name: String,
     addr: AddrType,
-    node: NodeType,
+    node: TargetNodeType,
     effective: Option<bool>,
 }
 
@@ -25,7 +25,7 @@ impl ModuleSpecRef {
     pub fn from<S: Into<String>, A: Into<AddrType>>(
         name: S,
         addr: A,
-        node: NodeType,
+        node: TargetNodeType,
     ) -> ModuleSpecRef {
         Self {
             name: name.into(),

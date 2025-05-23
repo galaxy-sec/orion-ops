@@ -8,7 +8,7 @@ use crate::{
     addr::{GitAddr, LocalAddr},
     const_vars::MODULES_SPC_ROOT,
     error::SpecResult,
-    module::{NodeType, refs::ModuleSpecRef, spec::ModuleSpec},
+    module::{TargetNodeType, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
     types::{AsyncUpdateable, TomlAble},
@@ -87,7 +87,7 @@ impl SysModelSpec {
         }
     }
 
-    pub async fn assemble(&self, path: &PathBuf) -> SpecResult<()> {
+    pub async fn update_local(&self, path: &PathBuf) -> SpecResult<()> {
         let root = path.join(self.name());
         self.mod_list.update_local(&root).await?;
         Ok(())
@@ -121,18 +121,65 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     modul_spec.add_mod_ref(ModuleSpecRef::from(
         "example_mod1",
         LocalAddr::from(format!("{}/example_mod1", MODULES_SPC_ROOT)),
-        NodeType::Host,
+        TargetNodeType::Host,
     ));
     modul_spec.add_mod_ref(ModuleSpecRef::from(
         "postgresql",
         LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
-        NodeType::Host,
+        TargetNodeType::Host,
     ));
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
             "mysql-example",
             GitAddr::from("http://github").tag("v1.0.0"),
-            NodeType::K8s,
+            TargetNodeType::K8s,
+        )
+        .with_effective(false),
+    );
+
+    Ok(modul_spec)
+}
+
+pub fn make_sys_spec_new(name: &str) -> SpecResult<SysModelSpec> {
+    let net = NetResSpace::new(
+        Ipv4Addr::new(10, 0, 0, 1),
+        (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
+    );
+
+    let mut allocator = NetAllocator::new(net.clone());
+
+    let res = ModelResource::from(vec![Vps::new(
+        CaculateResSpec::new(4, 8),
+        vec![allocator.alloc_master()],
+    )]);
+    let vars = VarCollection::define(vec![
+        VarType::from(("IP", "10.0.0.1")),
+        VarType::from(("pass", false)),
+        VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
+    ]);
+
+    let mut modul_spec = SysModelSpec::new(name, net, res, vars);
+    modul_spec.add_mod_ref(
+        ModuleSpecRef::from(
+            "example_mod1",
+            LocalAddr::from(format!("{}/example_mod1", MODULES_SPC_ROOT)),
+            TargetNodeType::Host,
+        )
+        .with_effective(false),
+    );
+    modul_spec.add_mod_ref(
+        ModuleSpecRef::from(
+            "postgresql",
+            LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+            TargetNodeType::Host,
+        )
+        .with_effective(false),
+    );
+    modul_spec.add_mod_ref(
+        ModuleSpecRef::from(
+            "mysql-example",
+            GitAddr::from("http://github").tag("v1.0.0"),
+            TargetNodeType::K8s,
         )
         .with_effective(false),
     );
@@ -152,7 +199,7 @@ pub mod tests {
         let spec = make_sys_spec_example()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;
-        spec.assemble(&spec_root).await?;
+        spec.update_local(&spec_root).await?;
         let _loaded = SysModelSpec::load_from(&spec_root.join(spec.name()))?;
         Ok(())
     }
