@@ -1,7 +1,7 @@
 use crate::{
     error::SpecResult,
     resource::ResourceNode,
-    system::SysModelSpec,
+    system::spec::SysModelSpec,
     task::{SetupTaskBuilder, TaskHandle},
 };
 use orion_exchange::vars::VarCollection;
@@ -41,7 +41,7 @@ pub struct DeployJob {}
 #[cfg(test)]
 mod tests {
     use super::CustomModelConf;
-    use crate::{error::SpecResult, resource::ResourceNode, system::make_sys_spec_example};
+    use crate::{error::SpecResult, resource::ResourceNode, system::spec::make_sys_spec_example};
     use orion_exchange::vars::{VarCollection, VarType};
 
     #[test]

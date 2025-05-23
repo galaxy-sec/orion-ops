@@ -8,10 +8,11 @@ use crate::{
     addr::{LocalAddr, path_file_name},
     const_vars::SYS_MODEL_SPC_ROOT,
     error::{SpecReason, SpecResult, ToErr},
-    system::SysModelSpecRef,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
 };
+
+use super::refs::SysModelSpecRef;
 
 #[derive(Getters, Clone, Debug)]
 pub struct RunningSystem {
@@ -94,6 +95,7 @@ pub fn make_runsystem_example() -> RunningSystem {
     let mut dict = ValueDict::new();
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
     dict.insert("INS_MAX_MEM", ValueType::from(100));
+    dict.insert("CACHE_SIZE", ValueType::from(4));
     let sys = RunningSystem::new(spec, dict);
     sys
 }
@@ -102,7 +104,7 @@ pub mod tests {
     use std::path::PathBuf;
 
     use crate::{
-        const_vars::SYS_MODEL_INS_ROOT, error::SpecResult, sys_run::make_runsystem_example,
+        const_vars::SYS_MODEL_INS_ROOT, error::SpecResult, system::work::make_runsystem_example,
         types::Persistable,
     };
 

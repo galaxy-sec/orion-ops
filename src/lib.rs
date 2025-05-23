@@ -9,7 +9,6 @@ pub mod module;
 pub mod resource;
 pub mod software;
 pub mod spec;
-pub mod sys_run;
 pub mod system;
 pub mod task;
 pub mod tools;

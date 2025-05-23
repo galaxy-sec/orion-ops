@@ -111,7 +111,7 @@ pub mod tests {
     use std::path::PathBuf;
 
     use crate::{
-        const_vars::{MODULES_INS_ROOT, MODULES_SPC_ROOT},
+        const_vars::MODULES_INS_ROOT,
         error::SpecResult,
         module::work::make_modins_example,
         types::{Localizable, Persistable},

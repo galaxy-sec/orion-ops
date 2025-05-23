@@ -14,5 +14,7 @@ mod setup {
     }
     flow do {
       gx.echo { value= "this is  host setup" }
+      gx.down { file = "./artifact.toml" , dst_path =  "./"  }
+
     }
 }
