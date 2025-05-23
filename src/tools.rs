@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use url::Url;
+
 #[derive(Default, Clone, Debug)]
 pub struct GitRepo {}
 #[allow(dead_code)]
@@ -19,3 +21,8 @@ impl GxShell {
 #[derive(Default, Clone, Debug)]
 pub struct Http {}
 impl Http {}
+pub fn get_last_segment(url_str: &str) -> Option<String> {
+    let url = Url::parse(url_str).ok()?;
+    let last = url.path_segments()?.rev().find(|s| !s.is_empty());
+    last.map(String::from)
+}

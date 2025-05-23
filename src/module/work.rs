@@ -6,7 +6,7 @@ use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{ValueDict, ValueType};
 
 use crate::{
-    addr::{LocalAddr, path_file_name},
+    addr::{GitAddr, LocalAddr, path_file_name},
     const_vars::MODULES_SPC_ROOT,
     error::{SpecReason, SpecResult, ToErr},
     module::TargetNodeType,
@@ -98,6 +98,20 @@ pub fn make_modins_example() -> SpecResult<RunningModule> {
     let spec = ModuleSpecRef::from(
         "postgresql",
         LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+        TargetNodeType::Host,
+    );
+    let mut dict = ValueDict::new();
+    dict.insert("KEY", ValueType::from("postgresql"));
+    dict.insert("CACHE_SIZE", ValueType::from(4));
+    let sys = RunningModule::new(spec, dict);
+    Ok(sys)
+}
+
+pub fn make_modins_new(name: &str, spec_center: &str) -> SpecResult<RunningModule> {
+    let spec = ModuleSpecRef::from(
+        name,
+        //LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+        GitAddr::from(spec_center).path(name),
         TargetNodeType::Host,
     );
     let mut dict = ValueDict::new();

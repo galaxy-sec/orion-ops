@@ -30,6 +30,8 @@ delegate = "0.13.3"
 wildmatch = "~2.4"
 lazy_static = "~1.5"
 futures = "0.3"
+url = "2.5"
+home = "0.5"
 
 handlebars = "6.3"
 fs_extra = "1.3"

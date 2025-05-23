@@ -140,7 +140,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     Ok(modul_spec)
 }
 
-pub fn make_sys_spec_new(name: &str) -> SpecResult<SysModelSpec> {
+pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
     let net = NetResSpace::new(
         Ipv4Addr::new(10, 0, 0, 1),
         (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
@@ -162,7 +162,7 @@ pub fn make_sys_spec_new(name: &str) -> SpecResult<SysModelSpec> {
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
             "example_mod1",
-            LocalAddr::from(format!("{}/example_mod1", MODULES_SPC_ROOT)),
+            GitAddr::from(repo).path("example_mod1"),
             TargetNodeType::Host,
         )
         .with_effective(false),
@@ -170,7 +170,7 @@ pub fn make_sys_spec_new(name: &str) -> SpecResult<SysModelSpec> {
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
             "postgresql",
-            LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+            GitAddr::from(repo).path("postgresql"),
             TargetNodeType::Host,
         )
         .with_effective(false),

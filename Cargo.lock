@@ -1208,6 +1208,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f154ce46856750ed433c8649605bf7ed2de3bc35fd9d2a9f30cddd873c80cb08"
 
 [[package]]
+name = "home"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
+dependencies = [
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "http"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1993,6 +2002,7 @@ dependencies = [
  "futures",
  "git2",
  "handlebars",
+ "home",
  "httpmock",
  "indicatif",
  "lazy_static",
@@ -2012,6 +2022,7 @@ dependencies = [
  "tokio",
  "toml",
  "tracing",
+ "url",
  "walkdir",
  "wildmatch",
 ]

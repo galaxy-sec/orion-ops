@@ -3,9 +3,10 @@ use std::path::PathBuf;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{ValueDict, ValueType};
+use url::Url;
 
 use crate::{
-    addr::{LocalAddr, path_file_name},
+    addr::{GitAddr, LocalAddr, path_file_name},
     const_vars::SYS_MODEL_SPC_ROOT,
     error::{SpecReason, SpecResult, ToErr},
     tpl::{TPlEngineType, TplRender},
@@ -92,6 +93,22 @@ pub fn make_runsystem_example() -> RunningSystem {
         "example-sys",
         LocalAddr::from(format!("{}/example-sys", SYS_MODEL_SPC_ROOT)),
     );
+    let mut dict = ValueDict::new();
+    dict.insert("SYS_KEY", ValueType::from("example-sys"));
+    dict.insert("INS_MAX_MEM", ValueType::from(100));
+    dict.insert("CACHE_SIZE", ValueType::from(4));
+    let sys = RunningSystem::new(spec, dict);
+    sys
+}
+
+pub fn get_last_segment(url_str: &str) -> Option<String> {
+    let url = Url::parse(url_str).ok()?;
+    let last = url.path_segments()?.rev().find(|s| !s.is_empty());
+    last.map(String::from)
+}
+pub fn make_runsystem_new(repo: &str) -> RunningSystem {
+    let name = get_last_segment(repo).unwrap_or("unknow".into());
+    let spec = SysModelSpecRef::from(name, GitAddr::from(repo));
     let mut dict = ValueDict::new();
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
     dict.insert("INS_MAX_MEM", ValueType::from(100));
