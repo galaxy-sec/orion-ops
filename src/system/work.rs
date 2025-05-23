@@ -3,12 +3,11 @@ use std::path::PathBuf;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{ValueDict, ValueType};
-use url::Url;
 
 use crate::{
-    addr::{GitAddr, LocalAddr, path_file_name},
-    const_vars::SYS_MODEL_SPC_ROOT,
+    addr::{GitAddr, path_file_name},
     error::{SpecReason, SpecResult, ToErr},
+    tools::get_last_segment,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
 };
@@ -89,9 +88,10 @@ impl RunningSystem {
     }
 }
 pub fn make_runsystem_example() -> RunningSystem {
+    let target = "example-sys-x1";
     let spec = SysModelSpecRef::from(
-        "example-sys",
-        LocalAddr::from(format!("{}/example-sys", SYS_MODEL_SPC_ROOT)),
+        target,
+        GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git").path(target),
     );
     let mut dict = ValueDict::new();
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
@@ -101,11 +101,6 @@ pub fn make_runsystem_example() -> RunningSystem {
     sys
 }
 
-pub fn get_last_segment(url_str: &str) -> Option<String> {
-    let url = Url::parse(url_str).ok()?;
-    let last = url.path_segments()?.rev().find(|s| !s.is_empty());
-    last.map(String::from)
-}
 pub fn make_runsystem_new(repo: &str) -> RunningSystem {
     let name = get_last_segment(repo).unwrap_or("unknow".into());
     let spec = SysModelSpecRef::from(name, GitAddr::from(repo));

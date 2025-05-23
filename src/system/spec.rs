@@ -5,9 +5,8 @@ use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use orion_exchange::vars::{ValueConstraint, VarCollection, VarType};
 
 use crate::{
-    addr::{GitAddr, LocalAddr},
-    const_vars::MODULES_SPC_ROOT,
-    error::SpecResult,
+    addr::GitAddr,
+    error::{SpecReason, SpecResult, ToErr},
     module::{TargetNodeType, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
@@ -22,6 +21,7 @@ pub struct SysModelSpec {
     vars: VarCollection,
     res: ModelResource,
     net: NetResSpace,
+    local: Option<PathBuf>,
 }
 
 impl SysModelSpec {
@@ -69,6 +69,7 @@ impl SysModelSpec {
             vars,
             res,
             net: net_res,
+            local: Some(root.clone()),
         })
     }
 
@@ -84,13 +85,18 @@ impl SysModelSpec {
             vars,
             res,
             net,
+            local: None,
         }
     }
 
-    pub async fn update_local(&self, path: &PathBuf) -> SpecResult<()> {
-        let root = path.join(self.name());
-        self.mod_list.update_local(&root).await?;
-        Ok(())
+    pub async fn update_local(&self) -> SpecResult<()> {
+        if let Some(local) = &self.local {
+            //let root = path.join(self.name());
+            self.mod_list.update_local(local).await?;
+            Ok(())
+        } else {
+            SpecReason::Miss("local path".into()).err_result()
+        }
     }
 }
 impl SetupTaskBuilder for SysModelSpec {
@@ -100,6 +106,7 @@ impl SetupTaskBuilder for SysModelSpec {
 }
 
 pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
+    let repo = "https://e.coding.net/dy-sec/galaxy-open/modspec.git";
     let net = NetResSpace::new(
         Ipv4Addr::new(10, 0, 0, 1),
         (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
@@ -118,14 +125,19 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     ]);
 
     let mut modul_spec = SysModelSpec::new("example-sys", net, res, vars);
+    let mod_name = "example_mod1";
+    modul_spec.add_mod_ref(
+        ModuleSpecRef::from(
+            mod_name,
+            GitAddr::from(repo).branch("master").path(mod_name),
+            TargetNodeType::Host,
+        )
+        .with_effective(false),
+    );
+    let mod_name = "postgresql";
     modul_spec.add_mod_ref(ModuleSpecRef::from(
-        "example_mod1",
-        LocalAddr::from(format!("{}/example_mod1", MODULES_SPC_ROOT)),
-        TargetNodeType::Host,
-    ));
-    modul_spec.add_mod_ref(ModuleSpecRef::from(
-        "postgresql",
-        LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+        mod_name,
+        GitAddr::from(repo).branch("master").path(mod_name),
         TargetNodeType::Host,
     ));
     modul_spec.add_mod_ref(
@@ -199,8 +211,8 @@ pub mod tests {
         let spec = make_sys_spec_example()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;
-        spec.update_local(&spec_root).await?;
-        let _loaded = SysModelSpec::load_from(&spec_root.join(spec.name()))?;
+        let spec = SysModelSpec::load_from(&spec_root.join(spec.name()))?;
+        spec.update_local().await?;
         Ok(())
     }
 }

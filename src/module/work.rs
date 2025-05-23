@@ -6,8 +6,7 @@ use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use orion_exchange::vars::{ValueDict, ValueType};
 
 use crate::{
-    addr::{GitAddr, LocalAddr, path_file_name},
-    const_vars::MODULES_SPC_ROOT,
+    addr::{GitAddr, path_file_name},
     error::{SpecReason, SpecResult, ToErr},
     module::TargetNodeType,
     tpl::{TPlEngineType, TplRender},
@@ -95,13 +94,14 @@ impl Localizable for RunningModule {
     }
 }
 pub fn make_modins_example() -> SpecResult<RunningModule> {
+    let name = "postgresql";
     let spec = ModuleSpecRef::from(
-        "postgresql",
-        LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
+        name,
+        GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git").path(name),
         TargetNodeType::Host,
     );
     let mut dict = ValueDict::new();
-    dict.insert("KEY", ValueType::from("postgresql"));
+    dict.insert("KEY", ValueType::from(name));
     dict.insert("CACHE_SIZE", ValueType::from(4));
     let sys = RunningModule::new(spec, dict);
     Ok(sys)
@@ -110,7 +110,6 @@ pub fn make_modins_example() -> SpecResult<RunningModule> {
 pub fn make_modins_new(name: &str, spec_center: &str) -> SpecResult<RunningModule> {
     let spec = ModuleSpecRef::from(
         name,
-        //LocalAddr::from(format!("{}/postgresql", MODULES_SPC_ROOT)),
         GitAddr::from(spec_center).path(name),
         TargetNodeType::Host,
     );
