@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -45,7 +45,7 @@ impl ModuleSpecRef {
 }
 #[async_trait]
 impl AsyncUpdateable for ModuleSpecRef {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         if self.effective.is_none_or(|x| x) {
             let spec_path = self.addr.update_local(path).await?;
             let mod_path = path.join(self.name.as_str());
@@ -54,7 +54,7 @@ impl AsyncUpdateable for ModuleSpecRef {
             spec.clean_other(self.node())?;
             Ok(spec_path)
         } else {
-            Ok(path.clone())
+            Ok(path.to_path_buf())
         }
     }
 }

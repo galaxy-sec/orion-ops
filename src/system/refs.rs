@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -22,11 +22,11 @@ impl SysModelSpecRef {
 
 #[async_trait]
 impl AsyncUpdateable for SysModelSpecRef {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         self.addr.update_local(path).await
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
         self.addr.update_rename(path, name).await
     }
 }

@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     addr::{AddrType, path_file_name},
@@ -118,7 +121,7 @@ impl ConfSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         let root = path.join("confs");
         std::fs::create_dir_all(&root).owe_res()?;
         for f in &self.files {

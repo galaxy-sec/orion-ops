@@ -130,7 +130,7 @@ impl Vps {
 }
 impl CaculateResource for Vps {
     fn address(&self) -> ResAddress {
-        ResAddress::Ipv4(self.ips.first().unwrap().clone())
+        ResAddress::Ipv4(*self.ips.first().unwrap())
     }
 }
 

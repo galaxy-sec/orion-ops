@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -67,19 +67,19 @@ impl ModuleSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModuleSpec {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         if let Some(host) = &self.host {
             host.update_local(&path.join("host")).await?;
         }
         if let Some(k8s) = &self.k8s {
             k8s.update_local(&path.join("k8s")).await?;
         }
-        Ok(path.clone())
+        Ok(path.to_path_buf())
     }
 }
 
 impl Persistable<ModuleSpec> for ModuleSpec {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let mod_path = path.join(self.name());
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
@@ -93,8 +93,8 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<Self> {
-        let name = path_file_name(&path)?;
+    fn load_from(path: &Path) -> SpecResult<Self> {
+        let name = path_file_name(path)?;
         let k8s_path = path.join("k8s");
         let host_path = path.join("host");
         let k8s = if k8s_path.exists() {
@@ -111,7 +111,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
             name,
             k8s,
             host,
-            local: Some(path.clone()),
+            local: Some(path.to_path_buf()),
         })
     }
 }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use derive_getters::Getters;
 use derive_more::From;
@@ -12,14 +12,14 @@ pub struct GxlProject {
 }
 
 impl Persistable<GxlProject> for GxlProject {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let path = path.join("_gal");
         std::fs::create_dir_all(&path).owe_res().with(&path)?;
         std::fs::write(path.join("work.gxl"), self.main.as_str()).owe_res()?;
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<GxlProject> {
+    fn load_from(path: &Path) -> SpecResult<GxlProject> {
         let path = path.join("_gal/work.gxl");
         let main = std::fs::read_to_string(path).owe_res()?;
         Ok(Self { main })

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -29,14 +29,14 @@ pub struct ModTargetSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModTargetSpec {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         self.conf_spec.update_local(path).await?;
-        Ok(path.clone())
+        Ok(path.to_path_buf())
     }
 }
 
 impl Persistable<ModTargetSpec> for ModTargetSpec {
-    fn save_to(&self, root: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, root: &Path) -> SpecResult<()> {
         let target_path = root.join(self.target());
         std::fs::create_dir_all(&target_path)
             .owe_conf()
@@ -57,7 +57,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         Ok(())
     }
 
-    fn load_from(target_path: &PathBuf) -> SpecResult<Self> {
+    fn load_from(target_path: &Path) -> SpecResult<Self> {
         //target: &str
         let mut ctx = WithContext::want("load mod spec");
         //let target_path = root.join(target);

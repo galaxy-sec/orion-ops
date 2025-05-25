@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -34,7 +34,7 @@ impl HttpAddr {
 
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, dest_dir: &Path) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
         let client = reqwest::Client::new();

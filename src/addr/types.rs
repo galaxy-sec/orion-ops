@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use serde_derive::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ pub enum AddrType {
 
 #[async_trait]
 impl AsyncUpdateable for AddrType {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         match self {
             AddrType::Git(addr) => addr.update_local(path).await,
             AddrType::Http(addr) => addr.update_local(path).await,
@@ -27,7 +27,7 @@ impl AsyncUpdateable for AddrType {
         }
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
         match self {
             AddrType::Git(addr) => addr.update_rename(path, name).await,
             AddrType::Http(addr) => addr.update_rename(path, name).await,

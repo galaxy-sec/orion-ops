@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
@@ -22,7 +22,7 @@ pub struct RunningSystem {
     local: Option<PathBuf>,
 }
 impl Persistable<RunningSystem> for RunningSystem {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
         let spec_path = root.join("spec.toml");
@@ -32,7 +32,7 @@ impl Persistable<RunningSystem> for RunningSystem {
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<Self> {
+    fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
         let spec_path = path.join("spec.toml");
         let spec = SysModelSpecRef::from_toml(&spec_path)?;
@@ -42,7 +42,7 @@ impl Persistable<RunningSystem> for RunningSystem {
             name,
             spec_ref: spec,
             value,
-            local: Some(path.clone()),
+            local: Some(path.to_path_buf()),
         })
     }
 }
@@ -104,8 +104,7 @@ pub fn make_runsystem_example() -> RunningSystem {
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
     dict.insert("INS_MAX_MEM", ValueType::from(100));
     dict.insert("CACHE_SIZE", ValueType::from(4));
-    let sys = RunningSystem::new(spec, dict);
-    sys
+    RunningSystem::new(spec, dict)
 }
 
 pub fn make_runsystem_new(repo: &str) -> RunningSystem {
@@ -115,8 +114,7 @@ pub fn make_runsystem_new(repo: &str) -> RunningSystem {
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
     dict.insert("INS_MAX_MEM", ValueType::from(100));
     dict.insert("CACHE_SIZE", ValueType::from(4));
-    let sys = RunningSystem::new(spec, dict);
-    sys
+    RunningSystem::new(spec, dict)
 }
 #[cfg(test)]
 pub mod tests {

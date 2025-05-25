@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
@@ -46,7 +46,7 @@ impl GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         let name = get_last_segment(self.repo.as_str()).unwrap_or("unknow".into());
         let mut base_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
@@ -61,7 +61,7 @@ impl AsyncUpdateable for GitAddr {
             Ok(re) => self.pull_repository(&re, ctx.clone())?,
             Err(_) => self.clone_repository(&base_local, ctx.clone())?,
         }
-        let mut dst_path = path.clone();
+        let mut dst_path = path.to_path_buf();
         if let Some(sub) = &self.path {
             base_local = base_local.join(sub);
             dst_path = dst_path.join(sub);

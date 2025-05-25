@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -23,7 +23,7 @@ pub struct RunningModule {
     local: Option<PathBuf>,
 }
 impl Persistable<RunningModule> for RunningModule {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
         let spec_path = root.join("spec.toml");
@@ -33,7 +33,7 @@ impl Persistable<RunningModule> for RunningModule {
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<Self> {
+    fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
         let spec_path = path.join("spec.toml");
         let spec = ModuleSpecRef::from_toml(&spec_path)?;
@@ -43,7 +43,7 @@ impl Persistable<RunningModule> for RunningModule {
             name,
             spec,
             value,
-            local: Some(path.clone()),
+            local: Some(path.to_path_buf()),
         })
     }
 }

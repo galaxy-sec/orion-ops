@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -15,7 +15,7 @@ pub struct LocalAddr {
 }
 #[async_trait]
 impl AsyncUpdateable for LocalAddr {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -35,21 +35,21 @@ impl AsyncUpdateable for LocalAddr {
         Ok(dst)
     }
 
-    async fn update_rename(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
         let target = self.update_local(path).await?;
         rename_path(&target, name)?;
         Ok(())
     }
 }
 
-pub fn path_file_name(path: &PathBuf) -> SpecResult<String> {
+pub fn path_file_name(path: &Path) -> SpecResult<String> {
     let file_name = path
         .file_name()
         .and_then(|f| f.to_str())
         .ok_or(StructError::from_conf("get file_name error".to_string()))?;
     Ok(file_name.to_string())
 }
-pub fn rename_path(local: &PathBuf, name: &str) -> SpecResult<()> {
+pub fn rename_path(local: &Path, name: &str) -> SpecResult<()> {
     let mut ctx = WithContext::want("rename path");
     let new_src = local
         .parent()

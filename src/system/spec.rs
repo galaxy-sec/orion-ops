@@ -1,4 +1,7 @@
-use std::{net::Ipv4Addr, path::PathBuf};
+use std::{
+    net::Ipv4Addr,
+    path::{Path, PathBuf},
+};
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
@@ -33,10 +36,10 @@ impl SysModelSpec {
     pub fn add_mod_ref(&mut self, modx: ModuleSpecRef) {
         self.mod_list.add_ref(modx)
     }
-    pub fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    pub fn save_to(&self, path: &Path) -> SpecResult<()> {
         self.save_local(path, self.name())
     }
-    pub fn save_local(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
+    pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
         std::fs::create_dir_all(&root).owe_conf()?;
         let list_path = root.join("mod_list.toml");
@@ -52,7 +55,7 @@ impl SysModelSpec {
         Ok(())
     }
 
-    pub fn load_from(root: &PathBuf) -> SpecResult<Self> {
+    pub fn load_from(root: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load syspec");
         let name = root
             .file_name()
@@ -70,14 +73,14 @@ impl SysModelSpec {
         let var_path = root.join("vars.toml");
         ctx.with_path("var_path", &var_path);
         let vars = VarCollection::from_toml(&var_path).with(&ctx)?;
-        let actions = Actions::load_from(&root).with(&ctx)?;
+        let actions = Actions::load_from(root).with(&ctx)?;
         Ok(Self {
             name: name.to_string(),
             mod_list,
             vars,
             res,
             net: net_res,
-            local: Some(root.clone()),
+            local: Some(root.to_path_buf()),
             actions,
         })
     }

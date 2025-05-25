@@ -2,6 +2,7 @@ pub mod init;
 pub mod refs;
 pub mod spec;
 pub mod work;
+use std::path::Path;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
 use async_trait::async_trait;
@@ -43,7 +44,7 @@ impl ModulesList {
 
 #[async_trait]
 impl AsyncUpdateable for ModulesList {
-    async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         let root = path.join("mods");
         std::fs::create_dir_all(&root).owe_data()?;
         for m in &self.mods {

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
@@ -17,13 +17,13 @@ impl GxlAction {
     }
 }
 impl Persistable<GxlAction> for GxlAction {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let path_file = path.join(format!("{}.gxl", self.task()));
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<GxlAction> {
+    fn load_from(path: &Path) -> SpecResult<GxlAction> {
         let file_name = path
             .file_name()
             .and_then(|f| f.to_str())

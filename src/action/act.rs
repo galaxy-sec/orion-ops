@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use super::prj::GxlProject;
 use super::{bsh::BashAction, gxl::GxlAction};
@@ -20,7 +20,7 @@ impl Actions {
 }
 
 impl Persistable<Actions> for Actions {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         let action_path = path.join("actions");
         std::fs::create_dir_all(&action_path)
             .owe_res()
@@ -33,7 +33,7 @@ impl Persistable<Actions> for Actions {
     }
 
     //加载 path 目录的文件
-    fn load_from(path: &PathBuf) -> SpecResult<Actions> {
+    fn load_from(path: &Path) -> SpecResult<Actions> {
         let mut actions = Vec::new();
         let actions_path = path.join("actions");
         for entry in std::fs::read_dir(&actions_path).owe_res()? {
@@ -64,14 +64,14 @@ pub enum ActionType {
 }
 
 impl Persistable<ActionType> for ActionType {
-    fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
+    fn save_to(&self, path: &Path) -> SpecResult<()> {
         match self {
             ActionType::Bash(act) => act.save_to(path),
             ActionType::Gxl(act) => act.save_to(path),
         }
     }
 
-    fn load_from(path: &PathBuf) -> SpecResult<ActionType> {
+    fn load_from(path: &Path) -> SpecResult<ActionType> {
         // 首先检查文件是否存在且是普通文件
         if !path.exists() {
             return Err(StructError::from_conf("path not exists".into())).with(path);
