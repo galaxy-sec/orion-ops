@@ -44,7 +44,7 @@ impl ModuleSpec {
         if let Some(local) = &self.local {
             let subs = get_sub_dirs(local)?;
             for sub in subs {
-                if sub.ends_with(node.to_string().as_str()) {
+                if !sub.ends_with(node.to_string().as_str()) {
                     Self::clean_path(&sub)?;
                 }
             }
