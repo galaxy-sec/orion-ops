@@ -1,7 +1,7 @@
 use derive_getters::Getters;
 use derive_more::Display;
 
-use crate::{error::SpecResult, module::TargetNodeType};
+use crate::{error::SpecResult, module::TargetNode};
 
 #[derive(Clone, Debug, PartialEq, Display)]
 pub enum OperationType {
@@ -20,7 +20,7 @@ pub trait SetupTaskBuilder {
 }
 
 pub trait NodeSetupTaskBuilder {
-    fn make_setup_task(&self, node: &TargetNodeType) -> SpecResult<TaskHandle>;
+    fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle>;
 }
 
 pub trait UpdateTaskMaker {

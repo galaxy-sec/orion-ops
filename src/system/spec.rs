@@ -11,7 +11,7 @@ use crate::{
     action::act::Actions,
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
-    module::{TargetNodeType, refs::ModuleSpecRef, spec::ModuleSpec},
+    module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
     types::{AsyncUpdateable, Persistable, TomlAble},
@@ -145,7 +145,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
         ModuleSpecRef::from(
             mod_name,
             GitAddr::from(repo).branch("master").path(mod_name),
-            TargetNodeType::Host,
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
         .with_effective(false),
     );
@@ -153,13 +153,13 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     modul_spec.add_mod_ref(ModuleSpecRef::from(
         mod_name,
         GitAddr::from(repo).branch("master").path(mod_name),
-        TargetNodeType::Host,
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
     ));
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
             "mysql-example",
             GitAddr::from("http://github").tag("v1.0.0"),
-            TargetNodeType::K8s,
+            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         )
         .with_effective(false),
     );
@@ -191,7 +191,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
         ModuleSpecRef::from(
             "example_mod1",
             GitAddr::from(repo).path("example_mod1"),
-            TargetNodeType::Host,
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
         .with_effective(false),
     );
@@ -199,7 +199,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
         ModuleSpecRef::from(
             "postgresql",
             GitAddr::from(repo).path("postgresql"),
-            TargetNodeType::Host,
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
         .with_effective(false),
     );
@@ -207,7 +207,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
         ModuleSpecRef::from(
             "mysql-example",
             GitAddr::from("http://github").tag("v1.0.0"),
-            TargetNodeType::K8s,
+            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         )
         .with_effective(false),
     );

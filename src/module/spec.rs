@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -13,53 +16,44 @@ use crate::{
     error::{SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     task::{NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},
+    tools::get_sub_dirs,
     types::{AsyncUpdateable, Persistable},
 };
 
-use super::{TargetNodeType, init::ModIniter, target::ModTargetSpec};
+use super::{CpuArch, OsCPE, RunSPC, TargetNode, init::ModIniter, target::ModTargetSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
     name: String,
-    k8s: Option<ModTargetSpec>,
-    host: Option<ModTargetSpec>,
+    targets: HashMap<TargetNode, ModTargetSpec>,
     local: Option<PathBuf>,
 }
 impl ModuleSpec {
-    pub fn init<S: Into<String>>(
-        name: S,
-        k8s: Option<ModTargetSpec>,
-        host: Option<ModTargetSpec>,
-    ) -> ModuleSpec {
+    pub fn init<S: Into<String>>(name: S, target_vec: Vec<ModTargetSpec>) -> ModuleSpec {
+        let mut targets = HashMap::new();
+        for node in target_vec {
+            targets.insert(node.target().clone(), node);
+        }
         Self {
             name: name.into(),
-            k8s,
-            host,
+            targets,
             local: None,
         }
     }
-    pub fn clean_other(&mut self, node: &TargetNodeType) -> SpecResult<()> {
-        match node {
-            TargetNodeType::Host => {
-                self.host = None;
-                self.local
-                    .as_ref()
-                    .map(|x| x.join("k8s"))
-                    .map(Self::clean_path);
-            }
-            TargetNodeType::K8s => {
-                self.k8s = None;
-                self.local
-                    .as_ref()
-                    .map(|x| x.join("host"))
-                    .map(Self::clean_path);
+    pub fn clean_other(&mut self, node: &TargetNode) -> SpecResult<()> {
+        if let Some(local) = &self.local {
+            let subs = get_sub_dirs(local)?;
+            for sub in subs {
+                if sub.ends_with(node.to_string().as_str()) {
+                    Self::clean_path(&sub)?;
+                }
             }
         }
         Ok(())
     }
-    fn clean_path(path: PathBuf) -> SpecResult<()> {
+    fn clean_path(path: &Path) -> SpecResult<()> {
         if path.exists() {
-            std::fs::remove_dir_all(&path).owe_res().with(&path)?;
+            std::fs::remove_dir_all(path).owe_res().with(path)?;
         }
         Ok(())
     }
@@ -68,11 +62,8 @@ impl ModuleSpec {
 #[async_trait]
 impl AsyncUpdateable for ModuleSpec {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
-        if let Some(host) = &self.host {
-            host.update_local(&path.join("host")).await?;
-        }
-        if let Some(k8s) = &self.k8s {
-            k8s.update_local(&path.join("k8s")).await?;
+        for (target, node) in &self.targets {
+            node.update_local(&path.join(target.to_string())).await?;
         }
         Ok(path.to_path_buf())
     }
@@ -84,50 +75,34 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
-        if let Some(host) = &self.host {
-            host.save_to(&mod_path)?;
-        }
-        if let Some(k8s) = &self.k8s {
-            k8s.save_to(&mod_path)?;
+
+        for (_target, node) in &self.targets {
+            node.save_to(&mod_path)?;
         }
         Ok(())
     }
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
-        let k8s_path = path.join("k8s");
-        let host_path = path.join("host");
-        let k8s = if k8s_path.exists() {
-            Some(ModTargetSpec::load_from(&path.join("k8s"))?)
-        } else {
-            None
-        };
-        let host = if host_path.exists() {
-            Some(ModTargetSpec::load_from(&path.join("host"))?)
-        } else {
-            None
-        };
+        let subs = get_sub_dirs(path)?;
+        let mut targets = HashMap::new();
+        for sub in subs {
+            let node = ModTargetSpec::load_from(&sub).with(&sub)?;
+            targets.insert(node.target().clone(), node);
+        }
         Ok(Self {
             name,
-            k8s,
-            host,
+            targets,
             local: Some(path.to_path_buf()),
         })
     }
 }
 impl NodeSetupTaskBuilder for ModuleSpec {
-    fn make_setup_task(&self, node: &TargetNodeType) -> SpecResult<TaskHandle> {
-        match node {
-            TargetNodeType::Host => self
-                .host
-                .as_ref()
-                .map(|x| x.make_setup_task())
-                .ok_or(SpecReason::Miss("host spec".into()).to_err())?,
-            TargetNodeType::K8s => self
-                .k8s
-                .as_ref()
-                .map(|x| x.make_setup_task())
-                .ok_or(SpecReason::Miss("k8s spec".into()).to_err())?,
+    fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle> {
+        if let Some(cur_node) = self.targets().get(node) {
+            return cur_node.make_setup_task();
+        } else {
+            SpecReason::Miss(node.to_string()).err_result()
         }
     }
 }
@@ -146,7 +121,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
 
     let cpe = name;
     let k8s = ModTargetSpec::init(
-        "k8s",
+        TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         Artifact::new(
             cpe,
             OsType::MacOs,
@@ -161,7 +136,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
     );
 
     let host = ModTargetSpec::init(
-        "host",
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         Artifact::new(
             cpe,
             OsType::MacOs,
@@ -174,7 +149,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
     );
-    Ok(ModuleSpec::init(cpe, Some(k8s), Some(host)))
+    Ok(ModuleSpec::init(cpe, vec![k8s, host]))
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
@@ -185,7 +160,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 
     let cpe = "postgresql";
     let k8s = ModTargetSpec::init(
-        "k8s",
+        TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         Artifact::new(
             cpe,
             OsType::MacOs,
@@ -198,7 +173,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     );
 
     let host = ModTargetSpec::init(
-        "host",
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         Artifact::new(
             cpe,
             OsType::MacOs,
@@ -209,7 +184,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
     );
-    Ok(ModuleSpec::init("postgresql", Some(k8s), Some(host)))
+    Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
 }
 
 #[cfg(test)]

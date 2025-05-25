@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -16,9 +19,11 @@ use crate::{
     types::{AsyncUpdateable, Persistable, TomlAble},
 };
 
+use super::TargetNode;
+
 #[derive(Getters, Clone, Debug)]
 pub struct ModTargetSpec {
-    target: String,
+    target: TargetNode,
     artifact: Artifact,
     actions: Actions,
     conf_spec: ConfSpec,
@@ -37,7 +42,7 @@ impl AsyncUpdateable for ModTargetSpec {
 
 impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn save_to(&self, root: &Path) -> SpecResult<()> {
-        let target_path = root.join(self.target());
+        let target_path = root.join(self.target().to_string());
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
@@ -58,23 +63,23 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
     }
 
     fn load_from(target_path: &Path) -> SpecResult<Self> {
-        //target: &str
         let mut ctx = WithContext::want("load mod spec");
-        //let target_path = root.join(target);
         let artifact_path = target_path.join("artifact.toml");
         ctx.with("artifact", format!("{}", artifact_path.display()));
         let artifact = Artifact::from_toml(&artifact_path).with(&ctx)?;
 
-        let actions = Actions::load_from(target_path)?;
+        let actions = Actions::load_from(target_path).with(&ctx)?;
         let spec_path = target_path.join("conf_spec.toml");
-        let conf_spec = ConfSpec::from_toml(&spec_path)?;
+        let conf_spec = ConfSpec::from_toml(&spec_path).with(&ctx)?;
         let spec_path = target_path.join("logs_spec.toml");
-        let logs_spec = LogsSpec::from_toml(&spec_path)?;
+        let logs_spec = LogsSpec::from_toml(&spec_path).with(&ctx)?;
         let spec_path = target_path.join("res_spec.toml");
-        let res_spec = CaculateResSpec::from_toml(&spec_path)?;
+        let res_spec = CaculateResSpec::from_toml(&spec_path).with(&ctx)?;
         let vars_path = target_path.join("vars.toml");
-        let vars = VarCollection::from_toml(&vars_path)?;
-        let target = path_file_name(target_path)?;
+        let vars = VarCollection::from_toml(&vars_path).with(&ctx)?;
+        let target = TargetNode::from_str(path_file_name(target_path)?.as_str())
+            .owe_res()
+            .with(&ctx)?;
 
         Ok(Self {
             target,
@@ -88,8 +93,8 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
     }
 }
 impl ModTargetSpec {
-    pub fn init<S: Into<String>>(
-        target: S,
+    pub fn init(
+        target: TargetNode,
         artifact: Artifact,
         actions: Actions,
         conf_spec: ConfSpec,
@@ -97,7 +102,7 @@ impl ModTargetSpec {
         vars: VarCollection,
     ) -> Self {
         Self {
-            target: target.into(),
+            target,
             actions,
             artifact,
             conf_spec,

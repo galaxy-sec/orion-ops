@@ -7,7 +7,6 @@ use orion_exchange::vars::{ValueDict, ValueType};
 use crate::{
     addr::{GitAddr, path_file_name},
     error::{SpecReason, SpecResult, ToErr},
-    tools::get_last_segment,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
 };
@@ -107,9 +106,9 @@ pub fn make_runsystem_example() -> RunningSystem {
     RunningSystem::new(spec, dict)
 }
 
-pub fn make_runsystem_new(repo: &str) -> RunningSystem {
-    let name = get_last_segment(repo).unwrap_or("unknow".into());
-    let spec = SysModelSpecRef::from(name, GitAddr::from(repo));
+pub fn make_runsystem_new(repo: &str, path: &str) -> RunningSystem {
+    //let name = get_last_segment(repo).unwrap_or("unknow".into());
+    let spec = SysModelSpecRef::from(path, GitAddr::from(repo).path(path));
     let mut dict = ValueDict::new();
     dict.insert("SYS_KEY", ValueType::from("example-sys"));
     dict.insert("INS_MAX_MEM", ValueType::from(100));

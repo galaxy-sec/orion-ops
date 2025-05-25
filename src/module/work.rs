@@ -8,12 +8,12 @@ use orion_exchange::vars::{ValueDict, ValueType};
 use crate::{
     addr::{GitAddr, path_file_name},
     error::{SpecReason, SpecResult, ToErr},
-    module::TargetNodeType,
+    module::TargetNode,
     tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, JsonAble, Localizable, Persistable, TomlAble},
 };
 
-use super::{refs::ModuleSpecRef, spec::ModuleSpec};
+use super::{CpuArch, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct RunningModule {
@@ -98,7 +98,7 @@ pub fn make_modins_example() -> SpecResult<RunningModule> {
     let spec = ModuleSpecRef::from(
         name,
         GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git").path(name),
-        TargetNodeType::Host,
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
     );
     let mut dict = ValueDict::new();
     dict.insert("KEY", ValueType::from(name));
@@ -111,7 +111,7 @@ pub fn make_modins_new(name: &str, spec_center: &str) -> SpecResult<RunningModul
     let spec = ModuleSpecRef::from(
         name,
         GitAddr::from(spec_center).path(name),
-        TargetNodeType::Host,
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
     );
     let mut dict = ValueDict::new();
     dict.insert("KEY", ValueType::from("postgresql"));
