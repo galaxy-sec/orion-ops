@@ -1,0 +1,5 @@
+vars:
+- !int
+  name: SPEED_LIMIT
+  value: 1000
+  constr: null

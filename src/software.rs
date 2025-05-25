@@ -78,7 +78,7 @@ pub enum Constraint {
 
 #[allow(dead_code)]
 pub fn redis_confspec() -> ConfSpecRef {
-    let conf_path = "./spec/redis/config_spec.toml";
+    let conf_path = "./spec/redis/config_spec.yml";
     ConfSpecRef::new(conf_path)
 }
 
@@ -93,7 +93,7 @@ mod tests {
         artifact::OsType,
         conf::{ConfFile, ConfSpec},
         error::SpecResult,
-        types::TomlAble,
+        types::Configable,
     };
 
     use super::*;
@@ -113,9 +113,9 @@ mod tests {
         let mut redis = ConfSpec::new("1.0");
         redis.add(ConfFile::new("./nginx.conf"));
 
-        let path = root_path.join("config_spec.toml");
-        redis.save_toml(&path).unwrap();
-        let loaded = ConfSpec::from_toml(&path).unwrap();
+        let path = root_path.join("config_spec.yml");
+        redis.save_conf(&path).unwrap();
+        let loaded = ConfSpec::from_conf(&path).unwrap();
         assert_eq!(redis.version(), loaded.version());
 
         let warpflow = ConfSpec::from_files(vec![
@@ -124,8 +124,8 @@ mod tests {
             "./sink/framework.toml",
         ]);
 
-        let path = root_path.join("config_spec.toml");
-        warpflow.save_toml(&path).unwrap();
+        let path = root_path.join("config_spec.yml");
+        warpflow.save_conf(&path).unwrap();
         Ok(())
     }
 
@@ -135,7 +135,7 @@ mod tests {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
 
-        let conf_path = "./example/spec/redis/config_spec.toml";
+        let conf_path = "./example/spec/redis/config_spec.yml";
 
         let artifact = Artifact::new(
             "redis-7.0.1",
@@ -148,10 +148,10 @@ mod tests {
             ConfSpecRef::new(conf_path),
         );
 
-        let path = root_path.join("redis_7.toml");
-        redis.save_toml(&path)?;
+        let path = root_path.join("redis_7.yml");
+        redis.save_conf(&path)?;
 
-        let loaded = SoftWare::from_toml(&path)?;
+        let loaded = SoftWare::from_conf(&path)?;
         assert_eq!(loaded.workspec(), redis.workspec());
         Ok(())
     }

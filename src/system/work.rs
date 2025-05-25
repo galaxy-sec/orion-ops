@@ -8,7 +8,7 @@ use crate::{
     addr::{GitAddr, path_file_name},
     error::{SpecReason, SpecResult, ToErr},
     tpl::{TPlEngineType, TplRender},
-    types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
+    types::{AsyncUpdateable, Configable, JsonAble, Persistable},
 };
 
 use super::{refs::SysModelSpecRef, spec::SysModelSpec};
@@ -24,8 +24,8 @@ impl Persistable<RunningSystem> for RunningSystem {
     fn save_to(&self, path: &Path) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
-        let spec_path = root.join("spec.toml");
-        self.spec_ref.save_toml(&spec_path)?;
+        let spec_path = root.join("spec.yml");
+        self.spec_ref.save_conf(&spec_path)?;
         let json_path = root.join("value.json");
         self.value.save_json(&json_path)?;
         Ok(())
@@ -33,8 +33,8 @@ impl Persistable<RunningSystem> for RunningSystem {
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
-        let spec_path = path.join("spec.toml");
-        let spec = SysModelSpecRef::from_toml(&spec_path)?;
+        let spec_path = path.join("spec.yml");
+        let spec = SysModelSpecRef::from_conf(&spec_path)?;
         let json_path = path.join("value.json");
         let value = ValueDict::from_json(&json_path)?;
         Ok(Self {

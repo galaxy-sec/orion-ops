@@ -29,29 +29,32 @@ pub trait Localizable {
     async fn localize(&self) -> SpecResult<()>;
 }
 
-pub trait TomlAble<T>
+pub trait Configable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_toml(path: &Path) -> SpecResult<T>;
-    fn save_toml(&self, path: &Path) -> SpecResult<()>;
+    fn from_conf(path: &Path) -> SpecResult<T>;
+    fn save_conf(&self, path: &Path) -> SpecResult<()>;
 }
 
-impl<T> TomlAble<T> for T
+impl<T> Configable<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_toml(path: &Path) -> SpecResult<T> {
+    fn from_conf(path: &Path) -> SpecResult<T> {
         let mut ctx = WithContext::want("load object from toml");
         ctx.with("path", format!("path: {}", path.display()));
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
-        let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
+        //let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
+        let loaded: T = serde_yaml::from_str(file_content.as_str())
+            .owe_res()
+            .with(&ctx)?;
         Ok(loaded)
     }
-    fn save_toml(&self, path: &Path) -> SpecResult<()> {
+    fn save_conf(&self, path: &Path) -> SpecResult<()> {
         let mut ctx = WithContext::want("save toml");
         ctx.with("path", format!("path: {}", path.display()));
-        let data_content = toml::to_string(self).owe_data().with(&ctx)?;
+        let data_content = serde_yaml::to_string(self).owe_data().with(&ctx)?;
         fs::write(path, data_content).owe_res().with(&ctx)?;
         Ok(())
     }

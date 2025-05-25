@@ -1,5 +1,0 @@
-[[vars]]
-
-[vars.int]
-name = "EXAMPLE_SIZE"
-value = 1000

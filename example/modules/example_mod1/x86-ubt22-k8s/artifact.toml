@@ -1,5 +1,0 @@
-cpe = "example_mod1"
-meta = "MacOs"
-
-[addr.http]
-url = "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5"

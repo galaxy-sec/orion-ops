@@ -1,0 +1,7 @@
+version: 1.0.0
+files:
+- path: postgresql.conf
+  addr: !http
+    url: https://mirrors.aliyun.com/postgresql/README
+    username: null
+    password: null

@@ -10,7 +10,7 @@ use crate::{
     error::{SpecReason, SpecResult, ToErr},
     module::TargetNode,
     tpl::{TPlEngineType, TplRender},
-    types::{AsyncUpdateable, JsonAble, Localizable, Persistable, TomlAble},
+    types::{AsyncUpdateable, Configable, JsonAble, Localizable, Persistable},
 };
 
 use super::{CpuArch, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec};
@@ -26,8 +26,8 @@ impl Persistable<RunningModule> for RunningModule {
     fn save_to(&self, path: &Path) -> SpecResult<()> {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
-        let spec_path = root.join("spec.toml");
-        self.spec.save_toml(&spec_path)?;
+        let spec_path = root.join("spec.yml");
+        self.spec.save_conf(&spec_path)?;
         let json_path = root.join("value.json");
         self.value.save_json(&json_path)?;
         Ok(())
@@ -35,8 +35,8 @@ impl Persistable<RunningModule> for RunningModule {
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
-        let spec_path = path.join("spec.toml");
-        let spec = ModuleSpecRef::from_toml(&spec_path)?;
+        let spec_path = path.join("spec.yml");
+        let spec = ModuleSpecRef::from_conf(&spec_path)?;
         let json_path = path.join("value.json");
         let value = ValueDict::from_json(&json_path)?;
         Ok(Self {

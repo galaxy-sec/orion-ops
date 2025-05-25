@@ -16,7 +16,7 @@ use crate::{
     error::SpecResult,
     resource::CaculateResSpec,
     software::LogsSpec,
-    types::{AsyncUpdateable, Persistable, TomlAble},
+    types::{AsyncUpdateable, Configable, Persistable},
 };
 
 use super::TargetNode;
@@ -46,37 +46,37 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
-        let artifact_path = target_path.join("artifact.toml");
-        self.artifact.save_toml(&artifact_path)?;
+        let artifact_path = target_path.join("artifact.yml");
+        self.artifact.save_conf(&artifact_path)?;
 
         self.actions.save_to(&target_path)?;
-        let spec_path = target_path.join("conf_spec.toml");
-        self.conf_spec.save_toml(&spec_path)?;
-        let spec_path = target_path.join("logs_spec.toml");
-        self.logs_spec.save_toml(&spec_path)?;
+        let spec_path = target_path.join("conf_spec.yml");
+        self.conf_spec.save_conf(&spec_path)?;
+        let spec_path = target_path.join("logs_spec.yml");
+        self.logs_spec.save_conf(&spec_path)?;
 
-        let spec_path = target_path.join("res_spec.toml");
-        self.res_spec.save_toml(&spec_path)?;
-        let vars_path = target_path.join("vars.toml");
-        self.vars.save_toml(&vars_path)?;
+        let spec_path = target_path.join("res_spec.yml");
+        self.res_spec.save_conf(&spec_path)?;
+        let vars_path = target_path.join("vars.yml");
+        self.vars.save_conf(&vars_path)?;
         Ok(())
     }
 
     fn load_from(target_path: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load mod spec");
-        let artifact_path = target_path.join("artifact.toml");
+        let artifact_path = target_path.join("artifact.yml");
         ctx.with("artifact", format!("{}", artifact_path.display()));
-        let artifact = Artifact::from_toml(&artifact_path).with(&ctx)?;
+        let artifact = Artifact::from_conf(&artifact_path).with(&ctx)?;
 
         let actions = Actions::load_from(target_path).with(&ctx)?;
-        let spec_path = target_path.join("conf_spec.toml");
-        let conf_spec = ConfSpec::from_toml(&spec_path).with(&ctx)?;
-        let spec_path = target_path.join("logs_spec.toml");
-        let logs_spec = LogsSpec::from_toml(&spec_path).with(&ctx)?;
-        let spec_path = target_path.join("res_spec.toml");
-        let res_spec = CaculateResSpec::from_toml(&spec_path).with(&ctx)?;
-        let vars_path = target_path.join("vars.toml");
-        let vars = VarCollection::from_toml(&vars_path).with(&ctx)?;
+        let spec_path = target_path.join("conf_spec.yml");
+        let conf_spec = ConfSpec::from_conf(&spec_path).with(&ctx)?;
+        let spec_path = target_path.join("logs_spec.yml");
+        let logs_spec = LogsSpec::from_conf(&spec_path).with(&ctx)?;
+        let spec_path = target_path.join("res_spec.yml");
+        let res_spec = CaculateResSpec::from_conf(&spec_path).with(&ctx)?;
+        let vars_path = target_path.join("vars.yml");
+        let vars = VarCollection::from_conf(&vars_path).with(&ctx)?;
         let target = TargetNode::from_str(path_file_name(target_path)?.as_str())
             .owe_res()
             .with(&ctx)?;

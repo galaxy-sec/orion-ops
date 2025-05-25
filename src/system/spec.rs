@@ -14,7 +14,7 @@ use crate::{
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
-    types::{AsyncUpdateable, Persistable, TomlAble},
+    types::{AsyncUpdateable, Configable, Persistable},
 };
 
 use super::{ModelResource, ModulesList, NetAllocator, NetResSpace, init::SysIniter};
@@ -42,15 +42,15 @@ impl SysModelSpec {
     pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
         std::fs::create_dir_all(&root).owe_conf()?;
-        let list_path = root.join("mod_list.toml");
-        self.mod_list.save_toml(&list_path)?;
+        let list_path = root.join("mod_list.yml");
+        self.mod_list.save_conf(&list_path)?;
 
-        let res_path = root.join("resource.toml");
-        self.res.save_toml(&res_path)?;
-        let net_path = root.join("net_res.toml");
-        self.net.save_toml(&net_path)?;
-        let var_path = root.join("vars.toml");
-        self.vars.save_toml(&var_path)?;
+        let res_path = root.join("resource.yml");
+        self.res.save_conf(&res_path)?;
+        let net_path = root.join("net_res.yml");
+        self.net.save_conf(&net_path)?;
+        let var_path = root.join("vars.yml");
+        self.vars.save_conf(&var_path)?;
         self.actions.save_to(&root)?;
         Ok(())
     }
@@ -62,17 +62,17 @@ impl SysModelSpec {
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        let list_path = root.join("mod_list.toml");
+        let list_path = root.join("mod_list.yml");
         ctx.with_path("mod_list", &list_path);
-        let mod_list = ModulesList::from_toml(&list_path).with(&ctx)?;
-        let res_path = root.join("resource.toml");
+        let mod_list = ModulesList::from_conf(&list_path).with(&ctx)?;
+        let res_path = root.join("resource.yml");
         ctx.with_path("res_list", &res_path);
-        let res = ModelResource::from_toml(&res_path).with(&ctx)?;
-        let net_path = root.join("net_res.toml");
-        let net_res = NetResSpace::from_toml(&net_path).with(&ctx)?;
-        let var_path = root.join("vars.toml");
+        let res = ModelResource::from_conf(&res_path).with(&ctx)?;
+        let net_path = root.join("net_res.yml");
+        let net_res = NetResSpace::from_conf(&net_path).with(&ctx)?;
+        let var_path = root.join("vars.yml");
         ctx.with_path("var_path", &var_path);
-        let vars = VarCollection::from_toml(&var_path).with(&ctx)?;
+        let vars = VarCollection::from_conf(&var_path).with(&ctx)?;
         let actions = Actions::load_from(root).with(&ctx)?;
         Ok(Self {
             name: name.to_string(),

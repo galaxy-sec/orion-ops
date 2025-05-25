@@ -6,7 +6,7 @@ use std::{
 use crate::{
     addr::{AddrType, path_file_name},
     error::SpecResult,
-    types::{AsyncUpdateable, TomlAble},
+    types::{AsyncUpdateable, Configable},
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -62,12 +62,12 @@ impl ConfSpecRef {
     pub fn new<S: Into<String>>(path: S) -> Self {
         let path = path.into();
         let file_path = PathBuf::from(path.as_str());
-        let obj = ConfSpec::from_toml(&file_path).unwrap();
+        let obj = ConfSpec::from_conf(&file_path).unwrap();
         Self { path, obj }
     }
     fn load_ref(path: &str) -> ConfSpec {
         let path = PathBuf::from(path);
-        ConfSpec::from_toml(&path).unwrap()
+        ConfSpec::from_conf(&path).unwrap()
     }
 }
 
@@ -151,8 +151,8 @@ mod tests {
 
     #[test]
     fn test_conf_file_creation() {
-        let file = ConfFile::new("config.toml");
-        assert_eq!(file.path(), "config.toml");
+        let file = ConfFile::new("config.yml");
+        assert_eq!(file.path(), "config.yml");
         assert!(file.addr().is_none());
 
         let with_addr = file.with_addr(AddrType::Local(LocalAddr::from("/tmp")));
@@ -166,21 +166,21 @@ mod tests {
         // 创建带地址的配置
         let mut spec = ConfSpec::new("3.0");
         spec.add(
-            ConfFile::new("db.toml")
-                .with_addr(AddrType::Local(LocalAddr::from("./temp/src/db.toml"))),
+            ConfFile::new("db.yml")
+                .with_addr(AddrType::Local(LocalAddr::from("./temp/src/db.yml"))),
         );
 
         // 模拟本地文件
 
         fs::create_dir_all(&src_dir).await.owe_res()?;
         fs::create_dir_all(&dst_dir).await.owe_res()?;
-        fs::write(src_dir.join("db.toml"), "[database]\nurl=\"localhost\"")
+        fs::write(src_dir.join("db.yml"), "[database]\nurl=\"localhost\"")
             .await
             .owe_res()?;
 
         // 执行更新
         let _ = spec.update_local(&dst_dir).await?;
-        assert!(dst_dir.join("confs/db.toml").exists());
+        assert!(dst_dir.join("confs/db.yml").exists());
 
         // 清理
         fs::remove_dir_all(dst_dir).await.owe_res()?;
@@ -192,15 +192,13 @@ mod tests {
     async fn test_conf_with_http_addr() -> SpecResult<()> {
         let server = MockServer::start();
         server.mock(|when, then| {
-            when.method(GET).path("/global.toml");
+            when.method(GET).path("/global.yml");
             then.status(200).body("[settings]\nenv=\"test\"");
         });
 
         // 创建包含HttpAddr的配置
         let mut conf = ConfSpec::new("1.0");
-        conf.add(
-            ConfFile::new("remote.toml").with_addr(HttpAddr::from(server.url("/global.toml"))),
-        );
+        conf.add(ConfFile::new("remote.yml").with_addr(HttpAddr::from(server.url("/global.yml"))));
 
         // 测试更新
         //let src_dir = PathBuf::from("./temp/src");
@@ -209,7 +207,7 @@ mod tests {
         let updated_path = conf.update_local(&dst_dir).await?;
 
         // 验证下载的文件
-        let content = fs::read_to_string(updated_path.join("remote.toml"))
+        let content = fs::read_to_string(updated_path.join("remote.yml"))
             .await
             .owe_res()
             .with(format!("path: {}", updated_path.display()))?;
