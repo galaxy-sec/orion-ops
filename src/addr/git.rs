@@ -47,7 +47,7 @@ impl GitAddr {
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
     async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
-        let name = get_last_segment(&self.repo.as_str()).unwrap_or("unknow".into());
+        let name = get_last_segment(self.repo.as_str()).unwrap_or("unknow".into());
         let mut base_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".galaxy/cache")
@@ -70,7 +70,7 @@ impl AsyncUpdateable for GitAddr {
             std::fs::remove_dir_all(&dst_path).owe_res().with(&ctx)?;
         }
         let options = CopyOptions::new();
-        fs_extra::copy_items(&[&base_local], &path, &options)
+        fs_extra::copy_items(&[&base_local], path, &options)
             .owe_res()
             .with(&ctx)?;
         Ok(dst_path)

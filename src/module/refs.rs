@@ -47,7 +47,7 @@ impl ModuleSpecRef {
 impl AsyncUpdateable for ModuleSpecRef {
     async fn update_local(&self, path: &PathBuf) -> SpecResult<PathBuf> {
         if self.effective.is_none_or(|x| x) {
-            let spec_path = self.addr.update_local(&path).await?;
+            let spec_path = self.addr.update_local(path).await?;
             let mod_path = path.join(self.name.as_str());
             let mut spec = ModuleSpec::load_from(&mod_path)?;
             let _x = spec.update_local(&mod_path).await?;

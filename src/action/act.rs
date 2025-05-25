@@ -85,9 +85,7 @@ impl Persistable<ActionType> for ActionType {
         match path.extension().and_then(|s| s.to_str()) {
             Some("sh") => BashAction::load_from(path).map(ActionType::Bash),
             Some("gxl") => GxlAction::load_from(path).map(ActionType::Gxl),
-            _ => {
-                return Err(StructError::from_conf("file type not support".into())).with(path);
-            }
+            _ => Err(StructError::from_conf("file type not support".into())).with(path),
         }
     }
 }

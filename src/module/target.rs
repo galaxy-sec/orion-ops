@@ -65,7 +65,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         ctx.with("artifact", format!("{}", artifact_path.display()));
         let artifact = Artifact::from_toml(&artifact_path).with(&ctx)?;
 
-        let actions = Actions::load_from(&target_path)?;
+        let actions = Actions::load_from(target_path)?;
         let spec_path = target_path.join("conf_spec.toml");
         let conf_spec = ConfSpec::from_toml(&spec_path)?;
         let spec_path = target_path.join("logs_spec.toml");

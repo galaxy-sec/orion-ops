@@ -61,9 +61,9 @@ impl TplRender {
             .owe_data()
             .with(&err_ctx)?;
         if tpl.is_dir() {
-            Self::render_dir_impl(&handlebars, &tpl, &dst, &data)
+            Self::render_dir_impl(&handlebars, tpl, dst, &data)
         } else {
-            Self::render_file_impl(&handlebars, &tpl, &dst, &data)
+            Self::render_file_impl(&handlebars, tpl, dst, &data)
         }
     }
     fn render_dir_impl<T: Serialize>(

@@ -34,7 +34,7 @@ impl SysModelSpec {
         self.mod_list.add_ref(modx)
     }
     pub fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
-        self.save_local(path, &self.name())
+        self.save_local(path, self.name())
     }
     pub fn save_local(&self, path: &PathBuf, name: &str) -> SpecResult<()> {
         let root = path.join(name);
