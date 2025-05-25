@@ -1,3 +1,4 @@
+pub mod init;
 pub mod metrc;
 pub mod refs;
 pub mod spec;

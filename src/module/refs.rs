@@ -38,6 +38,10 @@ impl ModuleSpecRef {
         self.effective = Some(effective);
         self
     }
+
+    pub fn is_effective(&self) -> bool {
+        self.effective.is_none_or(|x| x)
+    }
 }
 #[async_trait]
 impl AsyncUpdateable for ModuleSpecRef {

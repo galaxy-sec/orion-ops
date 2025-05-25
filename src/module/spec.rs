@@ -16,7 +16,7 @@ use crate::{
     types::{AsyncUpdateable, Persistable},
 };
 
-use super::{TargetNodeType, target::ModTargetSpec};
+use super::{TargetNodeType, init::ModIniter, target::ModTargetSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
@@ -154,7 +154,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
                 "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
             ),
         ),
-        Actions::k8s_tpl_init(),
+        Actions::mod_k8s_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -169,7 +169,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
                 "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
             ),
         ),
-        Actions::host_tpl_init(),
+        Actions::mod_host_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -180,7 +180,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     let mut conf = ConfSpec::new("1.0.0");
     conf.add(ConfFile::new("postgresql.conf").with_addr(HttpAddr::from(
-        "https://raw.githubusercontent.com/galaxy-sec/module-specs/refs/heads/main/postgresql/conf/postgresql.conf"
+        "https://mirrors.aliyun.com/postgresql/README",
     )));
 
     let cpe = "postgresql";
@@ -191,7 +191,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             OsType::MacOs,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
-        Actions::k8s_tpl_init(),
+        Actions::mod_k8s_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -204,7 +204,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             OsType::MacOs,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
         ),
-        Actions::host_tpl_init(),
+        Actions::mod_host_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),

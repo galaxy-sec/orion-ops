@@ -1,0 +1,8 @@
+mod setup {
+    flow stage1 {
+        gx.read_file { file = "./mod_list.toml" , entity= "mod_list", name = "MODS" } ;
+        for ${CUR} in ${MODS} {
+            gx.echo { value = "${CUR}" }
+        }
+    }
+}

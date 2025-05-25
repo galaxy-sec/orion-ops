@@ -1,3 +1,4 @@
+pub mod init;
 pub mod refs;
 pub mod spec;
 pub mod work;
@@ -6,6 +7,7 @@ use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::ErrorOwe;
+use orion_exchange::vars::{ValueDict, ValueType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::module::refs::ModuleSpecRef;
@@ -27,6 +29,15 @@ pub struct ModulesList {
 impl ModulesList {
     pub fn add_ref(&mut self, spec_ref: ModuleSpecRef) {
         self.mods.push(spec_ref);
+    }
+    pub fn export(&self) -> ValueDict {
+        let mut dict = ValueDict::new();
+        for item in self.mods().iter() {
+            if item.is_effective() {
+                dict.insert(item.name(), ValueType::from(item.name().as_str()));
+            }
+        }
+        dict
     }
 }
 

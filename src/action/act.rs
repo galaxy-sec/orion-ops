@@ -14,21 +14,7 @@ pub struct Actions {
 }
 
 impl Actions {
-    pub fn host_tpl_init() -> Self {
-        let project = GxlProject::spec_host_tpl();
-        let actions = vec![
-            ActionType::Gxl(GxlAction::host_setup_tpl()),
-            ActionType::Gxl(GxlAction::host_update_tpl()),
-        ];
-        Self { project, actions }
-    }
-
-    pub fn k8s_tpl_init() -> Actions {
-        let project = GxlProject::spec_k8s_tpl();
-        let actions = vec![
-            ActionType::Gxl(GxlAction::k8s_setup_tpl()),
-            ActionType::Gxl(GxlAction::k8s_update_tpl()),
-        ];
+    pub fn new(project: GxlProject, actions: Vec<ActionType>) -> Self {
         Self { project, actions }
     }
 }
@@ -108,13 +94,14 @@ impl Persistable<ActionType> for ActionType {
 
 #[cfg(test)]
 mod tests {
+    use crate::module::init::ModIniter;
+
     use super::*;
-    use std::path::PathBuf;
     use tempfile::TempDir;
 
     #[test]
     fn test_host_tpl_init() {
-        let actions = Actions::host_tpl_init();
+        let actions = Actions::mod_host_tpl_init();
         assert_eq!(actions.actions().len(), 2);
         matches!(actions.actions()[0], ActionType::Gxl(_));
         matches!(actions.actions()[1], ActionType::Gxl(_));
@@ -122,7 +109,7 @@ mod tests {
 
     #[test]
     fn test_k8s_tpl_init() {
-        let actions = Actions::k8s_tpl_init();
+        let actions = Actions::mod_k8s_tpl_init();
         assert_eq!(actions.actions().len(), 2);
         matches!(actions.actions()[0], ActionType::Gxl(_));
         matches!(actions.actions()[1], ActionType::Gxl(_));
@@ -134,30 +121,11 @@ mod tests {
         let path = temp_dir.path().to_path_buf();
 
         // 测试保存和加载
-        let original = Actions::host_tpl_init();
+        let original = Actions::mod_host_tpl_init();
         original.save_to(&path)?;
 
         let loaded = Actions::load_from(&path)?;
         assert_eq!(loaded.actions().len(), original.actions().len());
         Ok(())
-    }
-
-    #[test]
-    fn test_action_type_detection() {
-        let sh_path = PathBuf::from("./src/action/init/host/actions/setup.sh");
-        let gxl_path = PathBuf::from("./src/action/init/host/actions/setup.gxl");
-        let invalid_path = PathBuf::from("test.txt");
-
-        // 测试正确识别 bash 动作
-        let bash_action = ActionType::load_from(&sh_path);
-        assert!(matches!(bash_action, Ok(ActionType::Bash(_))));
-
-        // 测试正确识别 gxl 动作
-        let gxl_action = ActionType::load_from(&gxl_path);
-        assert!(matches!(gxl_action, Ok(ActionType::Gxl(_))));
-
-        // 测试无效文件类型
-        let invalid_action = ActionType::load_from(&invalid_path);
-        assert!(invalid_action.is_err());
     }
 }

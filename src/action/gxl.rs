@@ -5,8 +5,6 @@ use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 
 use crate::{error::SpecResult, task::OperationType, types::Persistable};
 
-use super::{HOST_SETUP_GXL, HOST_UPDATE_GXL, K8S_SETUP_GXL, K8S_UPDATE_GXL};
-
 #[derive(Getters, Clone, Debug, PartialEq)]
 pub struct GxlAction {
     task: OperationType,
@@ -16,30 +14,6 @@ pub struct GxlAction {
 impl GxlAction {
     pub fn new(task: OperationType, code: String) -> Self {
         Self { task, code }
-    }
-    pub fn host_setup_tpl() -> Self {
-        Self {
-            task: OperationType::Setup,
-            code: HOST_SETUP_GXL.to_string(),
-        }
-    }
-    pub fn host_update_tpl() -> Self {
-        Self {
-            task: OperationType::Update,
-            code: HOST_UPDATE_GXL.to_string(),
-        }
-    }
-    pub fn k8s_setup_tpl() -> Self {
-        Self {
-            task: OperationType::Setup,
-            code: K8S_SETUP_GXL.to_string(),
-        }
-    }
-    pub fn k8s_update_tpl() -> Self {
-        Self {
-            task: OperationType::Update,
-            code: K8S_UPDATE_GXL.to_string(),
-        }
     }
 }
 impl Persistable<GxlAction> for GxlAction {

@@ -1,28 +1,16 @@
 use std::path::PathBuf;
 
 use derive_getters::Getters;
+use derive_more::From;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{error::SpecResult, types::Persistable};
 
-use super::{HOST_PRJ, K8S_PRJ};
-
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug, From)]
 pub struct GxlProject {
     main: String,
 }
-impl GxlProject {
-    pub fn spec_host_tpl() -> Self {
-        Self {
-            main: HOST_PRJ.to_string(),
-        }
-    }
-    pub fn spec_k8s_tpl() -> Self {
-        Self {
-            main: K8S_PRJ.to_string(),
-        }
-    }
-}
+
 impl Persistable<GxlProject> for GxlProject {
     fn save_to(&self, path: &PathBuf) -> SpecResult<()> {
         let path = path.join("_gal");

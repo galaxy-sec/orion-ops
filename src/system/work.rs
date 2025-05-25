@@ -12,12 +12,12 @@ use crate::{
     types::{AsyncUpdateable, JsonAble, Persistable, TomlAble},
 };
 
-use super::refs::SysModelSpecRef;
+use super::{refs::SysModelSpecRef, spec::SysModelSpec};
 
 #[derive(Getters, Clone, Debug)]
 pub struct RunningSystem {
     name: String,
-    spec: SysModelSpecRef,
+    spec_ref: SysModelSpecRef,
     value: ValueDict,
     local: Option<PathBuf>,
 }
@@ -26,7 +26,7 @@ impl Persistable<RunningSystem> for RunningSystem {
         let root = path.join(self.name());
         std::fs::create_dir_all(&root).owe_conf()?;
         let spec_path = root.join("spec.toml");
-        self.spec.save_toml(&spec_path)?;
+        self.spec_ref.save_toml(&spec_path)?;
         let json_path = root.join("value.json");
         self.value.save_json(&json_path)?;
         Ok(())
@@ -40,7 +40,7 @@ impl Persistable<RunningSystem> for RunningSystem {
         let value = ValueDict::from_json(&json_path)?;
         Ok(Self {
             name,
-            spec,
+            spec_ref: spec,
             value,
             local: Some(path.clone()),
         })
@@ -51,7 +51,7 @@ impl RunningSystem {
         let name = spec.name().clone();
         Self {
             name,
-            spec,
+            spec_ref: spec,
             value,
             local: None,
         }
@@ -67,7 +67,14 @@ impl RunningSystem {
             ctx.with_path("spec", &spec);
             std::fs::remove_dir_all(&spec).owe_res().with(&ctx)?;
         }
-        self.spec.update_rename(&local, "spec").await?;
+        self.spec_ref
+            .update_rename(&local, "spec")
+            .await
+            .with(&ctx)?;
+        ctx.with("action", "sys-spec load");
+        let spec = SysModelSpec::load_from(&spec).with(&ctx)?;
+        ctx.with("action", "spec update");
+        spec.update_local().await.with(&ctx)?;
         Ok(())
     }
 

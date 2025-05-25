@@ -1,19 +1,20 @@
 use std::{net::Ipv4Addr, path::PathBuf};
 
 use derive_getters::Getters;
-use orion_error::{ErrorOwe, StructError, UvsConfFrom};
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_exchange::vars::{ValueConstraint, VarCollection, VarType};
 
 use crate::{
+    action::act::Actions,
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
     module::{TargetNodeType, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
-    types::{AsyncUpdateable, TomlAble},
+    types::{AsyncUpdateable, Persistable, TomlAble},
 };
 
-use super::{ModelResource, ModulesList, NetAllocator, NetResSpace};
+use super::{ModelResource, ModulesList, NetAllocator, NetResSpace, init::SysIniter};
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
     name: String,
@@ -22,6 +23,7 @@ pub struct SysModelSpec {
     res: ModelResource,
     net: NetResSpace,
     local: Option<PathBuf>,
+    actions: Actions,
 }
 
 impl SysModelSpec {
@@ -46,23 +48,29 @@ impl SysModelSpec {
         self.net.save_toml(&net_path)?;
         let var_path = root.join("vars.toml");
         self.vars.save_toml(&var_path)?;
+        self.actions.save_to(&root)?;
         Ok(())
     }
 
     pub fn load_from(root: &PathBuf) -> SpecResult<Self> {
+        let mut ctx = WithContext::want("load syspec");
         let name = root
             .file_name()
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
         let list_path = root.join("mod_list.toml");
-        let mod_list = ModulesList::from_toml(&list_path)?;
+        ctx.with_path("mod_list", &list_path);
+        let mod_list = ModulesList::from_toml(&list_path).with(&ctx)?;
         let res_path = root.join("resource.toml");
-        let res = ModelResource::from_toml(&res_path)?;
+        ctx.with_path("res_list", &res_path);
+        let res = ModelResource::from_toml(&res_path).with(&ctx)?;
         let net_path = root.join("net_res.toml");
-        let net_res = NetResSpace::from_toml(&net_path)?;
+        let net_res = NetResSpace::from_toml(&net_path).with(&ctx)?;
         let var_path = root.join("vars.toml");
-        let vars = VarCollection::from_toml(&var_path)?;
+        ctx.with_path("var_path", &var_path);
+        let vars = VarCollection::from_toml(&var_path).with(&ctx)?;
+        let actions = Actions::load_from(&root).with(&ctx)?;
         Ok(Self {
             name: name.to_string(),
             mod_list,
@@ -70,11 +78,13 @@ impl SysModelSpec {
             res,
             net: net_res,
             local: Some(root.clone()),
+            actions,
         })
     }
 
     pub fn new<S: Into<String>>(
         name: S,
+        actions: Actions,
         net: NetResSpace,
         res: ModelResource,
         vars: VarCollection,
@@ -86,6 +96,7 @@ impl SysModelSpec {
             res,
             net,
             local: None,
+            actions,
         }
     }
 
@@ -124,7 +135,8 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
         VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
     ]);
 
-    let mut modul_spec = SysModelSpec::new("example-sys", net, res, vars);
+    let actions = Actions::sys_tpl_init();
+    let mut modul_spec = SysModelSpec::new("example-sys", actions, net, res, vars);
     let mod_name = "example_mod1";
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
@@ -170,7 +182,8 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
         VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
     ]);
 
-    let mut modul_spec = SysModelSpec::new(name, net, res, vars);
+    let actions = Actions::sys_tpl_init();
+    let mut modul_spec = SysModelSpec::new(name, actions, net, res, vars);
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
             "example_mod1",
@@ -208,6 +221,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn build_example_sys_spec() -> SpecResult<()> {
+        std::fs::remove_dir_all(SYS_MODEL_SPC_ROOT).owe_res()?;
         let spec = make_sys_spec_example()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;

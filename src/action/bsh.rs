@@ -5,8 +5,6 @@ use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 
 use crate::{error::SpecResult, task::OperationType, types::Persistable};
 
-use super::HOST_SETUP_SH;
-
 #[derive(Getters, Clone, Debug, PartialEq)]
 pub struct BashAction {
     task: OperationType,
@@ -14,11 +12,8 @@ pub struct BashAction {
 }
 
 impl BashAction {
-    pub fn setup_tpl() -> Self {
-        Self {
-            task: OperationType::Setup,
-            code: HOST_SETUP_SH.to_string(),
-        }
+    pub fn new(task: OperationType, code: String) -> Self {
+        Self { task, code }
     }
 }
 
