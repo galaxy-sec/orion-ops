@@ -14,3 +14,4 @@ pub mod task;
 pub mod tools;
 pub mod tpl;
 pub mod types;
+pub mod vars;

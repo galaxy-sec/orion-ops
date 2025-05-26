@@ -141,6 +141,7 @@ mod tests {
             "redis-7.0.1",
             OsType::MacOs,
             LocalAddr::from("redis-linux-7.tar.gz"),
+            "redis-linux-7.tar.gz",
         );
         let redis = SoftWare::new(
             artifact,

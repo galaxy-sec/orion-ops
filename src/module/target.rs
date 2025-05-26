@@ -11,7 +11,7 @@ use orion_exchange::vars::VarCollection;
 use crate::{
     action::act::Actions,
     addr::path_file_name,
-    artifact::Artifact,
+    artifact::ArtifactPackage,
     conf::ConfSpec,
     error::SpecResult,
     resource::CaculateResSpec,
@@ -24,7 +24,7 @@ use super::TargetNode;
 #[derive(Getters, Clone, Debug)]
 pub struct ModTargetSpec {
     target: TargetNode,
-    artifact: Artifact,
+    artifact: ArtifactPackage,
     actions: Actions,
     conf_spec: ConfSpec,
     logs_spec: LogsSpec,
@@ -66,7 +66,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let mut ctx = WithContext::want("load mod spec");
         let artifact_path = target_path.join("artifact.yml");
         ctx.with("artifact", format!("{}", artifact_path.display()));
-        let artifact = Artifact::from_conf(&artifact_path).with(&ctx)?;
+        let artifact = ArtifactPackage::from_conf(&artifact_path).with(&ctx)?;
 
         let actions = Actions::load_from(target_path).with(&ctx)?;
         let spec_path = target_path.join("conf_spec.yml");
@@ -95,7 +95,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
 impl ModTargetSpec {
     pub fn init(
         target: TargetNode,
-        artifact: Artifact,
+        artifact: ArtifactPackage,
         actions: Actions,
         conf_spec: ConfSpec,
         res_spec: CaculateResSpec,

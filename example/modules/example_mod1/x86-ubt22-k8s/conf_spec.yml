@@ -3,5 +3,3 @@ files:
 - path: example.conf
   addr: !http
     url: https://mirrors.aliyun.com/postgresql/README
-    username: null
-    password: null

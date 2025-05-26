@@ -12,10 +12,15 @@ use crate::{error::SpecResult, tools::get_last_segment, types::AsyncUpdateable};
 #[serde(rename = "git")]
 pub struct GitAddr {
     repo: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     res: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     tag: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     rev: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     path: Option<String>,
 }
 

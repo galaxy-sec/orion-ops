@@ -6,8 +6,6 @@ edition = "2024"
 [dependencies]
 orion-error = "0.2"
 #orion-error= {path = "../orion-error/"}
-#orion-exchange = {path = "../orion-exchange/"}
-orion-exchange = { git = "https://github.com/galaxy-sec/orion-exchange.git", branch = "main" }
 
 anyhow = "~1.0"
 comfy-table = "~7.1"

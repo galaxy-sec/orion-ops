@@ -12,7 +12,9 @@ use crate::{error::SpecResult, types::AsyncUpdateable};
 #[serde(rename = "http")]
 pub struct HttpAddr {
     url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     username: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     password: Option<String>,
 }
 

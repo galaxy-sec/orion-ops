@@ -1976,16 +1976,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orion-exchange"
-version = "0.1.1"
-source = "git+https://github.com/galaxy-sec/orion-exchange.git?branch=main#b441bba1ceb4ebda2752a7e8c1ff9d54a2ca1faa"
-dependencies = [
- "derive-getters",
- "serde",
- "serde_derive",
-]
-
-[[package]]
 name = "orion-syspec"
 version = "0.1.5"
 dependencies = [
@@ -2009,7 +1999,6 @@ dependencies = [
  "log",
  "mockall",
  "orion-error",
- "orion-exchange",
  "regex",
  "reqwest",
  "serde",
