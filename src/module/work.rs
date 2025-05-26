@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
-use orion_exchange::vars::{ValueDict, ValueType};
 
 use crate::{
     addr::{GitAddr, path_file_name},

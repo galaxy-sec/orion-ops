@@ -3,8 +3,8 @@ use crate::{
     resource::ResourceNode,
     system::spec::SysModelSpec,
     task::{SetupTaskBuilder, TaskHandle},
+    vars::VarCollection,
 };
-use orion_exchange::vars::VarCollection;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -41,8 +41,8 @@ pub struct DeployJob {}
 #[cfg(test)]
 mod tests {
     use super::CustomModelConf;
+    use crate::vars::{VarCollection, VarType};
     use crate::{error::SpecResult, resource::ResourceNode, system::spec::make_sys_spec_example};
-    use orion_exchange::vars::{VarCollection, VarType};
 
     #[test]
     fn test_seup() -> SpecResult<()> {

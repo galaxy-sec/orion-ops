@@ -3,9 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::vars::{ValueConstraint, VarCollection, VarType};
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
-use orion_exchange::vars::{ValueConstraint, VarCollection, VarType};
 
 use crate::{
     action::act::Actions,

@@ -17,7 +17,7 @@ impl ValueDict {
         }
     }
 
-    pub fn insert<S:Into<String>>(&mut self, k: S, v: ValueType) -> Option<ValueType> {
+    pub fn insert<S: Into<String>>(&mut self, k: S, v: ValueType) -> Option<ValueType> {
         self.dict.insert(k.into(), v)
     }
 }
@@ -37,7 +37,7 @@ mod tests {
         let loaded: ValueDict = toml::from_str(content.as_str()).unwrap();
         assert_eq!(dict, loaded);
 
-        let content = serde_yml::to_string(&dict).unwrap();
+        let content = serde_yaml::to_string(&dict).unwrap();
         println!("{}", content);
 
         let content = serde_json::to_string(&dict).unwrap();

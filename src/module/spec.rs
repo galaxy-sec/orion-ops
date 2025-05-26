@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::vars::{VarCollection, VarType};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
-use orion_exchange::vars::{VarCollection, VarType};
 
 use crate::{
     action::act::Actions,

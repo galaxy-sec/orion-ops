@@ -3,10 +3,10 @@ use std::{
     str::FromStr,
 };
 
+use crate::vars::VarCollection;
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
-use orion_exchange::vars::VarCollection;
 
 use crate::{
     action::act::Actions,

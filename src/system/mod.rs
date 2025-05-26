@@ -5,10 +5,10 @@ pub mod work;
 use std::path::Path;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
+use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::ErrorOwe;
-use orion_exchange::vars::{ValueDict, ValueType};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::module::refs::ModuleSpecRef;
