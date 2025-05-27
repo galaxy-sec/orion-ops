@@ -1,4 +1,5 @@
 use derive_getters::Getters;
+use derive_more::Display;
 use serde_derive::{Deserialize, Serialize};
 
 use super::constraint::ValueConstraint;
@@ -30,13 +31,13 @@ where
     }
 }
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
 #[serde(transparent)]
 pub struct VarValue<T>
 where
     T: serde::Serialize,
 {
-    //name: String,
+    #[display("{value}")]
     value: T,
 }
 

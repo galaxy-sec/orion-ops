@@ -1,4 +1,5 @@
 use super::{VarValue, constraint::ValueConstraint, definition::VarDefinition};
+use derive_more::{Display, From};
 use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum VarType {
@@ -70,15 +71,11 @@ impl From<(&str, f64)> for VarType {
 }
 
 //#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Display, From)]
 pub enum ValueType {
-    //#[serde(rename = "string")]
     String(VarValue<String>),
-    //#[serde(rename = "bool")]
     Bool(VarValue<bool>),
-    //#[serde(rename = "int")]
     Int(VarValue<u64>),
-    //#[serde(rename = "float")]
     Float(VarValue<f64>),
 }
 
@@ -170,6 +167,11 @@ mod tests {
     use crate::vars::constraint::ValueConstraint;
 
     use super::*;
+    #[test]
+    fn vartype_display() {
+        let val = ValueType::from("hello");
+        assert_eq!(val.to_string(), "hello".to_string());
+    }
 
     #[test]
     fn test_vartype_toml_serialization() {

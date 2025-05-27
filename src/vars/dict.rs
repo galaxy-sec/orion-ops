@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use derive_getters::Getters;
+use derive_more::Deref;
 use serde_derive::{Deserialize, Serialize};
 
 use super::types::ValueType;
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref)]
 #[serde(transparent)]
 pub struct ValueDict {
     dict: HashMap<String, ValueType>,

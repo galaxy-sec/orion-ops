@@ -11,7 +11,7 @@ anyhow = "~1.0"
 comfy-table = "~7.1"
 contracts = "~0.6"
 env_logger = "~0.11"
-reqwest = "~0.12"
+reqwest = { version = "~0.12", features = ["multipart"] }
 async-trait = "0.1"
 log = "~0.4"
 serde = "~1.0"

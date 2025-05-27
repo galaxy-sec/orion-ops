@@ -5,6 +5,7 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom};
 use serde_derive::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
+use url::Url;
 
 use crate::{error::SpecResult, types::AsyncUpdateable};
 
@@ -33,10 +34,87 @@ impl HttpAddr {
         self
     }
 }
+impl HttpAddr {
+    pub fn get_filename(&self) -> Option<String> {
+        let url = Url::parse(&self.url).ok()?;
+        url.path_segments()?.last().and_then(|s| {
+            if s.is_empty() {
+                None
+            } else {
+                Some(s.to_string())
+            }
+        })
+    }
+}
 
-#[async_trait]
-impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &Path) -> SpecResult<PathBuf> {
+impl HttpAddr {
+    pub async fn upload<P: AsRef<Path>>(&self, file_path: P) -> SpecResult<()> {
+        log::info!(
+            "Starting upload to {} from {:?}",
+            self.url,
+            file_path.as_ref()
+        );
+
+        let client = reqwest::Client::new();
+
+        // 读取文件内容
+        let file_content = tokio::fs::read(file_path.as_ref())
+            .await
+            .owe_sys()
+            .with(format!(
+                "Failed to read file {}",
+                file_path.as_ref().display()
+            ))?;
+
+        log::debug!("Read {} bytes from file", file_content.len());
+
+        // 获取文件名
+        let file_name = file_path
+            .as_ref()
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("file");
+
+        log::debug!("Uploading file with name: {}", file_name);
+
+        // 创建 multipart 请求
+        let file_part =
+            reqwest::multipart::Part::bytes(file_content).file_name(file_name.to_string());
+
+        let form = reqwest::multipart::Form::new().part("file", file_part);
+
+        // 构建请求
+        let mut request = client.post(&self.url).multipart(form);
+
+        // 添加认证信息
+        if let (Some(u), Some(p)) = (&self.username, &self.password) {
+            log::debug!("Adding basic auth credentials");
+            request = request.basic_auth(u, Some(p));
+        }
+
+        // 发送请求
+        log::debug!("Sending upload request to {}", self.url);
+        let response = request
+            .send()
+            .await
+            .owe_res()
+            .with(format!("Failed to send request to {}", self.url))?;
+
+        // 检查响应状态
+        let status = response.status();
+        if !status.is_success() {
+            let error_body = response.text().await.unwrap_or_default();
+            log::error!("Upload failed with status {}: {}", status, error_body);
+            return Err(StructError::from_res(format!(
+                "HTTP upload failed: {} - {}",
+                status, error_body
+            )));
+        }
+
+        log::info!("Upload completed successfully");
+        Ok(())
+    }
+    pub async fn download(&self, dest_path: &Path) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
         let client = reqwest::Client::new();
@@ -60,13 +138,7 @@ impl AsyncUpdateable for HttpAddr {
         }
 
         let total_size = response.content_length().unwrap_or(0);
-        let file_name = response
-            .url()
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .unwrap_or("downloaded_file");
 
-        let dest_path = dest_dir.join(file_name);
         let mut file = tokio::fs::File::create(&dest_path)
             .await
             .owe_conf()
@@ -91,7 +163,16 @@ impl AsyncUpdateable for HttpAddr {
         }
 
         pb.finish_with_message("下载完成");
-        Ok(dest_path)
+        Ok(dest_path.to_path_buf())
+    }
+}
+
+#[async_trait]
+impl AsyncUpdateable for HttpAddr {
+    async fn update_local(&self, dest_dir: &Path) -> SpecResult<PathBuf> {
+        let file = self.get_filename();
+        let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
+        self.download(&dest_path).await
     }
 }
 
@@ -138,6 +219,39 @@ mod tests {
                 "5b2c9e9b7f111af52f0375c1fd9d35cd4d0dabc3",
             );
         addr.update_local(&path).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_http_upload() -> SpecResult<()> {
+        // 1. 配置模拟服务器
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(httpmock::Method::POST)
+                .path("/upload")
+                .header_exists("content-type")  // 检查 multipart 头
+                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");
+            then.status(200)
+                .body("upload success");
+        });
+
+        // 2. 创建临时测试文件
+        let temp_dir = tempfile::tempdir().owe_res()?;
+        let file_path = temp_dir.path().join("test.txt");
+        tokio::fs::write(&file_path, "test content")
+            .await
+            .owe_sys()?;
+
+        // 3. 执行上传
+        let http_addr = HttpAddr::from(server.url("/upload")).with_credentials(
+            "generic-1747535977632",
+            "5b2c9e9b7f111af52f0375c1fd9d35cd4d0dabc3",
+        );
+
+        http_addr.upload(&file_path).await?;
+
+        // 4. 验证结果
+        mock.assert();
         Ok(())
     }
 }
