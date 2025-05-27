@@ -14,7 +14,7 @@ mod setup {
     }
     flow do {
       gx.echo { value= "this is  host setup" }
-      gx.down { file = "./artifact.yml" , dst_path =  "./"  }
+      gx.artifact { file = "./artifact.yml" , dst_path =  "./"  }
 
     }
 }
