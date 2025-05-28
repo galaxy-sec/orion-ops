@@ -37,7 +37,7 @@ impl HttpAddr {
 impl HttpAddr {
     pub fn get_filename(&self) -> Option<String> {
         let url = Url::parse(&self.url).ok()?;
-        url.path_segments()?.last().and_then(|s| {
+        url.path_segments()?.next_back().and_then(|s| {
             if s.is_empty() {
                 None
             } else {
@@ -264,5 +264,58 @@ mod tests {
         // 4. 验证结果
         mock.assert();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests2 {
+    use super::*;
+
+    #[test]
+    fn test_get_filename_with_regular_url() {
+        let addr = HttpAddr::from("http://example.com/file.txt");
+        assert_eq!(addr.get_filename(), Some("file.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_with_query_params() {
+        let addr = HttpAddr::from("http://example.com/file.txt?version=1.0");
+        assert_eq!(addr.get_filename(), Some("file.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_with_fragment() {
+        let addr = HttpAddr::from("http://example.com/file.txt#section1");
+        assert_eq!(addr.get_filename(), Some("file.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_with_multiple_path_segments() {
+        let addr = HttpAddr::from("http://example.com/path/to/file.txt");
+        assert_eq!(addr.get_filename(), Some("file.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_with_trailing_slash() {
+        let addr = HttpAddr::from("http://example.com/path/");
+        assert_eq!(addr.get_filename(), None);
+    }
+
+    #[test]
+    fn test_get_filename_with_empty_path() {
+        let addr = HttpAddr::from("http://example.com");
+        assert_eq!(addr.get_filename(), None);
+    }
+
+    #[test]
+    fn test_get_filename_with_invalid_url() {
+        let addr = HttpAddr::from("not a valid url");
+        assert_eq!(addr.get_filename(), None);
+    }
+
+    #[test]
+    fn test_get_filename_with_encoded_characters() {
+        let addr = HttpAddr::from("http://example.com/file%20name.txt");
+        assert_eq!(addr.get_filename(), Some("file%20name.txt".to_string()));
     }
 }
