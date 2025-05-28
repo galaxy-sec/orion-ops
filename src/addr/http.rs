@@ -20,7 +20,6 @@ pub struct HttpAddr {
 }
 
 impl HttpAddr {
-
     pub fn from<S: Into<String>>(url: S) -> Self {
         Self {
             url: url.into(),
@@ -36,7 +35,6 @@ impl HttpAddr {
     }
 }
 impl HttpAddr {
-
     pub fn get_filename(&self) -> Option<String> {
         let url = Url::parse(&self.url).ok()?;
         url.path_segments()?.last().and_then(|s| {
@@ -50,31 +48,35 @@ impl HttpAddr {
 }
 
 impl HttpAddr {
-
     pub async fn upload<P: AsRef<Path>>(&self, file_path: P, method: &str) -> SpecResult<()> {
         use indicatif::{ProgressBar, ProgressStyle};
-        
+
         let client = reqwest::Client::new();
-        let file_name = self.get_filename().unwrap_or_else(|| "file.bin".to_string());
+        let file_name = self
+            .get_filename()
+            .unwrap_or_else(|| "file.bin".to_string());
         let file_content = std::fs::read(file_path).owe_data()?;
-        
+
         // 创建进度条
         let pb = ProgressBar::new(file_content.len() as u64);
         pb.set_style(ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})").owe_logic()?
             .progress_chars("#>-"));
 
-        let form = reqwest::multipart::Form::new()
-            .part("file", reqwest::multipart::Part::bytes(file_content)
-                .file_name(file_name));
+        let form = reqwest::multipart::Form::new().part(
+            "file",
+            reqwest::multipart::Part::bytes(file_content).file_name(file_name),
+        );
 
         let mut request = match method.to_uppercase().as_str() {
             "POST" => client.post(&self.url),
             "PUT" => client.put(&self.url),
-            _ => return Err(StructError::from_res(format!(
-                "Unsupported HTTP method: {}",
-                method
-            ))),
+            _ => {
+                return Err(StructError::from_res(format!(
+                    "Unsupported HTTP method: {}",
+                    method
+                )));
+            }
         };
 
         request = request.multipart(form);
@@ -85,7 +87,7 @@ impl HttpAddr {
 
         let response = request.send().await.owe_res()?;
         response.error_for_status().owe_res()?;
-        
+
         pb.finish_with_message("上传完成");
         Ok(())
     }
@@ -151,8 +153,6 @@ impl AsyncUpdateable for HttpAddr {
         self.download(&dest_path).await
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -232,7 +232,7 @@ mod tests {
         mock.assert();
         Ok(())
     }
-    
+
     #[tokio::test]
     async fn test_http_upload_put() -> SpecResult<()> {
         // 1. 配置模拟服务器

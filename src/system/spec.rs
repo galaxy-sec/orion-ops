@@ -42,14 +42,14 @@ impl SysModelSpec {
     pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
         std::fs::create_dir_all(&root).owe_conf()?;
-        let list_path = root.join("mod_list.yml");
+        let list_path = root.join(crate::const_vars::MOD_LIST_YML);
         self.mod_list.save_conf(&list_path)?;
 
-        let res_path = root.join("resource.yml");
+        let res_path = root.join(crate::const_vars::RESOURCE_YML);
         self.res.save_conf(&res_path)?;
-        let net_path = root.join("net_res.yml");
+        let net_path = root.join(crate::const_vars::NET_RES_YML);
         self.net.save_conf(&net_path)?;
-        let var_path = root.join("vars.yml");
+        let var_path = root.join(crate::const_vars::VARS_YML);
         self.vars.save_conf(&var_path)?;
         self.actions.save_to(&root)?;
         Ok(())
@@ -62,15 +62,15 @@ impl SysModelSpec {
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        let list_path = root.join("mod_list.yml");
+        let list_path = root.join(crate::const_vars::MOD_LIST_YML);
         ctx.with_path("mod_list", &list_path);
         let mod_list = ModulesList::from_conf(&list_path).with(&ctx)?;
-        let res_path = root.join("resource.yml");
+        let res_path = root.join(crate::const_vars::RESOURCE_YML);
         ctx.with_path("res_list", &res_path);
         let res = ModelResource::from_conf(&res_path).with(&ctx)?;
-        let net_path = root.join("net_res.yml");
+        let net_path = root.join(crate::const_vars::NET_RES_YML);
         let net_res = NetResSpace::from_conf(&net_path).with(&ctx)?;
-        let var_path = root.join("vars.yml");
+        let var_path = root.join(crate::const_vars::VARS_YML);
         ctx.with_path("var_path", &var_path);
         let vars = VarCollection::from_conf(&var_path).with(&ctx)?;
         let actions = Actions::load_from(root).with(&ctx)?;

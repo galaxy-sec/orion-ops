@@ -15,7 +15,7 @@ impl Persistable<GxlProject> for GxlProject {
     fn save_to(&self, path: &Path) -> SpecResult<()> {
         let path = path.join("_gal");
         std::fs::create_dir_all(&path).owe_res().with(&path)?;
-        std::fs::write(path.join("work.gxl"), self.main.as_str()).owe_res()?;
+        std::fs::write(path.join(crate::const_vars::WORK_GXL), self.main.as_str()).owe_res()?;
         Ok(())
     }
 

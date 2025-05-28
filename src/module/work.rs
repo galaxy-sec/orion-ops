@@ -63,13 +63,16 @@ impl RunningModule {
             .local
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
-        let spec = local.join("spec");
+        let spec = local.join(crate::const_vars::SPEC_DIR);
         if spec.exists() {
             ctx.with_path("spec", &spec);
             std::fs::remove_dir_all(&spec).owe_res().with(&ctx)?;
         }
         ctx.with_path("local", &local);
-        self.spec.update_rename(&local, "spec").await.with(&ctx)?;
+        self.spec
+            .update_rename(&local, crate::const_vars::SPEC_DIR)
+            .await
+            .with(&ctx)?;
 
         Ok(())
     }
@@ -83,9 +86,9 @@ impl Localizable for RunningModule {
             .local
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
-        let tpl = local.join("spec");
-        let dst = local.join("local");
-        let data = local.join("value.json");
+        let tpl = local.join(crate::const_vars::SPEC_DIR);
+        let dst = local.join(crate::const_vars::LOCAL_DIR);
+        let data = local.join(crate::const_vars::VALUE_JSON);
         ctx.with_path("dst", &dst);
         let spec = ModuleSpec::load_from(&tpl)?;
         spec.update_local(&tpl).await?;

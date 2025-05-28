@@ -46,36 +46,36 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
-        let artifact_path = target_path.join("artifact.yml");
+        let artifact_path = target_path.join(crate::const_vars::ARTIFACT_YML);
         self.artifact.save_conf(&artifact_path)?;
 
         self.actions.save_to(&target_path)?;
-        let spec_path = target_path.join("conf_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::CONF_SPEC_YML);
         self.conf_spec.save_conf(&spec_path)?;
-        let spec_path = target_path.join("logs_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::LOGS_SPEC_YML);
         self.logs_spec.save_conf(&spec_path)?;
 
-        let spec_path = target_path.join("res_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::RES_SPEC_YML);
         self.res_spec.save_conf(&spec_path)?;
-        let vars_path = target_path.join("vars.yml");
+        let vars_path = target_path.join(crate::const_vars::VARS_YML);
         self.vars.save_conf(&vars_path)?;
         Ok(())
     }
 
     fn load_from(target_path: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load mod spec");
-        let artifact_path = target_path.join("artifact.yml");
+        let artifact_path = target_path.join(crate::const_vars::ARTIFACT_YML);
         ctx.with("artifact", format!("{}", artifact_path.display()));
         let artifact = ArtifactPackage::from_conf(&artifact_path).with(&ctx)?;
 
         let actions = Actions::load_from(target_path).with(&ctx)?;
-        let spec_path = target_path.join("conf_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::CONF_SPEC_YML);
         let conf_spec = ConfSpec::from_conf(&spec_path).with(&ctx)?;
-        let spec_path = target_path.join("logs_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::LOGS_SPEC_YML);
         let logs_spec = LogsSpec::from_conf(&spec_path).with(&ctx)?;
-        let spec_path = target_path.join("res_spec.yml");
+        let spec_path = target_path.join(crate::const_vars::RES_SPEC_YML);
         let res_spec = CaculateResSpec::from_conf(&spec_path).with(&ctx)?;
-        let vars_path = target_path.join("vars.yml");
+        let vars_path = target_path.join(crate::const_vars::VARS_YML);
         let vars = VarCollection::from_conf(&vars_path).with(&ctx)?;
         let target = TargetNode::from_str(path_file_name(target_path)?.as_str())
             .owe_res()
