@@ -1,6 +1,6 @@
 use crate::{
     action::{
-        act::{ActionType, Actions},
+        act::{ModWorkflows, Workflow, Workflows},
         gxl::GxlAction,
         prj::GxlProject,
     },
@@ -37,12 +37,12 @@ pub trait SysIniter {
     fn sys_tpl_init() -> Self;
 }
 
-impl SysIniter for Actions {
+impl<T> SysIniter for Workflows<T> {
     fn sys_tpl_init() -> Self {
         let project = GxlProject::spec_tpl();
         let actions = vec![
-            ActionType::Gxl(GxlAction::sys_setup_tpl()),
-            ActionType::Gxl(GxlAction::sys_update_tpl()),
+            Workflow::Gxl(GxlAction::sys_setup_tpl()),
+            Workflow::Gxl(GxlAction::sys_update_tpl()),
         ];
         Self::new(project, actions)
     }

@@ -3,13 +3,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::vars::{VarCollection, VarType};
+use crate::{
+    types::Localizable,
+    vars::{VarCollection, VarType},
+};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
-    action::act::Actions,
+    action::act::ModWorkflows,
     addr::{HttpAddr, path_file_name},
     artifact::{Artifact, ArtifactPackage, OsType},
     conf::{ConfFile, ConfSpec},
@@ -113,6 +116,16 @@ impl SetupTaskBuilder for ModTargetSpec {
     }
 }
 
+#[async_trait]
+impl Localizable for ModuleSpec {
+    async fn localize(&self) -> SpecResult<()> {
+        for target in self.targets.values() {
+            target.localize().await?;
+        }
+        Ok(())
+    }
+}
+
 pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
     let mut conf = ConfSpec::new("1.0.0");
     conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
@@ -140,7 +153,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
                 "postgresql-17.3.tar.gz.md5",
             ),
         ]),
-        Actions::mod_k8s_tpl_init(),
+        ModWorkflows::mod_k8s_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -156,7 +169,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
             ),
             "postgresql-17.4.tar.gz.md5",
         )]),
-        Actions::mod_host_tpl_init(),
+        ModWorkflows::mod_host_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -179,7 +192,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
-        Actions::mod_k8s_tpl_init(),
+        ModWorkflows::mod_k8s_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -193,7 +206,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
-        Actions::mod_host_tpl_init(),
+        ModWorkflows::mod_host_tpl_init(),
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -212,14 +225,16 @@ pub mod test {
         make_mod_spec_new("example_mod1")
     }
 
-    #[test]
-    fn build_mod_example() -> SpecResult<()> {
+    #[tokio::test]
+    async fn build_mod_example() -> SpecResult<()> {
         let spec = make_mod_spec_example()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
+        let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
+        loaded.localize().await?;
         let spec = make_mod_spec_mod1()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
-        let _loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
+        let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
+        loaded.localize().await?;
         Ok(())
     }
 }

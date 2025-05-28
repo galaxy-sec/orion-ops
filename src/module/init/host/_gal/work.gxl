@@ -1,8 +1,8 @@
-extern mod setup,update { path = "./actions"; }
+extern mod setup,update { path = "./spec/workflows"; }
 
 
 mod main   {
-    env default : setup.dev ;
+    env default {}
 
     flow setup  : setup.do ;
     flow update : update.do ;

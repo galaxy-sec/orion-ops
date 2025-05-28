@@ -3,12 +3,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::vars::{ValueConstraint, VarCollection, VarType};
+use crate::{
+    action::act::SysWorkflows,
+    vars::{ValueConstraint, VarCollection, VarType},
+};
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 
 use crate::{
-    action::act::Actions,
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
@@ -26,7 +28,7 @@ pub struct SysModelSpec {
     res: ModelResource,
     net: NetResSpace,
     local: Option<PathBuf>,
-    actions: Actions,
+    actions: SysWorkflows,
 }
 
 impl SysModelSpec {
@@ -73,7 +75,7 @@ impl SysModelSpec {
         let var_path = root.join(crate::const_vars::VARS_YML);
         ctx.with_path("var_path", &var_path);
         let vars = VarCollection::from_conf(&var_path).with(&ctx)?;
-        let actions = Actions::load_from(root).with(&ctx)?;
+        let actions = SysWorkflows::load_from(root).with(&ctx)?;
         Ok(Self {
             name: name.to_string(),
             mod_list,
@@ -87,7 +89,7 @@ impl SysModelSpec {
 
     pub fn new<S: Into<String>>(
         name: S,
-        actions: Actions,
+        actions: SysWorkflows,
         net: NetResSpace,
         res: ModelResource,
         vars: VarCollection,
@@ -138,7 +140,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
         VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
     ]);
 
-    let actions = Actions::sys_tpl_init();
+    let actions = SysWorkflows::sys_tpl_init();
     let mut modul_spec = SysModelSpec::new("example-sys", actions, net, res, vars);
     let mod_name = "example_mod1";
     modul_spec.add_mod_ref(
@@ -185,7 +187,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
         VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
     ]);
 
-    let actions = Actions::sys_tpl_init();
+    let actions = SysWorkflows::sys_tpl_init();
     let mut modul_spec = SysModelSpec::new(name, actions, net, res, vars);
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(

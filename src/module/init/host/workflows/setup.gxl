@@ -1,0 +1,7 @@
+mod setup {
+    flow do {
+      gx.echo { value= "this is  host setup" }
+      gx.artifact { file = "./artifact.yml" , dst_path =  "./"  }
+
+    }
+}

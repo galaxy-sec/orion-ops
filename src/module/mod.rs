@@ -3,7 +3,6 @@ pub mod metrc;
 pub mod refs;
 pub mod spec;
 pub mod target;
-pub mod work;
 use std::{fmt::Display, str::FromStr};
 
 use derive_more::{Display, From};
