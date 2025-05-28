@@ -23,54 +23,30 @@ pub struct RunningSystem {
 impl Persistable<RunningSystem> for RunningSystem {
     fn save_to(&self, path: &Path) -> SpecResult<()> {
         let root = path.join(self.name());
-log::debug!("Creating system directory at: {}", root.display());
-std::fs::create_dir_all(&root).owe_conf()
-    .map_err(|e| {
-        log::error!("Failed to create system directory at {}: {}", root.display(), e);
-        e
-    })?;
+        log::debug!("Creating system directory at: {}", root.display());
+        std::fs::create_dir_all(&root).owe_conf()?;
 
-let spec_path = root.join("spec.yml");
-log::debug!("Saving system spec to: {}", spec_path.display());
-self.spec_ref.save_conf(&spec_path)
-    .map_err(|e| {
-        log::error!("Failed to save system spec to {}: {}", spec_path.display(), e);
-        e
-    })?;
+        let spec_path = root.join("spec.yml");
+        log::debug!("Saving system spec to: {}", spec_path.display());
+        self.spec_ref.save_conf(&spec_path)?;
 
-let json_path = root.join("value.json");
-log::debug!("Saving system values to: {}", json_path.display());
-self.value.save_json(&json_path)
-    .map_err(|e| {
-        log::error!("Failed to save system values to {}: {}", json_path.display(), e);
-        e
-    })?;
+        let json_path = root.join("value.json");
+        log::debug!("Saving system values to: {}", json_path.display());
+        self.value.save_json(&json_path)?;
         Ok(())
     }
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         log::debug!("Loading system from path: {}", path.display());
-let name = path_file_name(path)
-    .map_err(|e| {
-        log::error!("Failed to get path name from {}: {}", path.display(), e);
-        e
-    })?;
+        let name = path_file_name(path)?;
 
-let spec_path = path.join("spec.yml");
-log::debug!("Loading system spec from: {}", spec_path.display());
-let spec = SysModelSpecRef::from_conf(&spec_path)
-    .map_err(|e| {
-        log::error!("Failed to load system spec from {}: {}", spec_path.display(), e);
-        e
-    })?;
+        let spec_path = path.join("spec.yml");
+        log::debug!("Loading system spec from: {}", spec_path.display());
+        let spec = SysModelSpecRef::from_conf(&spec_path)?;
 
-let json_path = path.join("value.json");
-log::debug!("Loading system values from: {}", json_path.display());
-let value = ValueDict::from_json(&json_path)
-    .map_err(|e| {
-        log::error!("Failed to load system values from {}: {}", json_path.display(), e);
-        e
-    })?;
+        let json_path = path.join("value.json");
+        log::debug!("Loading system values from: {}", json_path.display());
+        let value = ValueDict::from_json(&json_path)?;
         Ok(Self {
             name,
             spec_ref: spec,
@@ -96,41 +72,32 @@ impl RunningSystem {
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
         let spec = local.join("spec");
-log::debug!("Preparing to update system spec at: {}", spec.display());
-if spec.exists() {
-    ctx.with_path("spec", &spec);
-    log::debug!("Removing existing spec directory at: {}", spec.display());
-    std::fs::remove_dir_all(&spec).owe_res()
-        .map_err(|e| {
-            log::error!("Failed to remove spec directory at {}: {}", spec.display(), e);
-            e
-        })
-        .with(&ctx)?;
-}
+        log::debug!("Preparing to update system spec at: {}", spec.display());
+        if spec.exists() {
+            ctx.with_path("spec", &spec);
+            log::debug!("Removing existing spec directory at: {}", spec.display());
+            std::fs::remove_dir_all(&spec).owe_res().with(&ctx)?;
+        }
 
-log::info!("Updating system spec from remote repository");
-self.spec_ref
-    .update_rename(&local, "spec")
-    .await
-    .with(&ctx)?;
+        log::info!("Updating system spec from remote repository");
+        self.spec_ref
+            .update_rename(&local, "spec")
+            .await
+            .with(&ctx)?;
 
-ctx.with("action", "sys-spec load");
-log::debug!("Loading updated system spec from: {}", spec.display());
-let spec = SysModelSpec::load_from(&spec)
-    .map_err(|e| {
-        log::error!("Failed to load updated system spec from {}: {}", spec.display(), e);
-        e
-    })
-    .with(&ctx)?;
+        ctx.with("action", "sys-spec load");
+        log::debug!("Loading updated system spec from: {}", spec.display());
+        let spec = SysModelSpec::load_from(&spec).with(&ctx)?;
 
-ctx.with("action", "spec update");
-log::info!("Applying system spec updates");
-spec.update_local().await
-    .map_err(|e| {
-        log::error!("Failed to update system spec: {}", e);
-        e
-    })
-    .with(&ctx)?;
+        ctx.with("action", "spec update");
+        log::info!("Applying system spec updates");
+        spec.update_local()
+            .await
+            .map_err(|e| {
+                log::error!("Failed to update system spec: {}", e);
+                e
+            })
+            .with(&ctx)?;
         Ok(())
     }
 
@@ -141,32 +108,18 @@ spec.update_local().await
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
         let tpl = local.join("spec");
-let dst = local.join("local");
-let data = local.join("value.json");
+        let dst = local.join("local");
+        let data = local.join("value.json");
 
-log::debug!("Localizing system resources from {} to {}", tpl.display(), dst.display());
-
-ctx.with_path("local", &dst);
-log::debug!("Creating localization directory at: {}", dst.display());
-std::fs::create_dir_all(&dst).owe_res()
-    .map_err(|e| {
-        log::error!("Failed to create localization directory at {}: {}", dst.display(), e);
-        e
-    })
-    .with(&ctx)?;
-
-log::info!("Rendering system templates");
-TPlEngineType::Handlebars
-    .render_path(&tpl, &dst, &data)
-    .map_err(|e| {
-        log::error!(
-            "Failed to render templates from {} to {}: {}", 
-            tpl.display(), 
-            dst.display(), 
-            e
+        log::debug!(
+            "Localizing system resources from {} to {}",
+            tpl.display(),
+            dst.display()
         );
-        e
-    })?;
+
+        ctx.with_path("local", &dst);
+        std::fs::create_dir_all(&dst).owe_res().with(&ctx)?;
+        TplRender::render_path(TPlEngineType::Handlebars, &tpl, &dst, &data)?;
         Ok(())
     }
 }
