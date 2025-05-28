@@ -127,7 +127,7 @@ impl SysModelSpec {
 impl Localizable for SysModelSpec {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            let base_path = LocalizePath::from_root(&local);
+            let base_path = LocalizePath::from_root(local);
             let value_path = base_path.value().join(VALUE_JSON);
             if !value_path.exists() {
                 value_path.parent().map(std::fs::create_dir_all);

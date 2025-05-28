@@ -69,10 +69,10 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn load_from(root_path: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load target mod spec");
 
-        let target = TargetNode::from_str(path_file_name(&root_path)?.as_str())
+        let target = TargetNode::from_str(path_file_name(root_path)?.as_str())
             .owe_res()
             .with(&ctx)?;
-        let actions = ModWorkflows::load_from(&root_path).with(&ctx)?;
+        let actions = ModWorkflows::load_from(root_path).with(&ctx)?;
         let target_path = root_path.join(SPEC_DIR);
         let artifact_path = target_path.join("artifact.yml");
         ctx.with_path("artifact", &artifact_path);
@@ -143,7 +143,7 @@ impl Localizable for ModTargetSpec {
         let used_path = localize_path.value().join(crate::const_vars::USED_JSON);
         let local_path = localize_path.local();
 
-        ctx.with_path("dst", &local_path);
+        ctx.with_path("dst", local_path);
         self.update_local(&tpl).await?;
         if !value_path.exists() {
             value_path.parent().map(std::fs::create_dir_all);
@@ -160,7 +160,7 @@ impl Localizable for ModTargetSpec {
             used.save_json(&used_path)?;
         }
 
-        TplRender::render_path(TPlEngineType::Handlebars, &tpl, &local_path, &used_path)
+        TplRender::render_path(TPlEngineType::Handlebars, &tpl, local_path, &used_path)
             .with(&ctx)?;
         Ok(())
     }

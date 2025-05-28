@@ -79,7 +79,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
 
-        for (_target, node) in &self.targets {
+        for node in self.targets.values() {
             node.save_to(&mod_path)?;
         }
         Ok(())
@@ -103,7 +103,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 impl NodeSetupTaskBuilder for ModuleSpec {
     fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle> {
         if let Some(cur_node) = self.targets().get(node) {
-            return cur_node.make_setup_task();
+            cur_node.make_setup_task()
         } else {
             SpecReason::Miss(node.to_string()).err_result()
         }

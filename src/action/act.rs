@@ -42,7 +42,7 @@ impl<T> Workflows<T> {
         Self {
             project,
             actions,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }
@@ -92,7 +92,7 @@ where
         Ok(Workflows {
             project,
             actions,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         })
     }
 }

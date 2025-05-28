@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::types::ValueType;
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]
 #[serde(transparent)]
 pub struct ValueDict {
     dict: HashMap<String, ValueType>,
