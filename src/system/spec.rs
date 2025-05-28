@@ -5,8 +5,8 @@ use std::{
 
 use crate::{
     action::act::SysWorkflows,
-    const_vars::{LOCAL_DIR, SPEC_DIR},
-    types::Localizable,
+    const_vars::{SPEC_DIR, VALUE_JSON},
+    types::{JsonAble, Localizable, LocalizePath},
     vars::{ValueConstraint, VarCollection, VarType},
 };
 use async_trait::async_trait;
@@ -125,9 +125,15 @@ impl SysModelSpec {
 
 #[async_trait]
 impl Localizable for SysModelSpec {
-    async fn localize(&self, _dst_path: Option<PathBuf>) -> SpecResult<()> {
+    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            let base_path = local.join(LOCAL_DIR);
+            let base_path = LocalizePath::from_root(&local);
+            let value_path = base_path.value().join(VALUE_JSON);
+            if !value_path.exists() {
+                value_path.parent().map(std::fs::create_dir_all);
+                let export = self.vars().value_dict();
+                export.save_json(&value_path)?
+            }
             self.mod_list.localize(Some(base_path)).await?;
             Ok(())
         } else {

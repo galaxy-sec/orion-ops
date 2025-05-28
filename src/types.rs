@@ -4,10 +4,11 @@ use std::{
 };
 
 use async_trait::async_trait;
+use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{addr::rename_path, error::SpecResult};
+use crate::{addr::rename_path, const_vars::LOCAL_DIR, error::SpecResult};
 
 pub trait Persistable<T> {
     fn save_to(&self, path: &Path) -> SpecResult<()>;
@@ -24,9 +25,38 @@ pub trait AsyncUpdateable {
     }
 }
 
+#[derive(Clone, Debug, Getters)]
+pub struct LocalizePath {
+    local: PathBuf,
+    value: PathBuf,
+    global: Option<PathBuf>,
+}
+impl LocalizePath {
+    pub fn new<P: AsRef<Path>>(local: P, value: P) -> Self {
+        Self {
+            local: PathBuf::from(local.as_ref()),
+            value: PathBuf::from(value.as_ref()),
+            global: None,
+        }
+    }
+    pub fn from_root(root: &Path) -> Self {
+        Self {
+            local: root.join(LOCAL_DIR),
+            value: root.join("value"),
+            global: Some(root.join("value/value.json")),
+        }
+    }
+    pub fn join<P: AsRef<Path>>(&self, path: P) -> Self {
+        Self {
+            local: self.local.join(&path),
+            value: self.value.join(&path),
+            global: self.global.clone(),
+        }
+    }
+}
 #[async_trait]
 pub trait Localizable {
-    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()>;
+    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()>;
 }
 
 pub trait Configable<T>

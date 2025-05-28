@@ -9,6 +9,7 @@ pub const NET_RES_YML: &str = "net_res.yml";
 pub const VARS_YML: &str = "vars.yml";
 pub const SPEC_YML: &str = "spec.yml";
 pub const VALUE_JSON: &str = "value.json";
+pub const USED_JSON: &str = "used.json";
 pub const ARTIFACT_YML: &str = "artifact.yml";
 pub const CONF_SPEC_YML: &str = "conf_spec.yml";
 pub const LOGS_SPEC_YML: &str = "logs_spec.yml";

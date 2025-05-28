@@ -184,7 +184,13 @@ mod tests {
     async fn test_git_addr_update_local2() -> SpecResult<()> {
         // 创建临时目录
         let dest_path = PathBuf::from("./temp");
-        std::fs::remove_dir_all(dest_path.join("postgresql")).owe_res()?;
+        let target_path = dest_path.join("postgresql");
+        std::fs::create_dir_all(&dest_path).owe_res()?;
+        if target_path.exists() {
+            std::fs::remove_dir_all(&target_path)
+                .owe_res()
+                .with(&dest_path)?;
+        }
 
         // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
         let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")

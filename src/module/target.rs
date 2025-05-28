@@ -17,8 +17,8 @@ use crate::{
     resource::CaculateResSpec,
     software::LogsSpec,
     tpl::{TPlEngineType, TplRender},
-    types::{AsyncUpdateable, Configable, JsonAble, Localizable, Persistable},
-    vars::VarCollection,
+    types::{AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable},
+    vars::{ValueDict, VarCollection},
 };
 
 use super::TargetNode;
@@ -127,22 +127,41 @@ impl ModTargetSpec {
 
 #[async_trait]
 impl Localizable for ModTargetSpec {
-    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         let mut ctx = WithContext::want("modul localize");
         let local = self
             .local
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
-        let dst = dst_path.unwrap_or(local.join(crate::const_vars::LOCAL_DIR));
-        let data = local.join(crate::const_vars::VALUE_JSON);
-        ctx.with_path("dst", &dst);
+        let localize_path = dst_path.unwrap_or(LocalizePath::new(
+            local.join(crate::const_vars::LOCAL_DIR),
+            local,
+        ));
+
+        let value_path = localize_path.value().join(crate::const_vars::VALUE_JSON);
+        let used_path = localize_path.value().join(crate::const_vars::USED_JSON);
+        let local_path = localize_path.local();
+
+        ctx.with_path("dst", &local_path);
         self.update_local(&tpl).await?;
-        if !data.exists() {
+        if !value_path.exists() {
+            value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
-            vars_dict.save_json(&data)?;
+            vars_dict.save_json(&value_path)?;
         }
-        TplRender::render_path(TPlEngineType::Handlebars, &tpl, &dst, &data).with(&ctx)?;
+        if let Some(global) = localize_path.global() {
+            let mut used = ValueDict::from_json(global)?;
+            let sec = ValueDict::from_json(&value_path)?;
+            used.merge(&sec);
+            used.save_json(&used_path)?;
+        } else {
+            let used = ValueDict::from_json(&value_path)?;
+            used.save_json(&used_path)?;
+        }
+
+        TplRender::render_path(TPlEngineType::Handlebars, &tpl, &local_path, &used_path)
+            .with(&ctx)?;
         Ok(())
     }
 }

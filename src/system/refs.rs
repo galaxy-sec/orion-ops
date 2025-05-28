@@ -30,3 +30,36 @@ impl AsyncUpdateable for SysModelSpecRef {
         self.addr.update_rename(path, name).await
     }
 }
+
+#[cfg(test)]
+pub mod tests {
+    use std::path::PathBuf;
+
+    use orion_error::TestAssertWithMsg;
+
+    use crate::{
+        addr::GitAddr,
+        const_vars::SYS_MODEL_INS_ROOT,
+        error::SpecResult,
+        system::{refs::SysModelSpecRef, spec::SysModelSpec},
+        types::{AsyncUpdateable, Localizable},
+    };
+
+    #[tokio::test]
+    async fn test_sys_running() -> SpecResult<()> {
+        let target = "example-sys-x1";
+        let spec_ref = SysModelSpecRef::from(
+            target,
+            GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git")
+                .path(target),
+        );
+        std::fs::create_dir_all(SYS_MODEL_INS_ROOT).assert("yes");
+        let root = PathBuf::from(SYS_MODEL_INS_ROOT);
+        spec_ref.update_local(&root).await?;
+        let spec_path = root.join(target);
+        let spec = SysModelSpec::load_from(&spec_path)?;
+        spec.update_local().await?;
+        spec.localize(None).await?;
+        Ok(())
+    }
+}

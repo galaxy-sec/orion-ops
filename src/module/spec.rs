@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    types::Localizable,
+    types::{Localizable, LocalizePath},
     vars::{VarCollection, VarType},
 };
 use async_trait::async_trait;
@@ -118,7 +118,7 @@ impl SetupTaskBuilder for ModTargetSpec {
 
 #[async_trait]
 impl Localizable for ModuleSpec {
-    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         for target in self.targets.values() {
             target.localize(dst_path.clone()).await?;
         }

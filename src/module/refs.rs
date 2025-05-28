@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     addr::AddrType,
     error::SpecResult,
-    types::{AsyncUpdateable, Localizable, Persistable},
+    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
 };
 
 use super::{TargetNode, spec::ModuleSpec};
@@ -71,7 +71,7 @@ impl ModuleSpecRef {
 
 #[async_trait]
 impl Localizable for ModuleSpecRef {
-    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 let mod_path = local.join(self.name.as_str());

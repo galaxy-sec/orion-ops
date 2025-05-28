@@ -21,6 +21,13 @@ impl ValueDict {
     pub fn insert<S: Into<String>>(&mut self, k: S, v: ValueType) -> Option<ValueType> {
         self.dict.insert(k.into(), v)
     }
+    pub fn merge(&mut self, other: &ValueDict) {
+        for (k, v) in other.iter() {
+            if !self.contains_key(k) {
+                self.insert(k.clone(), v.clone());
+            }
+        }
+    }
 }
 
 #[cfg(test)]

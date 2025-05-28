@@ -1,10 +1,9 @@
 pub mod init;
 pub mod refs;
 pub mod spec;
-pub mod work;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
-use crate::types::Localizable;
+use crate::types::{Localizable, LocalizePath};
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -56,7 +55,7 @@ impl ModulesList {
 }
 #[async_trait]
 impl Localizable for ModulesList {
-    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         let root = dst_path.map(|x| x.join("mods"));
         //std::fs::create_dir_all(&root).owe_data()?;
         for m in &self.mods {
