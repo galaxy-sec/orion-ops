@@ -118,9 +118,9 @@ impl SetupTaskBuilder for ModTargetSpec {
 
 #[async_trait]
 impl Localizable for ModuleSpec {
-    async fn localize(&self) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
         for target in self.targets.values() {
-            target.localize().await?;
+            target.localize(dst_path.clone()).await?;
         }
         Ok(())
     }
@@ -230,11 +230,11 @@ pub mod test {
         let spec = make_mod_spec_example()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
         let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
-        loaded.localize().await?;
+        loaded.localize(None).await?;
         let spec = make_mod_spec_mod1()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
         let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
-        loaded.localize().await?;
+        loaded.localize(None).await?;
         Ok(())
     }
 }

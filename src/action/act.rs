@@ -67,7 +67,12 @@ where
     fn load_from(path: &Path) -> SpecResult<Self> {
         let mut actions = Vec::new();
         let actions_path = path.join(T::workflow());
-        for entry in std::fs::read_dir(&actions_path).owe_res()? {
+        for entry in std::fs::read_dir(&actions_path)
+            .owe_res()
+            .with(&actions_path)
+            .want("read workflows")
+            .with(("action", "read workflows"))?
+        {
             let entry = entry.owe_res()?;
             let entry_path = entry.path();
 

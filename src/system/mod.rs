@@ -2,13 +2,12 @@ pub mod init;
 pub mod refs;
 pub mod spec;
 pub mod work;
-use std::path::Path;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
+use crate::types::Localizable;
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
-use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::module::refs::ModuleSpecRef;
@@ -18,7 +17,6 @@ use crate::{
     resource::{ResouceTypes, Vps},
     software::FileFormat,
     task::{CombinedTask, NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},
-    types::AsyncUpdateable,
 };
 
 #[derive(Getters, Clone, Debug, Default, Serialize, Deserialize)]
@@ -40,17 +38,31 @@ impl ModulesList {
         }
         dict
     }
+
+    fn set_mods_local(&mut self, spec_path: PathBuf) {
+        self.mods
+            .iter_mut()
+            .for_each(|x| x.set_local(spec_path.join("mods")));
+    }
 }
 
-#[async_trait]
-impl AsyncUpdateable for ModulesList {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
-        let root = path.join("mods");
-        std::fs::create_dir_all(&root).owe_data()?;
+impl ModulesList {
+    async fn update(&self) -> SpecResult<()> {
         for m in &self.mods {
-            m.update_local(&root).await?;
+            m.update().await?;
         }
-        Ok(root)
+        Ok(())
+    }
+}
+#[async_trait]
+impl Localizable for ModulesList {
+    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
+        let root = dst_path.map(|x| x.join("mods"));
+        //std::fs::create_dir_all(&root).owe_data()?;
+        for m in &self.mods {
+            m.localize(root.clone()).await?;
+        }
+        Ok(())
     }
 }
 

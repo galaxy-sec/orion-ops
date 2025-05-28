@@ -5,8 +5,11 @@ use std::{
 
 use crate::{
     action::act::SysWorkflows,
+    const_vars::{LOCAL_DIR, SPEC_DIR},
+    types::Localizable,
     vars::{ValueConstraint, VarCollection, VarType},
 };
+use async_trait::async_trait;
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 
@@ -16,7 +19,7 @@ use crate::{
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
     task::{SetupTaskBuilder, TaskHandle},
-    types::{AsyncUpdateable, Configable, Persistable},
+    types::{Configable, Persistable},
 };
 
 use super::{ModelResource, ModulesList, NetAllocator, NetResSpace, init::SysIniter};
@@ -43,15 +46,16 @@ impl SysModelSpec {
     }
     pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
-        std::fs::create_dir_all(&root).owe_conf()?;
-        let list_path = root.join(crate::const_vars::MOD_LIST_YML);
+        let spec_path = root.join(SPEC_DIR);
+        std::fs::create_dir_all(&spec_path).owe_conf()?;
+        let list_path = spec_path.join(crate::const_vars::MOD_LIST_YML);
         self.mod_list.save_conf(&list_path)?;
 
-        let res_path = root.join(crate::const_vars::RESOURCE_YML);
+        let res_path = spec_path.join(crate::const_vars::RESOURCE_YML);
         self.res.save_conf(&res_path)?;
-        let net_path = root.join(crate::const_vars::NET_RES_YML);
+        let net_path = spec_path.join(crate::const_vars::NET_RES_YML);
         self.net.save_conf(&net_path)?;
-        let var_path = root.join(crate::const_vars::VARS_YML);
+        let var_path = spec_path.join(crate::const_vars::VARS_YML);
         self.vars.save_conf(&var_path)?;
         self.actions.save_to(&root)?;
         Ok(())
@@ -64,15 +68,19 @@ impl SysModelSpec {
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        let list_path = root.join(crate::const_vars::MOD_LIST_YML);
+        let spec_path = root.join(SPEC_DIR);
+        let list_path = spec_path.join(crate::const_vars::MOD_LIST_YML);
         ctx.with_path("mod_list", &list_path);
-        let mod_list = ModulesList::from_conf(&list_path).with(&ctx)?;
-        let res_path = root.join(crate::const_vars::RESOURCE_YML);
+        let mut mod_list = ModulesList::from_conf(&list_path)
+            .with("load mod-list".to_string())
+            .with(&ctx)?;
+        mod_list.set_mods_local(spec_path.clone());
+        let res_path = spec_path.join(crate::const_vars::RESOURCE_YML);
         ctx.with_path("res_list", &res_path);
         let res = ModelResource::from_conf(&res_path).with(&ctx)?;
-        let net_path = root.join(crate::const_vars::NET_RES_YML);
+        let net_path = spec_path.join(crate::const_vars::NET_RES_YML);
         let net_res = NetResSpace::from_conf(&net_path).with(&ctx)?;
-        let var_path = root.join(crate::const_vars::VARS_YML);
+        let var_path = spec_path.join(crate::const_vars::VARS_YML);
         ctx.with_path("var_path", &var_path);
         let vars = VarCollection::from_conf(&var_path).with(&ctx)?;
         let actions = SysWorkflows::load_from(root).with(&ctx)?;
@@ -106,9 +114,21 @@ impl SysModelSpec {
     }
 
     pub async fn update_local(&self) -> SpecResult<()> {
+        if let Some(_local) = &self.local {
+            self.mod_list.update().await?;
+            Ok(())
+        } else {
+            SpecReason::Miss("local path".into()).err_result()
+        }
+    }
+}
+
+#[async_trait]
+impl Localizable for SysModelSpec {
+    async fn localize(&self, _dst_path: Option<PathBuf>) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            //let root = path.join(self.name());
-            self.mod_list.update_local(local).await?;
+            let base_path = local.join(LOCAL_DIR);
+            self.mod_list.localize(Some(base_path)).await?;
             Ok(())
         } else {
             SpecReason::Miss("local path".into()).err_result()
@@ -232,6 +252,7 @@ pub mod tests {
         spec.save_to(&spec_root)?;
         let spec = SysModelSpec::load_from(&spec_root.join(spec.name()))?;
         spec.update_local().await?;
+        spec.localize(None).await?;
         Ok(())
     }
 }

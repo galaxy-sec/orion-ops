@@ -1,6 +1,6 @@
 use crate::{
     action::{
-        act::{ModWorkflows, Workflow, Workflows},
+        act::{Workflow, Workflows},
         gxl::GxlAction,
         prj::GxlProject,
     },

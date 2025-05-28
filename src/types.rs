@@ -26,7 +26,7 @@ pub trait AsyncUpdateable {
 
 #[async_trait]
 pub trait Localizable {
-    async fn localize(&self) -> SpecResult<()>;
+    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()>;
 }
 
 pub trait Configable<T>

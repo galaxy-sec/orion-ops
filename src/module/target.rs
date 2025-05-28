@@ -81,13 +81,13 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let spec_path = target_path.join("conf_spec.yml");
         ctx.with_path("conf_spec", &spec_path);
         let conf_spec = ConfSpec::from_conf(&spec_path).with(&ctx)?;
-        let logs_path = target_path.join("logs_spec.yml");
+        let logs_path = target_path.join(crate::const_vars::LOGS_SPEC_YML);
         ctx.with_path("logs_spec", &logs_path);
         let logs_spec = LogsSpec::from_conf(&logs_path).with(&ctx)?;
-        let res_path = target_path.join("res_spec.yml");
+        let res_path = target_path.join(crate::const_vars::RES_SPEC_YML);
         ctx.with_path("res_spec", &logs_path);
         let res_spec = CaculateResSpec::from_conf(&res_path).with(&ctx)?;
-        let vars_path = target_path.join("vars.yml");
+        let vars_path = target_path.join(crate::const_vars::VARS_YML);
         ctx.with_path("vars", &vars_path);
         let vars = VarCollection::from_conf(&vars_path).with(&ctx)?;
 
@@ -127,14 +127,14 @@ impl ModTargetSpec {
 
 #[async_trait]
 impl Localizable for ModTargetSpec {
-    async fn localize(&self) -> SpecResult<()> {
+    async fn localize(&self, dst_path: Option<PathBuf>) -> SpecResult<()> {
         let mut ctx = WithContext::want("modul localize");
         let local = self
             .local
             .clone()
             .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
-        let dst = local.join(crate::const_vars::LOCAL_DIR);
+        let dst = dst_path.unwrap_or(local.join(crate::const_vars::LOCAL_DIR));
         let data = local.join(crate::const_vars::VALUE_JSON);
         ctx.with_path("dst", &dst);
         self.update_local(&tpl).await?;
