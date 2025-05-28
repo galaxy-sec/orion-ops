@@ -1,5 +1,0 @@
-vars:
-- !int
-  name: EXAMPLE_SIZE
-  value: 1000
-  constr: null

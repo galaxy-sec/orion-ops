@@ -1,5 +1,0 @@
-version: 1.0.0
-files:
-- path: example.conf
-  addr: !http
-    url: https://mirrors.aliyun.com/postgresql/README
