@@ -8,7 +8,11 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{addr::rename_path, const_vars::LOCAL_DIR, error::SpecResult};
+use crate::{
+    addr::rename_path,
+    const_vars::{GLOBAL_JSON, LOCAL_DIR},
+    error::SpecResult,
+};
 
 pub trait Persistable<T> {
     fn save_to(&self, path: &Path) -> SpecResult<()>;
@@ -43,7 +47,7 @@ impl LocalizePath {
         Self {
             local: root.join(LOCAL_DIR),
             value: root.join("value"),
-            global: Some(root.join("value/value.json")),
+            global: Some(root.join(GLOBAL_JSON)),
         }
     }
     pub fn join<P: AsRef<Path>>(&self, path: P) -> Self {

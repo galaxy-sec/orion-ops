@@ -12,7 +12,7 @@ use crate::{
     addr::path_file_name,
     artifact::ArtifactPackage,
     conf::ConfSpec,
-    const_vars::SPEC_DIR,
+    const_vars::{ARTIFACT_YML, CONF_SPEC_YML, RES_SPEC_YML, SPEC_DIR, VARS_YML},
     error::{SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
@@ -59,9 +59,9 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let logs_path = spec_path.join(crate::const_vars::LOGS_SPEC_YML);
         self.logs_spec.save_conf(&logs_path)?;
 
-        let res_path = spec_path.join("res_spec.yml");
+        let res_path = spec_path.join(RES_SPEC_YML);
         self.res_spec.save_conf(&res_path)?;
-        let vars_path = spec_path.join("vars.yml");
+        let vars_path = spec_path.join(VARS_YML);
         self.vars.save_conf(&vars_path)?;
         Ok(())
     }
@@ -74,11 +74,11 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             .with(&ctx)?;
         let actions = ModWorkflows::load_from(root_path).with(&ctx)?;
         let target_path = root_path.join(SPEC_DIR);
-        let artifact_path = target_path.join("artifact.yml");
+        let artifact_path = target_path.join(ARTIFACT_YML);
         ctx.with_path("artifact", &artifact_path);
         let artifact = ArtifactPackage::from_conf(&artifact_path).with(&ctx)?;
 
-        let spec_path = target_path.join("conf_spec.yml");
+        let spec_path = target_path.join(CONF_SPEC_YML);
         ctx.with_path("conf_spec", &spec_path);
         let conf_spec = ConfSpec::from_conf(&spec_path).with(&ctx)?;
         let logs_path = target_path.join(crate::const_vars::LOGS_SPEC_YML);

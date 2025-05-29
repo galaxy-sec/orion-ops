@@ -8,9 +8,9 @@ use crate::{
     task::OperationType,
 };
 
-const HOST_SETUP_GXL: &str = include_str!("init/host/spec/workflows/setup.gxl");
-const HOST_UPDATE_GXL: &str = include_str!("init/host/spec/workflows/update.gxl");
-const HOST_SETUP_SH: &str = include_str!("init/host/spec/workflows/setup.sh");
+const HOST_SETUP_GXL: &str = include_str!("init/host/workflows/setup.gxl");
+const HOST_UPDATE_GXL: &str = include_str!("init/host/workflows/update.gxl");
+const HOST_SETUP_SH: &str = include_str!("init/host/workflows/setup.sh");
 const MOD_HOST_PRJ: &str = include_str!("init/host/_gal/work.gxl");
 
 const K8S_SETUP_GXL: &str = include_str!("init/k8s/spec/workflows/setup.gxl");

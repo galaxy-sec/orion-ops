@@ -23,7 +23,7 @@ pub trait FlowPaths {
 pub struct ModLabel;
 impl FlowPaths for ModLabel {
     fn workflow() -> PathBuf {
-        PathBuf::from("spec/workflows")
+        PathBuf::from(crate::const_vars::WORKFLOWS_DIR)
     }
 }
 #[derive(Clone, Debug)]
@@ -31,7 +31,7 @@ pub struct SysLabel;
 
 impl FlowPaths for SysLabel {
     fn workflow() -> PathBuf {
-        PathBuf::from("workflows")
+        PathBuf::from(crate::const_vars::WORKFLOWS_DIR)
     }
 }
 pub type ModWorkflows = Workflows<ModLabel>;

@@ -5,6 +5,7 @@ use std::{
 
 use crate::{
     addr::{AddrType, path_file_name},
+    const_vars::CONFS_DIR,
     error::SpecResult,
     types::{AsyncUpdateable, Configable},
 };
@@ -122,7 +123,7 @@ impl ConfSpec {
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
-        let root = path.join("confs");
+        let root = path.join(CONFS_DIR);
         std::fs::create_dir_all(&root).owe_res()?;
         for f in &self.files {
             if let Some(addr) = f.addr() {

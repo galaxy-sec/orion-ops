@@ -1,4 +1,4 @@
-extern mod setup,update { path = "./spec/workflows"; }
+extern mod setup,update { path = "./workflows"; }
 
 
 mod main   {
