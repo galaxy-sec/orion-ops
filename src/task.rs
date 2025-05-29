@@ -9,6 +9,14 @@ pub enum OperationType {
     Setup,
     #[display("update")]
     Update,
+    #[display("port")]
+    Port,
+    #[display("backup")]
+    Backup,
+    #[display("clean")]
+    Clean,
+    #[display("uninstall")]
+    UnInstall,
 }
 pub trait Task {
     fn exec(&self) -> SpecResult<()>;

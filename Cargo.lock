@@ -1987,7 +1987,7 @@ dependencies = [
 
 [[package]]
 name = "orion-syspec"
-version = "0.2.1"
+version = "0.2.3"
 dependencies = [
  "anyhow",
  "async-trait",

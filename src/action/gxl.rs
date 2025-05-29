@@ -32,6 +32,9 @@ impl Persistable<GxlAction> for GxlAction {
         let task_type = match file_name {
             "setup.gxl" => OperationType::Setup,
             "update.gxl" => OperationType::Update,
+            "port.gxl" => OperationType::Port,
+            "backup.gxl" => OperationType::Backup,
+            "uninstall.gxl" => OperationType::UnInstall,
             _ => todo!(),
         };
         let code = std::fs::read_to_string(path).owe_res()?;
