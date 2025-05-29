@@ -2,6 +2,7 @@ use super::{VarValue, constraint::ValueConstraint, definition::VarDefinition};
 use derive_more::{Display, From};
 use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
 pub enum VarType {
     #[serde(rename = "string")]
     String(VarDefinition<String>),
@@ -70,8 +71,9 @@ impl From<(&str, f64)> for VarType {
     }
 }
 
-//#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[derive(Clone, Debug, PartialEq, Display, From)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq,From,Display)]
+#[serde(untagged)]
+//#[derive(Clone, Debug, PartialEq, Display, From)]
 pub enum ValueType {
     String(VarValue<String>),
     Bool(VarValue<bool>),
@@ -79,6 +81,7 @@ pub enum ValueType {
     Float(VarValue<f64>),
 }
 
+/*
 impl serde::Serialize for ValueType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -139,6 +142,7 @@ impl<'de> serde::Deserialize<'de> for ValueType {
         deserializer.deserialize_any(ValueTypeVisitor)
     }
 }
+    */
 
 impl From<&str> for ValueType {
     fn from(value: &str) -> Self {

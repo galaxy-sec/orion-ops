@@ -8,6 +8,7 @@ use crate::{error::SpecResult, types::AsyncUpdateable};
 use super::{GitAddr, HttpAddr, LocalAddr};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum AddrType {
     #[serde(rename = "git")]
     Git(GitAddr),
