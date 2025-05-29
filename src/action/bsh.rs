@@ -15,6 +15,15 @@ impl BashAction {
     pub fn new(task: OperationType, code: String) -> Self {
         Self { task, code }
     }
+    pub fn is_action(path: &Path) -> bool {
+        if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
+            match file_name {
+                "setup.sh" | "update.sh" | "port.sh" | "backup.sh" | "uninstall.sh" => true,
+                _ => false,
+            };
+        }
+        false
+    }
 }
 
 impl Persistable<BashAction> for BashAction {

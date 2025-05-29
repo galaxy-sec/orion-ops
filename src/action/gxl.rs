@@ -15,6 +15,15 @@ impl GxlAction {
     pub fn new(task: OperationType, code: String) -> Self {
         Self { task, code }
     }
+    pub fn is_action(path: &Path) -> bool {
+        if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
+            return match file_name {
+                "setup.gxl" | "update.gxl" | "port.gxl" | "backup.gxl" | "uninstall.gxl" => true,
+                _ => false,
+            };
+        }
+        false
+    }
 }
 impl Persistable<GxlAction> for GxlAction {
     fn save_to(&self, path: &Path) -> SpecResult<()> {
