@@ -57,7 +57,7 @@ impl SysModelSpec {
         self.net.save_conf(&net_path)?;
         let var_path = spec_path.join(crate::const_vars::VARS_YML);
         self.vars.save_conf(&var_path)?;
-        self.actions.save_to(&root)?;
+        self.actions.save_to(&root, None)?;
         Ok(())
     }
 

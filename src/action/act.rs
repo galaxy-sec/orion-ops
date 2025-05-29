@@ -51,15 +51,15 @@ impl<T> Persistable<Workflows<T>> for Workflows<T>
 where
     T: FlowPaths,
 {
-    fn save_to(&self, path: &Path) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
         let action_path = path.join(T::workflow());
         std::fs::create_dir_all(&action_path)
             .owe_res()
             .with(&action_path)?;
         for item in &self.actions {
-            item.save_to(&action_path)?;
+            item.save_to(&action_path, name.clone())?;
         }
-        self.project.save_to(path)?;
+        self.project.save_to(path, name)?;
         Ok(())
     }
 
@@ -104,10 +104,10 @@ pub enum Workflow {
 }
 
 impl Persistable<Workflow> for Workflow {
-    fn save_to(&self, path: &Path) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
         match self {
-            Workflow::Bash(act) => act.save_to(path),
-            Workflow::Gxl(act) => act.save_to(path),
+            Workflow::Bash(act) => act.save_to(path, name),
+            Workflow::Gxl(act) => act.save_to(path, name),
         }
     }
 
@@ -172,7 +172,7 @@ mod tests {
 
         // 测试保存和加载
         let original = ModWorkflows::mod_host_tpl_init();
-        original.save_to(&path)?;
+        original.save_to(&path, None)?;
 
         let loaded = ModWorkflows::load_from(&path)?;
         assert_eq!(loaded.actions().len(), original.actions().len());

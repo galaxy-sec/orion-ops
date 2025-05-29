@@ -60,6 +60,17 @@ impl ModuleSpec {
         }
         Ok(())
     }
+    pub fn save_main(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+        let mod_path = path.join(name.unwrap_or(self.name().clone()));
+        std::fs::create_dir_all(&mod_path)
+            .owe_conf()
+            .with(format!("path: {}", mod_path.display()))?;
+
+        for node in self.targets.values() {
+            node.save_main(&mod_path, Some("".into()))?;
+        }
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -73,14 +84,14 @@ impl AsyncUpdateable for ModuleSpec {
 }
 
 impl Persistable<ModuleSpec> for ModuleSpec {
-    fn save_to(&self, path: &Path) -> SpecResult<()> {
-        let mod_path = path.join(self.name());
+    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+        let mod_path = path.join(name.unwrap_or(self.name().clone()));
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
 
         for node in self.targets.values() {
-            node.save_to(&mod_path)?;
+            node.save_to(&mod_path, None)?;
         }
         Ok(())
     }
@@ -228,11 +239,11 @@ pub mod test {
     #[tokio::test]
     async fn build_mod_example() -> SpecResult<()> {
         let spec = make_mod_spec_example()?;
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
         let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
         loaded.localize(None).await?;
         let spec = make_mod_spec_mod1()?;
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT))?;
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
         let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
         loaded.localize(None).await?;
         Ok(())

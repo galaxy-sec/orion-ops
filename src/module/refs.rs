@@ -76,7 +76,12 @@ impl Localizable for ModuleSpecRef {
             if let Some(local) = &self.local {
                 let mod_path = local.join(self.name.as_str());
                 let spec = ModuleSpec::load_from(&mod_path)?;
-                let cur_dst_path = dst_path.map(|x| x.join(self.name.as_str()));
+                if let Some(dst) = &dst_path {
+                    spec.save_main(dst.local(), None)?;
+                }
+                let value = PathBuf::from(self.name());
+                let local = PathBuf::from(self.name()).join("spec");
+                let cur_dst_path = dst_path.map(|x| x.join(local, value));
                 spec.localize(cur_dst_path).await?;
             }
             Ok(())

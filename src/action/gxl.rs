@@ -26,7 +26,7 @@ impl GxlAction {
     }
 }
 impl Persistable<GxlAction> for GxlAction {
-    fn save_to(&self, path: &Path) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
         let path_file = path.join(format!("{}.gxl", self.task()));
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())

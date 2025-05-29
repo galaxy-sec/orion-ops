@@ -56,7 +56,7 @@ impl ModulesList {
 #[async_trait]
 impl Localizable for ModulesList {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        let root = dst_path.map(|x| x.join("mods"));
+        let root = dst_path.map(|x| x.join_all("mods"));
         //std::fs::create_dir_all(&root).owe_data()?;
         for m in &self.mods {
             m.localize(root.clone()).await?;

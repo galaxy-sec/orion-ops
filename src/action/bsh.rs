@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
@@ -27,8 +27,8 @@ impl BashAction {
 }
 
 impl Persistable<BashAction> for BashAction {
-    fn save_to(&self, path: &Path) -> SpecResult<()> {
-        let path_file = path.join("setup.sh");
+    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+        let path_file = name.map(PathBuf::from).unwrap_or(path.join("setup.sh"));
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }

@@ -42,15 +42,25 @@ impl AsyncUpdateable for ModTargetSpec {
         Ok(path.to_path_buf())
     }
 }
+impl ModTargetSpec {
+    pub fn save_main(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
+        let target_path = root.join(name.unwrap_or(self.target().to_string()));
+        std::fs::create_dir_all(&target_path)
+            .owe_conf()
+            .with(format!("path: {}", target_path.display()))?;
+        self.actions.save_to(&target_path, None)?;
+        Ok(())
+    }
+}
 
 impl Persistable<ModTargetSpec> for ModTargetSpec {
-    fn save_to(&self, root: &Path) -> SpecResult<()> {
-        let target_path = root.join(self.target().to_string());
+    fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
+        let target_path = root.join(name.unwrap_or(self.target().to_string()));
         let spec_path = root.join(self.target().to_string()).join(SPEC_DIR);
         std::fs::create_dir_all(&spec_path)
             .owe_conf()
             .with(format!("path: {}", spec_path.display()))?;
-        self.actions.save_to(&target_path)?;
+        self.actions.save_to(&target_path, None)?;
         let artifact_path = spec_path.join(crate::const_vars::ARTIFACT_YML);
         self.artifact.save_conf(&artifact_path)?;
 

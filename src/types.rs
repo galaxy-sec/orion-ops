@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub trait Persistable<T> {
-    fn save_to(&self, path: &Path) -> SpecResult<()>;
+    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()>;
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
@@ -50,10 +50,17 @@ impl LocalizePath {
             global: Some(root.join(GLOBAL_JSON)),
         }
     }
-    pub fn join<P: AsRef<Path>>(&self, path: P) -> Self {
+    pub fn join_all<P: AsRef<Path>>(&self, path: P) -> Self {
         Self {
             local: self.local.join(&path),
             value: self.value.join(&path),
+            global: self.global.clone(),
+        }
+    }
+    pub fn join<P: AsRef<Path>>(&self, local: P, value: P) -> Self {
+        Self {
+            local: self.local.join(&local),
+            value: self.value.join(&value),
             global: self.global.clone(),
         }
     }
