@@ -1,4 +1,4 @@
-use super::{VarValue, constraint::ValueConstraint, definition::VarDefinition};
+use super::{VarValue, definition::VarDefinition};
 use derive_more::{Display, From};
 use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -21,23 +21,6 @@ impl VarType {
             VarType::Int(var) => var.name(),
             VarType::Float(var) => var.name(),
         }
-    }
-    pub fn constraint(mut self, constr: ValueConstraint) -> Self {
-        match &mut self {
-            VarType::String(var_define) => {
-                var_define.set_constr(constr);
-            }
-            VarType::Bool(var_define) => {
-                var_define.set_constr(constr);
-            }
-            VarType::Int(var_define) => {
-                var_define.set_constr(constr);
-            }
-            VarType::Float(var_define) => {
-                var_define.set_constr(constr);
-            }
-        }
-        self
     }
 
     pub(crate) fn var_value(&self) -> ValueType {
@@ -71,7 +54,7 @@ impl From<(&str, f64)> for VarType {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq,From,Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, From, Display)]
 #[serde(untagged)]
 //#[derive(Clone, Debug, PartialEq, Display, From)]
 pub enum ValueType {
@@ -180,33 +163,25 @@ mod tests {
     #[test]
     fn test_vartype_toml_serialization() {
         // 测试 String 类型的 TOML 序列化
-        let string_var = VarType::from(("test_str", "hello")).constraint(ValueConstraint::Locked);
+        let string_var = VarType::from(("test_str", "hello"));
         let serialized = toml::to_string(&string_var).unwrap();
-        let expected = r#"[string]
-name = "test_str"
+        let expected = r#"name = "test_str"
 value = "hello"
-constr = "locked"
 "#;
         assert_eq!(serialized, expected);
 
         // 测试 Bool 类型的 TOML 序列化
-        let bool_var = VarType::from(("test_bool", true)).constraint(ValueConstraint::scope(1, 10));
+        let bool_var = VarType::from(("test_bool", true));
         let serialized = toml::to_string(&bool_var).unwrap();
-        let expected = r#"[bool]
-name = "test_bool"
+        let expected = r#"name = "test_bool"
 value = true
-
-[bool.constr.scope]
-beg = 1
-end = 10
 "#;
         assert_eq!(serialized, expected);
 
         // 测试 Int 类型的 TOML 序列化
         let int_var = VarType::from(("test_int", 42));
         let serialized = toml::to_string(&int_var).unwrap();
-        let expected = r#"[int]
-name = "test_int"
+        let expected = r#"name = "test_int"
 value = 42
 "#;
         assert_eq!(serialized, expected);
@@ -214,8 +189,7 @@ value = 42
         // 测试 Float 类型的 TOML 序列化
         let float_var = VarType::from(("test_float", 3.14));
         let serialized = toml::to_string(&float_var).unwrap();
-        let expected = r#"[float]
-name = "test_float"
+        let expected = r#"name = "test_float"
 value = 3.14
 "#;
         assert_eq!(serialized, expected);
@@ -225,34 +199,27 @@ value = 3.14
     fn test_vartype_toml_deserialization() {
         // 测试 String 类型的 TOML 反序列化
         let toml_str = r#"
-            [string]
             name = "test_str"
             value = "hello"
-            constr = "locked"
         "#;
         let deserialized: VarType = toml::from_str(toml_str).unwrap();
 
-        let _expect = VarType::from(("test_str", "hello")).constraint(ValueConstraint::Locked);
+        let _expect = VarType::from(("test_str", "hello"));
         assert!(matches!(deserialized, _expect));
 
         // 测试 Bool 类型的 TOML 反序列化
         let toml_str = r#"
-            [bool]
             name = "test_bool"
             value = false
 
-            [bool.constr.scope]
-            beg = 5
-            end = 50
         "#;
         let deserialized: VarType = toml::from_str(toml_str).unwrap();
         let _constr = ValueConstraint::scope(5, 50);
-        let _expect = VarType::from(("test_bool", false)).constraint(_constr);
+        let _expect = VarType::from(("test_bool", false));
         assert!(matches!(deserialized, _expect));
 
         // 测试 Int 类型的 TOML 反序列化
         let toml_str = r#"
-            [int]
             name = "test_int"
             value = 100
         "#;
@@ -262,7 +229,6 @@ value = 3.14
 
         // 测试 Float 类型的 TOML 反序列化
         let toml_str = r#"
-            [float]
             name = "test_float"
             value = 1.618
         "#;

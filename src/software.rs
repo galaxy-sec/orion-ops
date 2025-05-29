@@ -71,6 +71,7 @@ impl ConstraintRule {
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum Constraint {
     Matching(String),
     WithInScope(u64, u64),

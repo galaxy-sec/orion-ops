@@ -2,8 +2,6 @@ use derive_getters::Getters;
 use derive_more::Display;
 use serde_derive::{Deserialize, Serialize};
 
-use super::constraint::ValueConstraint;
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct VarDefinition<T>
 where
@@ -11,15 +9,13 @@ where
 {
     name: String,
     value: T,
-    constr: Option<ValueConstraint>,
+    //#[serde(skip_serializing_if = "Option::is_none")]
+    //constr: Option<ValueConstraint>,
 }
 impl<T> VarDefinition<T>
 where
     T: serde::Serialize + Clone,
 {
-    pub(crate) fn set_constr(&mut self, constr: ValueConstraint) {
-        self.constr = Some(constr)
-    }
     pub(crate) fn var_value(&self) -> VarValue<T> {
         VarValue {
             value: self.value.clone(),
@@ -46,7 +42,6 @@ impl From<(&str, &str)> for VarDefinition<String> {
         VarDefinition {
             name: value.0.to_string(),
             value: value.1.to_string(),
-            constr: None,
         }
     }
 }
@@ -55,7 +50,6 @@ impl From<(&str, bool)> for VarDefinition<bool> {
         VarDefinition {
             name: value.0.to_string(),
             value: value.1,
-            constr: None,
         }
     }
 }
@@ -64,7 +58,6 @@ impl From<(&str, u64)> for VarDefinition<u64> {
         VarDefinition {
             name: value.0.to_string(),
             value: value.1,
-            constr: None,
         }
     }
 }
@@ -73,7 +66,6 @@ impl From<(&str, f64)> for VarDefinition<f64> {
         VarDefinition {
             name: value.0.to_string(),
             value: value.1,
-            constr: None,
         }
     }
 }

@@ -7,7 +7,7 @@ use crate::{
     action::act::SysWorkflows,
     const_vars::{SPEC_DIR, VALUE_JSON},
     types::{JsonAble, Localizable, LocalizePath},
-    vars::{ValueConstraint, VarCollection, VarType},
+    vars::{VarCollection, VarType},
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -163,7 +163,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     let vars = VarCollection::define(vec![
         VarType::from(("IP", "10.0.0.1")),
         VarType::from(("pass", false)),
-        VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
+        VarType::from(("SPEED_LIMIT", 1000)),
     ]);
 
     let actions = SysWorkflows::sys_tpl_init();
@@ -210,7 +210,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
     let vars = VarCollection::define(vec![
         VarType::from(("IP", "10.0.0.1")),
         VarType::from(("pass", false)),
-        VarType::from(("SPEED_LIMIT", 1000)).constraint(ValueConstraint::scope(1000, 10000)),
+        VarType::from(("SPEED_LIMIT", 1000)),
     ]);
 
     let actions = SysWorkflows::sys_tpl_init();
@@ -252,7 +252,9 @@ pub mod tests {
 
     #[tokio::test]
     async fn build_example_sys_spec() -> SpecResult<()> {
-        std::fs::remove_dir_all(SYS_MODEL_SPC_ROOT).owe_res()?;
+        if PathBuf::from(SYS_MODEL_SPC_ROOT).exists() {
+            std::fs::remove_dir_all(SYS_MODEL_SPC_ROOT).owe_res()?;
+        }
         let spec = make_sys_spec_example()?;
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root)?;
