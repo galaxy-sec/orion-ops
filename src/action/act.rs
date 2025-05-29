@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
+use super::gxl::GxlAction;
 use super::prj::GxlProject;
-use super::{bsh::BashAction, gxl::GxlAction};
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
@@ -99,14 +99,12 @@ where
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Workflow {
-    Bash(BashAction),
     Gxl(GxlAction),
 }
 
 impl Persistable<Workflow> for Workflow {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
         match self {
-            Workflow::Bash(act) => act.save_to(path, name),
             Workflow::Gxl(act) => act.save_to(path, name),
         }
     }
@@ -123,7 +121,6 @@ impl Persistable<Workflow> for Workflow {
 
         // 根据扩展名分发加载逻辑
         match path.extension().and_then(|s| s.to_str()) {
-            Some("sh") => BashAction::load_from(path).map(Workflow::Bash),
             Some("gxl") => GxlAction::load_from(path).map(Workflow::Gxl),
             _ => Err(StructError::from_conf("file type not support".into())).with(path),
         }

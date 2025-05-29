@@ -17,7 +17,6 @@ pub enum OperationType {
     Clean,
     #[display("uninstall")]
     UnInstall,
-    #[display("other")]
     Other,
 }
 pub trait Task {

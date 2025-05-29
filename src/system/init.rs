@@ -21,10 +21,18 @@ pub trait SysPrjIniter {
 
 impl SysActIniter for GxlAction {
     fn sys_setup_tpl() -> Self {
-        Self::new(OperationType::Setup, SYS_SETUP_GXL.to_string())
+        Self::new(
+            OperationType::Setup,
+            "setup.gxl".into(),
+            SYS_SETUP_GXL.to_string(),
+        )
     }
     fn sys_update_tpl() -> Self {
-        Self::new(OperationType::Update, SYS_UPDATE_GXL.to_string())
+        Self::new(
+            OperationType::Update,
+            "update.gxl".into(),
+            SYS_UPDATE_GXL.to_string(),
+        )
     }
 }
 impl SysPrjIniter for GxlProject {

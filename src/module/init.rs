@@ -1,7 +1,6 @@
 use crate::{
     action::{
         act::{ModWorkflows, Workflow},
-        bsh::BashAction,
         gxl::GxlAction,
         prj::GxlProject,
     },
@@ -10,7 +9,6 @@ use crate::{
 
 const HOST_SETUP_GXL: &str = include_str!("init/host/workflows/setup.gxl");
 const HOST_UPDATE_GXL: &str = include_str!("init/host/workflows/update.gxl");
-const HOST_SETUP_SH: &str = include_str!("init/host/workflows/setup.sh");
 const MOD_HOST_PRJ: &str = include_str!("init/host/_gal/work.gxl");
 
 const K8S_SETUP_GXL: &str = include_str!("init/k8s/spec/workflows/setup.gxl");
@@ -29,16 +27,32 @@ pub trait ModPrjIniter {
 
 impl ModActIniter for GxlAction {
     fn host_setup_tpl() -> Self {
-        Self::new(OperationType::Setup, HOST_SETUP_GXL.to_string())
+        Self::new(
+            OperationType::Setup,
+            "setup.gxl".into(),
+            HOST_SETUP_GXL.to_string(),
+        )
     }
     fn host_update_tpl() -> Self {
-        Self::new(OperationType::Update, HOST_UPDATE_GXL.to_string())
+        Self::new(
+            OperationType::Update,
+            "update.gxl".into(),
+            HOST_UPDATE_GXL.to_string(),
+        )
     }
     fn k8s_setup_tpl() -> Self {
-        Self::new(OperationType::Setup, K8S_SETUP_GXL.to_string())
+        Self::new(
+            OperationType::Setup,
+            "setup.gxl".into(),
+            K8S_SETUP_GXL.to_string(),
+        )
     }
     fn k8s_update_tpl() -> Self {
-        Self::new(OperationType::Update, K8S_UPDATE_GXL.to_string())
+        Self::new(
+            OperationType::Update,
+            "update.gxl".into(),
+            K8S_UPDATE_GXL.to_string(),
+        )
     }
 }
 impl ModPrjIniter for GxlProject {
@@ -47,12 +61,6 @@ impl ModPrjIniter for GxlProject {
     }
     fn spec_k8s_tpl() -> Self {
         Self::from(MOD_K8S_PRJ.to_string())
-    }
-}
-
-impl BashAction {
-    pub fn setup_tpl() -> Self {
-        Self::new(OperationType::Setup, HOST_SETUP_SH.to_string())
     }
 }
 

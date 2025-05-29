@@ -8,12 +8,13 @@ use crate::{error::SpecResult, task::OperationType, types::Persistable};
 #[derive(Getters, Clone, Debug, PartialEq)]
 pub struct GxlAction {
     task: OperationType,
+    file: String,
     code: String,
 }
 
 impl GxlAction {
-    pub fn new(task: OperationType, code: String) -> Self {
-        Self { task, code }
+    pub fn new(task: OperationType, file: String, code: String) -> Self {
+        Self { task, file, code }
     }
     pub fn is_action(path: &Path) -> bool {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
@@ -27,7 +28,7 @@ impl GxlAction {
 }
 impl Persistable<GxlAction> for GxlAction {
     fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
-        let path_file = path.join(format!("{}.gxl", self.task()));
+        let path_file = path.join(self.file());
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }
@@ -49,6 +50,7 @@ impl Persistable<GxlAction> for GxlAction {
         let code = std::fs::read_to_string(path).owe_res()?;
         Ok(Self {
             task: task_type,
+            file: file_name.to_string(),
             code,
         })
     }
