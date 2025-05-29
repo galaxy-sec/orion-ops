@@ -123,20 +123,8 @@ impl Persistable<Workflow> for Workflow {
 
         // 根据扩展名分发加载逻辑
         match path.extension().and_then(|s| s.to_str()) {
-            Some("sh") => {
-                if BashAction::is_action(path) {
-                    return BashAction::load_from(path).map(Workflow::Bash);
-                } else {
-                    return Err(StructError::from_conf("not bash action ".into())).with(path);
-                }
-            }
-            Some("gxl") => {
-                if GxlAction::is_action(path) {
-                    return GxlAction::load_from(path).map(Workflow::Gxl);
-                } else {
-                    return Err(StructError::from_conf("not gxl action".into())).with(path);
-                }
-            }
+            Some("sh") => BashAction::load_from(path).map(Workflow::Bash),
+            Some("gxl") => GxlAction::load_from(path).map(Workflow::Gxl),
             _ => Err(StructError::from_conf("file type not support".into())).with(path),
         }
     }

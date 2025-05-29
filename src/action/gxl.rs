@@ -44,7 +44,7 @@ impl Persistable<GxlAction> for GxlAction {
             "port.gxl" => OperationType::Port,
             "backup.gxl" => OperationType::Backup,
             "uninstall.gxl" => OperationType::UnInstall,
-            _ => todo!(),
+            _ => OperationType::Other,
         };
         let code = std::fs::read_to_string(path).owe_res()?;
         Ok(Self {

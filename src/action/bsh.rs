@@ -42,7 +42,10 @@ impl Persistable<BashAction> for BashAction {
         let task_type = match file_name {
             "setup.sh" => OperationType::Setup,
             "update.sh" => OperationType::Update,
-            _ => todo!(),
+            "port.sh" => OperationType::Port,
+            "backup.sh" => OperationType::Backup,
+            "uninstall.sh" => OperationType::UnInstall,
+            _ => OperationType::Other,
         };
         let code = std::fs::read_to_string(path).owe_res()?;
         Ok(Self {

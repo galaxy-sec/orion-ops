@@ -80,7 +80,7 @@ impl Localizable for ModuleSpecRef {
                     spec.save_main(dst.local(), None)?;
                 }
                 let value = PathBuf::from(self.name());
-                let local = PathBuf::from(self.name()).join("spec");
+                let local = PathBuf::from(self.name()).join("local");
                 let cur_dst_path = dst_path.map(|x| x.join(local, value));
                 spec.localize(cur_dst_path).await?;
             }
