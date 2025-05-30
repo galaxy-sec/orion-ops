@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_render_directory() {
-        let tmp_dir = PathBuf::from("./temp/tpl");
+        let tmp_dir = tempdir().unwrap().path().to_path_buf();
         let tpl_dir = tmp_dir.join("templates");
         if tmp_dir.exists() {
             std::fs::remove_dir_all(&tmp_dir).unwrap();
@@ -261,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_excluded_files() {
-        let tmp_dir = PathBuf::from("./temp/tpl2");
+        let tmp_dir = tempdir().unwrap().path().to_path_buf(); //PathBuf::from("./temp/tpl2");
         let tpl_dir = tmp_dir.join("templates");
         if tmp_dir.exists() {
             std::fs::remove_dir_all(&tmp_dir).unwrap();
