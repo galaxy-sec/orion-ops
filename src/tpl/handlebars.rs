@@ -1,8 +1,6 @@
 use std::{
-    fmt::Display,
     fs::File,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use fs_extra::dir::CopyOptions;
@@ -13,36 +11,9 @@ use serde::Serialize;
 
 use crate::{error::SpecResult, module::setting::TemplatePath};
 
-#[derive(Clone, Debug, PartialEq, Default)]
-pub enum TPlEngineType {
-    #[default]
-    Handlebars,
-    Helm,
-}
-impl FromStr for TPlEngineType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "handlebars" => Ok(Self::Handlebars),
-            "helm" => Ok(Self::Helm),
-            _ => Err("unknow engine".to_string()),
-        }
-    }
-}
-impl Display for TPlEngineType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let msg = match self {
-            TPlEngineType::Handlebars => "handlebars",
-            TPlEngineType::Helm => "helm",
-        };
-        write!(f, "{}", msg)
-    }
-}
-pub struct TplRender;
-impl TplRender {
+pub struct TplHandleBars;
+impl TplHandleBars {
     pub fn render_path(
-        engine: TPlEngineType,
         tpl: &PathBuf,
         dst: &PathBuf,
         data: &PathBuf,
@@ -50,13 +21,11 @@ impl TplRender {
     ) -> SpecResult<()> {
         let mut err_ctx = WithContext::want("render tpl path");
         // 处理目录模板
-        if engine != TPlEngineType::Handlebars {
-            unimplemented!("not support other engine")
-        }
         let mut handlebars = Handlebars::new();
         handlebars.set_strict_mode(true);
         // 准备数据
 
+        err_ctx.with_path("data", data);
         let content = std::fs::read_to_string(data).owe_data().with(&err_ctx)?;
         err_ctx.with("need-fmt", "json");
         let data: serde_json::Value = serde_json::from_str(content.as_str())
@@ -68,6 +37,7 @@ impl TplRender {
             Self::render_file_impl(&handlebars, tpl, dst, &data, setting)
         }
     }
+
     fn render_dir_impl<T: Serialize>(
         handlebars: &Handlebars,
         tpl_dir: &PathBuf,
@@ -81,24 +51,15 @@ impl TplRender {
             let tpl_path = entry.path().to_path_buf();
             let relative_path = tpl_path.strip_prefix(tpl_dir).owe_data()?;
             let dst_path = Path::new(dst).join(relative_path);
-            if setting.is_exclude(&tpl_path) {
-                if let Some(dist) = dst_path.parent() {
-                    fs_extra::copy_items(&[&tpl_path], &dist, &CopyOptions::default())
-                        .owe_res()
-                        .with(("tpl", &tpl_path))
-                        .with(("dst", &dist.to_path_buf()))?;
-                }
-            } else {
-                if tpl_path.is_dir() {
-                    // 如果是目录，确保在目标位置创建对应的目录
-                    std::fs::create_dir_all(&dst_path).owe_sys()?;
-                    debug!("created dir: {}", dst_path.display());
-                } else if tpl_path.is_file() {
-                    // 如果是文件，则渲染模板
-                    Self::render_file_impl(handlebars, &tpl_path, &dst_path, &data, setting)?;
-                }
+
+            if tpl_path.is_dir() {
+                // 如果是目录，确保在目标位置创建对应的目录
+                std::fs::create_dir_all(&dst_path).owe_sys()?;
+                debug!("created dir: {}", dst_path.display());
+            } else if tpl_path.is_file() {
+                // 如果是文件，则渲染模板
+                Self::render_file_impl(handlebars, &tpl_path, &dst_path, &data, setting)?;
             }
-            // 忽略其他类型（如符号链接等）
         }
         Ok(())
     }
@@ -121,10 +82,12 @@ impl TplRender {
         }
         if setting.is_exclude(&tpl_path) {
             if let Some(dist) = dst_path.parent() {
+                println!("copy {:30} ---> {}", tpl_path.display(), dist.display());
                 fs_extra::copy_items(&[&tpl_path], &dist, &CopyOptions::default())
                     .owe_res()
                     .with(("tpl", tpl_path))
                     .with(("dst", dist))?;
+
                 return Ok(());
             }
             return Err(StructError::from_res("path not parent".into())).with(dst_path);
@@ -205,8 +168,7 @@ mod tests {
         let setting = TemplatePath::default();
 
         // 执行渲染
-        let result = TplRender::render_path(
-            TPlEngineType::Handlebars,
+        let result = TplHandleBars::render_path(
             &tpl_file,
             &output_dir.join("output.txt"),
             &data_file,
@@ -240,13 +202,7 @@ mod tests {
         let output_dir = tmp_dir.join("output");
         let setting = TemplatePath::default();
 
-        let result = TplRender::render_path(
-            TPlEngineType::Handlebars,
-            &tpl_dir,
-            &output_dir,
-            &data_file,
-            &setting,
-        );
+        let result = TplHandleBars::render_path(&tpl_dir, &output_dir, &data_file, &setting);
 
         assert!(result.is_ok());
         assert_eq!(
@@ -281,14 +237,7 @@ mod tests {
         let mut setting = TemplatePath::default();
         setting.exclude_mut().push(tpl_dir.join("exclude.txt"));
 
-        let _ = TplRender::render_path(
-            TPlEngineType::Handlebars,
-            &tpl_dir,
-            &output_dir,
-            &data_file,
-            &setting,
-        )
-        .unwrap();
+        let _ = TplHandleBars::render_path(&tpl_dir, &output_dir, &data_file, &setting).unwrap();
 
         // 验证模板文件被渲染
         assert_eq!(

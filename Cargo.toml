@@ -31,6 +31,7 @@ lazy_static = "~1.5"
 futures = "0.3"
 url = "2.5"
 home = "0.5"
+gtmpl = "0.7.1"
 
 handlebars = "6.3"
 fs_extra = "1.3"
