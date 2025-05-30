@@ -1,13 +1,13 @@
 pub mod init;
 pub mod metrc;
 pub mod refs;
+pub mod setting;
 pub mod spec;
 pub mod target;
-use std::{fmt::Display, str::FromStr};
-
 use derive_more::{Display, From};
 use serde::Serializer;
 use serde_derive::{Deserialize, Serialize};
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Display, PartialEq, Eq, Hash)]
 pub enum CpuArch {

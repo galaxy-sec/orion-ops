@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use derive_getters::Getters;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom};
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 use url::Url;
@@ -50,13 +50,20 @@ impl HttpAddr {
 impl HttpAddr {
     pub async fn upload<P: AsRef<Path>>(&self, file_path: P, method: &str) -> SpecResult<()> {
         use indicatif::{ProgressBar, ProgressStyle};
+        let mut ctx = WithContext::want("upload url");
 
         let client = reqwest::Client::new();
         let file_name = self
             .get_filename()
             .unwrap_or_else(|| "file.bin".to_string());
-        let file_content = std::fs::read(file_path).owe_data()?;
+        ctx.with_path("local file", file_path.as_ref());
 
+        println!(
+            "upload : {} => \n {}",
+            file_path.as_ref().display(),
+            self.url(),
+        );
+        let file_content = std::fs::read(file_path).owe_data().with(&ctx)?;
         // 创建进度条
         let pb = ProgressBar::new(file_content.len() as u64);
         pb.set_style(ProgressStyle::default_bar()
@@ -68,6 +75,7 @@ impl HttpAddr {
             reqwest::multipart::Part::bytes(file_content).file_name(file_name),
         );
 
+        ctx.with("url", self.url());
         let mut request = match method.to_uppercase().as_str() {
             "POST" => client.post(&self.url),
             "PUT" => client.put(&self.url),
@@ -85,16 +93,16 @@ impl HttpAddr {
             request = request.basic_auth(u, Some(p));
         }
 
-        let response = request.send().await.owe_res()?;
-        response.error_for_status().owe_res()?;
-
+        let response = request.send().await.owe_res().with(&ctx)?;
+        response.error_for_status().owe_res().with(&ctx)?;
         pb.finish_with_message("上传完成");
         Ok(())
     }
 
     pub async fn download(&self, dest_path: &Path) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
-
+        let mut ctx = WithContext::want("download url");
+        ctx.with("url", self.url());
         let client = reqwest::Client::new();
         let mut request = client.get(&self.url);
 
@@ -102,25 +110,24 @@ impl HttpAddr {
             request = request.basic_auth(u, Some(p));
         }
 
-        let mut response = request
-            .send()
-            .await
-            .owe_res()
-            .with(format!("Failed to download {}", self.url))?;
+        println!("donwload :{}", self.url());
+        let mut response = request.send().await.owe_res().with(&ctx)?;
 
         if !response.status().is_success() {
             return Err(StructError::from_res(format!(
                 "HTTP request failed: {}",
                 response.status()
-            )));
+            )))
+            .with(&ctx);
         }
 
         let total_size = response.content_length().unwrap_or(0);
 
+        ctx.with_path("local", dest_path);
         let mut file = tokio::fs::File::create(&dest_path)
             .await
             .owe_conf()
-            .with(format!("Failed to create {}", dest_path.display()))?;
+            .with(&ctx)?;
 
         // 创建进度条
         let pb = ProgressBar::new(total_size);
@@ -130,11 +137,8 @@ impl HttpAddr {
 
         let mut downloaded: u64 = 0;
 
-        while let Some(chunk) = response.chunk().await.owe_data()? {
-            file.write_all(&chunk)
-                .await
-                .owe_sys()
-                .with(format!("Failed to write to {}", dest_path.display()))?;
+        while let Some(chunk) = response.chunk().await.owe_data().with(&ctx)? {
+            file.write_all(&chunk).await.owe_sys().with(&ctx)?;
 
             downloaded += chunk.len() as u64;
             pb.set_position(downloaded);

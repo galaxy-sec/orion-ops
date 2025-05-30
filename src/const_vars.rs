@@ -13,6 +13,7 @@ pub const GLOBAL_JSON: &str = "value/value.json";
 pub const USED_JSON: &str = "used.json";
 pub const ARTIFACT_YML: &str = "artifact.yml";
 pub const CONF_SPEC_YML: &str = "conf.yml";
+pub const SETTING_YML: &str = "setting.yml";
 pub const LOGS_SPEC_YML: &str = "logs.yml";
 pub const RES_SPEC_YML: &str = "res.yml";
 pub const SPEC_DIR: &str = "spec";

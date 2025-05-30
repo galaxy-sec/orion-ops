@@ -21,7 +21,10 @@ use crate::{
     vars::{ValueDict, VarCollection},
 };
 
-use super::TargetNode;
+use super::{
+    TargetNode,
+    setting::{Setting, TemplatePath},
+};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModTargetSpec {
@@ -33,6 +36,7 @@ pub struct ModTargetSpec {
     res_spec: CaculateResSpec,
     vars: VarCollection,
     local: Option<PathBuf>,
+    setting: Option<Setting>,
 }
 
 #[async_trait]
@@ -60,6 +64,11 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         std::fs::create_dir_all(&spec_path)
             .owe_conf()
             .with(format!("path: {}", spec_path.display()))?;
+
+        if let Some(setting) = &self.setting {
+            let setting_path = target_path.join(crate::const_vars::SETTING_YML);
+            setting.save_conf(&setting_path)?;
+        }
         self.actions.save_to(&target_path, None)?;
         let artifact_path = spec_path.join(crate::const_vars::ARTIFACT_YML);
         self.artifact.save_conf(&artifact_path)?;
@@ -84,6 +93,13 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             .with(&ctx)?;
         let actions = ModWorkflows::load_from(root_path).with(&ctx)?;
         let target_path = root_path.join(SPEC_DIR);
+
+        let setting_path = root_path.join(crate::const_vars::SETTING_YML);
+        let setting = if setting_path.exists() {
+            Some(Setting::from_conf(&setting_path)?)
+        } else {
+            None
+        };
         let artifact_path = target_path.join(ARTIFACT_YML);
         ctx.with_path("artifact", &artifact_path);
         let artifact = ArtifactPackage::from_conf(&artifact_path).with(&ctx)?;
@@ -110,6 +126,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             res_spec,
             local: Some(root_path.to_path_buf()),
             vars,
+            setting,
         })
     }
 }
@@ -121,6 +138,7 @@ impl ModTargetSpec {
         conf_spec: ConfSpec,
         res_spec: CaculateResSpec,
         vars: VarCollection,
+        setting: Option<Setting>,
     ) -> Self {
         Self {
             target,
@@ -131,6 +149,7 @@ impl ModTargetSpec {
             res_spec,
             local: None,
             vars,
+            setting,
         }
     }
 }
@@ -146,7 +165,7 @@ impl Localizable for ModTargetSpec {
         let tpl = local.join(crate::const_vars::SPEC_DIR);
         let localize_path = dst_path.unwrap_or(LocalizePath::new(
             local.join(crate::const_vars::LOCAL_DIR),
-            local,
+            local.clone(),
         ));
 
         let value_path = localize_path.value().join(crate::const_vars::VALUE_JSON);
@@ -169,9 +188,20 @@ impl Localizable for ModTargetSpec {
             let used = ValueDict::from_json(&value_path)?;
             used.save_json(&used_path)?;
         }
+        let tpl_setting = if let Some(setting) = &self.setting {
+            setting.localize_tpl().export_paths(&local)
+        } else {
+            TemplatePath::default()
+        };
 
-        TplRender::render_path(TPlEngineType::Handlebars, &tpl, local_path, &used_path)
-            .with(&ctx)?;
+        TplRender::render_path(
+            TPlEngineType::Handlebars,
+            &tpl,
+            local_path,
+            &used_path,
+            &tpl_setting,
+        )
+        .with(&ctx)?;
         Ok(())
     }
 }

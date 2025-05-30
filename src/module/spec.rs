@@ -23,7 +23,9 @@ use crate::{
     types::{AsyncUpdateable, Persistable},
 };
 
-use super::{CpuArch, OsCPE, RunSPC, TargetNode, init::ModIniter, target::ModTargetSpec};
+use super::{
+    CpuArch, OsCPE, RunSPC, TargetNode, init::ModIniter, setting::Setting, target::ModTargetSpec,
+};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
@@ -168,6 +170,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+        None,
     );
 
     let host = ModTargetSpec::init(
@@ -184,6 +187,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+        None,
     );
     Ok(ModuleSpec::init(cpe, vec![k8s, host]))
 }
@@ -207,6 +211,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+        Some(Setting::example()),
     );
 
     let host = ModTargetSpec::init(
@@ -221,6 +226,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+        Some(Setting::example()),
     );
     Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
 }
