@@ -1,0 +1,16 @@
+{
+  "name": "李华",
+  "age": 22,
+  "isAdmin": false,
+  "scores": [92, 85, 78, 95],
+  "courses": [
+    { "name": "数学", "credit": 4, "passed": true },
+    { "name": "英语", "credit": 3, "passed": true },
+    { "name": "编程", "credit": 5, "passed": false }
+  ],
+  "contact": {
+    "email": "lihua@example.com",
+    "phone": "13800138000"
+  },
+  "createdAt": "2025-05-15T08:30:00Z"
+}

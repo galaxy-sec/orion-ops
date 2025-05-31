@@ -127,28 +127,6 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn test_helm_nginx_rendering() {
-        let root_dir = PathBuf::from("./test/helm");
-        let helm_dir = PathBuf::from("./test/helm/nginx");
-        let out_dir = PathBuf::from("./test/temp/nginx");
-        if out_dir.exists() {
-            std::fs::remove_dir_all(&out_dir).assert();
-        }
-
-        let mut setting = TemplatePath::default();
-        setting.exclude_mut().push(helm_dir.join("templates"));
-
-        // 执行渲染 (注意：当前代码中 Helm 引擎未实现，这里测试路径处理逻辑)
-        let _result = TplGtmpl::render_path(
-            &helm_dir,
-            &out_dir,
-            &root_dir.join("value.json"), // 使用 values.yaml 作为数据源
-            &setting,
-        )
-        .unwrap();
-    }
-
-    #[test]
     fn test_gtmpl_complex_data() {
         let tmp_dir = tempdir().unwrap();
         let tpl_file = tmp_dir.path().join("template.gtpl");
@@ -170,5 +148,19 @@ mod tests {
             std::fs::read_to_string(output_file).unwrap(),
             "User: Alice, Age: 30"
         );
+    }
+    #[test]
+    fn test_gtmpl_simple() {
+        let base_dir = PathBuf::from("./test/helm/");
+        let out_dir = base_dir.join("out");
+        let tpl_dir = base_dir.join("tpls");
+
+        let tpl_file = tpl_dir.join("simple.tpl");
+        let out_file = out_dir.join("simple.out");
+        let data_file = tpl_dir.join("simple.json");
+
+        let result =
+            TplGtmpl::render_path(&tpl_file, &out_file, &data_file, &TemplatePath::default())
+                .assert();
     }
 }

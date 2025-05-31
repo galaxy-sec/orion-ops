@@ -4,7 +4,7 @@ use std::{
 };
 
 use fs_extra::dir::CopyOptions;
-use handlebars::Handlebars;
+use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
 use log::debug;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, WithContext};
 use serde::Serialize;
@@ -23,8 +23,6 @@ impl TplHandleBars {
         // 处理目录模板
         let mut handlebars = Handlebars::new();
         handlebars.set_strict_mode(true);
-        // 准备数据
-
         err_ctx.with_path("data", data);
         let content = std::fs::read_to_string(data).owe_data().with(&err_ctx)?;
         err_ctx.with("need-fmt", "json");
@@ -139,12 +137,102 @@ impl TplHandleBars {
         Ok(())
     }
 }
+// 创建一个自定义输出对象
+struct StringOutput<'a>(&'a mut String);
+
+impl<'a> Output for StringOutput<'a> {
+    fn write(&mut self, seg: &str) -> Result<(), std::io::Error> {
+        self.0.push_str(seg);
+        Ok(())
+    }
+
+    fn write_fmt(&mut self, args: std::fmt::Arguments) -> Result<(), std::io::Error> {
+        //write!(self.0, args)
+        std::fmt::write(self.0, args).map_err(|_e| std::io::Error::last_os_error())
+        //todo!();
+    }
+}
+
+pub fn filter_comments_helper(
+    h: &Helper,
+    handlebars: &Handlebars,
+    context: &Context,
+    render_context: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // 获取块内容（包含原始注释）
+    let template = h
+        .template()
+        .ok_or_else(|| RenderError::new("Block content missing for filter_comments helper"))?;
+
+    // 创建一个缓冲区来捕获渲染输出
+    let mut buffer = String::new();
+
+    let mut string_output = StringOutput(&mut buffer);
+    let mut local_render_context = render_context.clone();
+
+    // 渲染块内容到缓冲区
+    template.render(
+        handlebars,
+        context,
+        &mut local_render_context,
+        &mut string_output,
+    )?;
+
+    // 处理每行文本，过滤掉以 # 开头的行
+    for line in buffer.lines() {
+        if !line.trim_start().starts_with('#') {
+            out.write(line)?;
+            out.write("\n")?;
+        }
+    }
+
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::module::setting::TemplatePath;
+    use orion_error::TestAssert;
+    use serde_json::json;
     use tempfile::tempdir;
+
+    use handlebars::Handlebars;
+
+    #[test]
+    fn test_filter() -> Result<(), Box<dyn std::error::Error>> {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("filter_comments", Box::new(filter_comments_helper));
+
+        // 定义包含注释的模板
+        let template = r#"
+    {{#filter_comments}}
+    # 用户信息模板
+    # {{x.y}}
+    用户: {{user.name}}
+    年龄: {{user.age}}
+       # 测试注释行
+    邮箱: {{user.email}}
+    # 结束注释
+    {{/filter_comments}}
+        "#;
+
+        // 测试数据
+        let data = json!({
+            "user": {
+                "name": "张三",
+                "age": 30,
+                "email": "zhangsan@example.com"
+            }
+        });
+
+        handlebars.register_template_string("tpl", template)?;
+        let result = handlebars.render("tpl", &data)?;
+
+        println!("过滤后的结果:\n{}", result);
+        Ok(())
+    }
 
     #[test]
     fn test_render_path_with_handlebars() {
@@ -249,5 +337,27 @@ mod tests {
             std::fs::read_to_string(output_dir.join("exclude.txt")).unwrap(),
             "raw content"
         );
+    }
+
+    #[test]
+    fn test_helm_nginx_rendering() {
+        let root_dir = PathBuf::from("./test/helm");
+        let helm_dir = PathBuf::from("./test/helm/nginx");
+        let out_dir = PathBuf::from("./test/temp/nginx");
+        if out_dir.exists() {
+            std::fs::remove_dir_all(&out_dir).assert();
+        }
+
+        let mut setting = TemplatePath::default();
+        setting.exclude_mut().push(helm_dir.join("templates"));
+
+        // 执行渲染 (注意：当前代码中 Helm 引擎未实现，这里测试路径处理逻辑)
+        let _result = TplHandleBars::render_path(
+            &helm_dir,
+            &out_dir,
+            &root_dir.join("value.json"), // 使用 values.yaml 作为数据源
+            &setting,
+        )
+        .unwrap();
     }
 }
