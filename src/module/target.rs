@@ -16,13 +16,13 @@ use crate::{
     error::{SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
-    tpl::{TPlEngineType, TplRender},
     types::{AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable},
     vars::{ValueDict, VarCollection},
 };
 
 use super::{
     TargetNode,
+    locaize::LocalizeTemplate,
     setting::{Setting, TemplatePath},
 };
 
@@ -188,20 +188,17 @@ impl Localizable for ModTargetSpec {
             let used = ValueDict::from_json(&value_path)?;
             used.save_json(&used_path)?;
         }
-        let tpl_setting = if let Some(setting) = &self.setting {
-            setting.localize_tpl().export_paths(&local)
-        } else {
-            TemplatePath::default()
-        };
+        let path_setting = self
+            .setting
+            .as_ref()
+            .and_then(|x| x.localize().clone())
+            .and_then(|x| x.paths().clone())
+            .map(|x| x.export_paths(&local));
 
-        TplRender::render_path(
-            TPlEngineType::Handlebars,
-            &tpl,
-            local_path,
-            &used_path,
-            &tpl_setting,
-        )
-        .with(&ctx)?;
+        let tpl_setting = path_setting.unwrap_or(TemplatePath::default());
+        LocalizeTemplate::default()
+            .render_path(&tpl, local_path, &used_path, &tpl_setting)
+            .with(&ctx)?;
         Ok(())
     }
 }

@@ -1998,9 +1998,7 @@ dependencies = [
 
 [[package]]
 name = "orion-error"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b4db7fe503792bb9b5d70dceea0d044ae1e60bf878722a5176e20c01cb4ae9f"
+version = "0.3.0"
 dependencies = [
  "derive-getters",
  "derive_more",
@@ -2051,6 +2049,7 @@ dependencies = [
  "url",
  "walkdir",
  "wildmatch",
+ "winnow 0.6.26",
 ]
 
 [[package]]
@@ -3022,7 +3021,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -3538,6 +3537,15 @@ name = "winnow"
 version = "0.5.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "winnow"
+version = "0.6.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e90edd2ac1aa278a5c4599b1d89cf03074b610800f866d4026dc199d7929a28"
 dependencies = [
  "memchr",
 ]

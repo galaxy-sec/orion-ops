@@ -1,4 +1,5 @@
 pub mod init;
+pub mod locaize;
 pub mod metrc;
 pub mod refs;
 pub mod setting;

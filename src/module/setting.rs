@@ -2,9 +2,25 @@ use std::path::PathBuf;
 
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
+
 #[derive(Clone, Debug, Serialize, Deserialize, Getters)]
 pub struct Setting {
-    localize_tpl: Templateization,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    localize: Option<LocalizeConf>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Getters)]
+pub struct LocalizeConf {
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    paths: Option<Templateization>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    template: Option<TemplateCustom>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Getters)]
+pub struct TemplateCustom {
+    origin: (String, String),
+    target: (String, String),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters)]
@@ -23,13 +39,33 @@ impl Templateization {
     }
 }
 
+impl LocalizeConf {
+    pub fn example() -> Self {
+        Self {
+            paths: Some(Templateization {
+                includes: vec![],
+                excludes: vec!["README.md".to_string()],
+            }),
+            template: Some(TemplateCustom {
+                origin: ("[[".into(), "]]".into()),
+                target: ("{{".into(), "}}".into()),
+            }),
+        }
+    }
+}
+
+impl TemplateCustom {
+    pub fn example() -> Self {
+        TemplateCustom {
+            origin: ("[[".into(), "]]".into()),
+            target: ("{{".into(), "}}".into()),
+        }
+    }
+}
 impl Setting {
     pub fn example() -> Self {
         Self {
-            localize_tpl: Templateization {
-                includes: vec![],
-                excludes: vec!["README.md".to_string()],
-            },
+            localize: Some(LocalizeConf::example()),
         }
     }
 }
@@ -64,13 +100,28 @@ impl TemplatePath {
 
 #[cfg(test)]
 mod tests {
+    use std::env::temp_dir;
+
+    use crate::types::Configable;
+
     use super::*;
+    use orion_error::TestAssert;
     use serde_yaml;
 
     #[test]
     fn test_setting_serialization() {
-        let setting = Setting {
-            localize_tpl: Templateization {
+        let temp_dir = temp_dir();
+        let save_path = temp_dir.join("setting.yml");
+        let setting = Setting::example();
+        setting.save_conf(&save_path).assert();
+        println!("{}", std::fs::read_to_string(&save_path).unwrap());
+        Setting::from_conf(&save_path).assert();
+    }
+
+    #[test]
+    fn test_local_serialization() {
+        let setting = LocalizeConf {
+            paths: Some(Templateization {
                 includes: vec![
                     "templates/**/*.html".to_string(),
                     "static/**/*.js".to_string(),
@@ -79,11 +130,12 @@ mod tests {
                     "templates/secret/*".to_string(),
                     "static/vendor/*".to_string(),
                 ],
-            },
+            }),
+            template: None,
         };
 
-        let yaml = serde_yaml::to_string(&setting).unwrap();
-        let expected = r#"localize_tpl:
+        let yaml = serde_yaml::to_string(&setting).assert();
+        let expected = r#"paths:
   includes:
   - templates/**/*.html
   - static/**/*.js
@@ -92,19 +144,6 @@ mod tests {
   - static/vendor/*
 "#;
         assert_eq!(yaml, expected);
-    }
-
-    #[test]
-    fn test_setting_deserialization() {
-        let yaml = r#"---
-localize_tpl:
-  includes:
-    - templates/**/*.html
-  excludes:
-    - templates/secret/*
-"#;
-        let setting: Setting = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(setting.localize_tpl.includes, vec!["templates/**/*.html"]);
-        assert_eq!(setting.localize_tpl.excludes, vec!["templates/secret/*"]);
+        let _setting: LocalizeConf = serde_yaml::from_str(expected).assert();
     }
 }

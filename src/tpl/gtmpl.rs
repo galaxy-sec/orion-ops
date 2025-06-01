@@ -159,7 +159,7 @@ mod tests {
         let out_file = out_dir.join("simple.out");
         let data_file = tpl_dir.join("simple.json");
 
-        let result =
+        let _result =
             TplGtmpl::render_path(&tpl_file, &out_file, &data_file, &TemplatePath::default())
                 .assert();
     }
