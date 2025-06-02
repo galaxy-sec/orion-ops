@@ -4,6 +4,7 @@ version = "0.2.10"
 edition = "2024"
 
 [dependencies]
+glob = "0.3"
 #orion-error = "0.2"
 orion-error = { path = "../orion-error/" }
 

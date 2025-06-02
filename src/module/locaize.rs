@@ -90,7 +90,7 @@ impl LocalizeTemplate<'_> {
         tpl_path: &PathBuf,
         dst_path: &PathBuf,
         data: &T,
-        setting: &TemplatePath,
+        templatize: &TemplatePath,
     ) -> SpecResult<()> {
         debug!("tpl:{}", tpl_path.display());
         debug!("dst:{}", dst_path.display());
@@ -101,7 +101,7 @@ impl LocalizeTemplate<'_> {
         if !tpl_path.exists() {
             return Err(StructError::from_conf("tpl path not exists".to_string())).with(&err_ctx);
         }
-        if setting.is_exclude(&tpl_path) {
+        if templatize.is_exclude(&tpl_path) {
             if let Some(dist) = dst_path.parent() {
                 println!("copy {:30} ---> {}", tpl_path.display(), dist.display());
                 fs_extra::copy_items(&[&tpl_path], &dist, &CopyOptions::default())
