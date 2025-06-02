@@ -19,12 +19,13 @@ impl TemplatePath {
 
     pub fn is_exclude(&self, dst: &PathBuf) -> bool {
         for exclude in &self.excludes {
+            if dst.starts_with(exclude) {
+                return true;
+            }
             if let Ok(pattern) = Pattern::new(exclude.to_str().unwrap()) {
                 if pattern.matches(dst.to_str().unwrap()) {
                     return true;
                 }
-            } else if dst.starts_with(exclude) {
-                return true;
             }
         }
         false
@@ -34,12 +35,13 @@ impl TemplatePath {
             return true;
         }
         for include in &self.includes {
+            if dst.starts_with(include) {
+                return true;
+            }
             if let Ok(pattern) = Pattern::new(include.to_str().unwrap()) {
                 if pattern.matches(dst.to_str().unwrap()) {
                     return true;
                 }
-            } else if dst.starts_with(include) {
-                return true;
             }
         }
         false

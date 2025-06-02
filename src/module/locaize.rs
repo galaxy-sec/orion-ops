@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use fs_extra::dir::CopyOptions;
-use log::debug;
+use log::{debug, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, WithContext};
 use serde::Serialize;
 
@@ -100,6 +100,10 @@ impl LocalizeTemplate<'_> {
         // 2. 验证模板文件
         if !tpl_path.exists() {
             return Err(StructError::from_conf("tpl path not exists".to_string())).with(&err_ctx);
+        }
+        if !templatize.is_include(&tpl_path) {
+            info!("ignore:{}", tpl_path.display());
+            return Ok(());
         }
         if templatize.is_exclude(&tpl_path) {
             if let Some(dist) = dst_path.parent() {

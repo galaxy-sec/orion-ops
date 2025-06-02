@@ -82,6 +82,7 @@ mod tests {
     use std::path::PathBuf;
 
     use orion_error::ErrorOwe;
+    use tempfile::env::temp_dir;
 
     use crate::{
         addr::LocalAddr,
@@ -127,7 +128,8 @@ mod tests {
     // 序列化测试
     #[test]
     fn software_save_load() -> SpecResult<()> {
-        let root_path = PathBuf::from("./example/spec/redis");
+        //let root_path = PathBuf::from("./example/spec/redis");
+        let root_path = temp_dir();
         std::fs::create_dir_all(&root_path).owe_res()?;
 
         let conf_path = "./example/spec/redis/config_spec.yml";
