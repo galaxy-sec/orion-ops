@@ -23,7 +23,7 @@ use crate::{
 use super::{
     TargetNode,
     locaize::LocalizeTemplate,
-    setting::{Setting, TemplateConfig, TemplatePath},
+    setting::{Setting, TemplateConfig},
 };
 
 #[derive(Getters, Clone, Debug)]
@@ -196,7 +196,7 @@ impl Localizable for ModTargetSpec {
             .and_then(|x| x.templatize_path().clone())
             .map(|x| x.export_paths(&local));
 
-        let tpl_path = tpl_path_opt.unwrap_or(TemplatePath::default());
+        let tpl_path = tpl_path_opt.unwrap_or_default();
         let tpl_custom = self
             .setting
             .as_ref()

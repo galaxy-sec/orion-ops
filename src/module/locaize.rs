@@ -101,14 +101,14 @@ impl LocalizeTemplate<'_> {
         if !tpl_path.exists() {
             return Err(StructError::from_conf("tpl path not exists".to_string())).with(&err_ctx);
         }
-        if !templatize.is_include(&tpl_path) {
+        if !templatize.is_include(tpl_path) {
             info!("ignore:{}", tpl_path.display());
             return Ok(());
         }
-        if templatize.is_exclude(&tpl_path) {
+        if templatize.is_exclude(tpl_path) {
             if let Some(dist) = dst_path.parent() {
                 println!("copy {:30} ---> {}", tpl_path.display(), dist.display());
-                fs_extra::copy_items(&[&tpl_path], &dist, &CopyOptions::default())
+                fs_extra::copy_items(&[&tpl_path], dist, &CopyOptions::default())
                     .owe_res()
                     .with(("tpl", tpl_path))
                     .with(("dst", dist))?;

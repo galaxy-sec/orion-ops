@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ pub struct TemplateTargets {
 }
 
 impl TemplateTargets {
-    pub fn export_paths(&self, root: &PathBuf) -> TemplatePath {
+    pub fn export_paths(&self, root: &Path) -> TemplatePath {
         let includes = self.includes().iter().map(|x| root.join(x)).collect();
         let excludes = self.excludes().iter().map(|x| root.join(x)).collect();
         TemplatePath::new(includes, excludes)

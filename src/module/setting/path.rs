@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use derive_getters::Getters;
 
@@ -17,7 +17,7 @@ impl TemplatePath {
         &mut self.excludes
     }
 
-    pub fn is_exclude(&self, dst: &PathBuf) -> bool {
+    pub fn is_exclude(&self, dst: &Path) -> bool {
         for exclude in &self.excludes {
             if dst.starts_with(exclude) {
                 return true;
@@ -30,7 +30,7 @@ impl TemplatePath {
         }
         false
     }
-    pub fn is_include(&self, dst: &PathBuf) -> bool {
+    pub fn is_include(&self, dst: &Path) -> bool {
         if self.includes().is_empty() {
             return true;
         }

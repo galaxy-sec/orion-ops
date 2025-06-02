@@ -33,8 +33,8 @@ impl LabelCoverter {
         }
     }
     fn remvoe_comment(&self, cfmt: &CommentFmt, code: &str) -> SpecResult<String> {
-        let mut xcode = code;
-        let pure_code = cfmt.remove(&mut xcode).want("remove comment")?;
+        let xcode = code;
+        let pure_code = cfmt.remove(xcode).want("remove comment")?;
         Ok(pure_code)
     }
 

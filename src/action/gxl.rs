@@ -18,10 +18,10 @@ impl GxlAction {
     }
     pub fn is_action(path: &Path) -> bool {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
-            return match file_name {
-                "setup.gxl" | "update.gxl" | "port.gxl" | "backup.gxl" | "uninstall.gxl" => true,
-                _ => false,
-            };
+            return matches!(
+                file_name,
+                "setup.gxl" | "update.gxl" | "port.gxl" | "backup.gxl" | "uninstall.gxl"
+            );
         }
         false
     }

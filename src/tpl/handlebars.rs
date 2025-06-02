@@ -11,9 +11,7 @@ impl TplHandleBars<'_> {
     pub fn init() -> Self {
         let mut handlebars = Handlebars::new();
         handlebars.set_strict_mode(true);
-        Self {
-            handlebars: handlebars,
-        }
+        Self { handlebars }
     }
 
     pub fn render_data<T: Serialize>(&self, template: &str, data: &T) -> SpecResult<String> {

@@ -152,12 +152,7 @@ pub fn ignore_comment(input: &mut &str) -> ModalResult<String> {
         let code = ignore_comment_line(&mut status, input)?;
         out += code.as_str();
         if opt(line_ending).parse_next(input)?.is_some() {
-            match status {
-                //DslStatus::RawString => {}
-                _ => {
-                    out += "\n";
-                }
-            }
+            out += "\n";
         }
     }
     Ok(out)
