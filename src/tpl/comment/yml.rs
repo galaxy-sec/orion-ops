@@ -7,7 +7,7 @@ use winnow::{
     token::{literal, take_till, take_while},
 };
 
-use crate::error::{SpecReason, SpecResult};
+use crate::error::{LocalizeReason, SpecReason, SpecResult};
 
 pub struct YmlComment {}
 impl YmlComment {
@@ -126,7 +126,9 @@ pub fn remove_comment(code: &str) -> SpecResult<String> {
     let mut xcode = code;
     let pure_code = ignore_comment(&mut xcode)
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::Miss("comment".into()))
+        .owe(SpecReason::from(LocalizeReason::Templatize(
+            "comment error".into(),
+        )))
         .position(err_code_prompt(code))
         .want("remove comment");
     match pure_code {

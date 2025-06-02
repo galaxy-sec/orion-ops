@@ -52,7 +52,7 @@ impl<'de> serde::Deserialize<'de> for ConfSpecRef {
         let raw = RawRef::deserialize(deserializer)?;
         // 构建实例
         let config = ConfSpecRef {
-            obj: ConfSpecRef::load_ref(raw.path.as_str()),
+            obj: ConfSpecRef::load_ref(raw.path.as_str()).unwrap(),
             path: raw.path,
         };
         Ok(config)
@@ -60,15 +60,15 @@ impl<'de> serde::Deserialize<'de> for ConfSpecRef {
 }
 
 impl ConfSpecRef {
-    pub fn new<S: Into<String>>(path: S) -> Self {
+    pub fn new<S: Into<String>>(path: S) -> SpecResult<Self> {
         let path = path.into();
         let file_path = PathBuf::from(path.as_str());
-        let obj = ConfSpec::from_conf(&file_path).unwrap();
-        Self { path, obj }
+        let obj = ConfSpec::from_conf(&file_path)?;
+        Ok(Self { path, obj })
     }
-    fn load_ref(path: &str) -> ConfSpec {
+    fn load_ref(path: &str) -> SpecResult<ConfSpec> {
         let path = PathBuf::from(path);
-        ConfSpec::from_conf(&path).unwrap()
+        ConfSpec::from_conf(&path)
     }
 }
 
@@ -141,6 +141,8 @@ mod tests {
 
     use super::*;
     use httpmock::{Method::GET, MockServer};
+    use orion_error::TestAssert;
+    use tempfile::env::temp_dir;
     use tokio::fs;
 
     #[test]
@@ -189,7 +191,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_conf_with_http_addr() -> SpecResult<()> {
         let server = MockServer::start();
         server.mock(|when, then| {
@@ -203,9 +205,9 @@ mod tests {
 
         // 测试更新
         //let src_dir = PathBuf::from("./temp/src");
-        let dst_dir = PathBuf::from("./temp/dst");
-        //let temp_dir = tempfile::tempdir()?;
-        let updated_path = conf.update_local(&dst_dir).await?;
+        //let dst_dir = PathBuf::from("./temp/dst");
+        let temp_dir = temp_dir();
+        let updated_path = conf.update_local(&temp_dir).await.assert();
 
         // 验证下载的文件
         let content = fs::read_to_string(updated_path.join("remote.yml"))
@@ -213,7 +215,7 @@ mod tests {
             .owe_res()
             .with(format!("path: {}", updated_path.display()))?;
         assert!(content.contains("env=\"test\""));
-        fs::remove_dir_all(dst_dir).await.owe_res()?;
+        //fs::remove_dir_all(dst_dir).await.owe_res()?;
         Ok(())
     }
 }

@@ -12,26 +12,41 @@ pub struct Setting {
 #[derive(Clone, Debug, Serialize, Deserialize, Getters)]
 pub struct LocalizeConf {
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    paths: Option<Templateization>,
+    templatize_path: Option<TemplateTargets>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    template: Option<TemplateCustom>,
+    templatize_cust: Option<TemplateCustom>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters)]
 pub struct TemplateCustom {
+    label_beg: String,
+    label_end: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Getters)]
+pub struct TemplateConfig {
     origin: (String, String),
     target: (String, String),
 }
 
+impl From<TemplateCustom> for TemplateConfig {
+    fn from(value: TemplateCustom) -> Self {
+        Self {
+            origin: (value.label_beg, value.label_end),
+            target: ("{{".into(), "}}".into()),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Getters)]
-pub struct Templateization {
+pub struct TemplateTargets {
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     includes: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     excludes: Vec<String>,
 }
 
-impl Templateization {
+impl TemplateTargets {
     pub fn export_paths(&self, root: &PathBuf) -> TemplatePath {
         let includes = self.includes().iter().map(|x| root.join(x)).collect();
         let excludes = self.excludes().iter().map(|x| root.join(x)).collect();
@@ -42,21 +57,21 @@ impl Templateization {
 impl LocalizeConf {
     pub fn example() -> Self {
         Self {
-            paths: Some(Templateization {
+            templatize_path: Some(TemplateTargets {
                 includes: vec![],
                 excludes: vec!["README.md".to_string()],
             }),
-            template: Some(TemplateCustom {
-                origin: ("[[".into(), "]]".into()),
-                target: ("{{".into(), "}}".into()),
+            templatize_cust: Some(TemplateCustom {
+                label_beg: "[[".into(),
+                label_end: "]]".into(),
             }),
         }
     }
 }
 
-impl TemplateCustom {
+impl TemplateConfig {
     pub fn example() -> Self {
-        TemplateCustom {
+        TemplateConfig {
             origin: ("[[".into(), "]]".into()),
             target: ("{{".into(), "}}".into()),
         }
@@ -121,7 +136,7 @@ mod tests {
     #[test]
     fn test_local_serialization() {
         let setting = LocalizeConf {
-            paths: Some(Templateization {
+            templatize_path: Some(TemplateTargets {
                 includes: vec![
                     "templates/**/*.html".to_string(),
                     "static/**/*.js".to_string(),
@@ -131,11 +146,11 @@ mod tests {
                     "static/vendor/*".to_string(),
                 ],
             }),
-            template: None,
+            templatize_cust: None,
         };
 
         let yaml = serde_yaml::to_string(&setting).assert();
-        let expected = r#"paths:
+        let expected = r#"templatize_path:
   includes:
   - templates/**/*.html
   - static/**/*.js

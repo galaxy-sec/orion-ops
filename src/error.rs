@@ -6,18 +6,47 @@ use thiserror::Error;
 pub enum SpecReason {
     #[error("unknow")]
     UnKnow,
-    #[error("miss:{0}")]
-    Miss(String),
+    #[error("localize:{0}")]
+    Localize(LocalizeReason),
+    #[error("element:{0}")]
+    Element(ElementReason),
     #[error("{0}")]
     Uvs(UvsReason),
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Error)]
+pub enum ElementReason {
+    #[error("miss:{0}")]
+    Miss(String),
+}
+#[derive(Clone, Debug, Serialize, PartialEq, Error)]
+pub enum LocalizeReason {
+    #[error("miss:{0}")]
+    Templatize(String),
+}
+impl ErrorCode for ElementReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            ElementReason::Miss(_) => 531,
+        }
+    }
+}
+
+impl ErrorCode for LocalizeReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            LocalizeReason::Templatize(_) => 541,
+        }
+    }
 }
 
 impl ErrorCode for SpecReason {
     fn error_code(&self) -> i32 {
         match self {
             SpecReason::UnKnow => 500,
-            SpecReason::Miss(_) => 501,
-            SpecReason::Uvs(uvs_reason) => uvs_reason.error_code(),
+            SpecReason::Uvs(r) => r.error_code(),
+            SpecReason::Localize(r) => r.error_code(),
+            SpecReason::Element(r) => r.error_code(),
         }
     }
 }

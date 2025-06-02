@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{
+    error::ElementReason,
     types::{Localizable, LocalizePath},
     vars::{VarCollection, VarType},
 };
@@ -118,7 +119,7 @@ impl NodeSetupTaskBuilder for ModuleSpec {
         if let Some(cur_node) = self.targets().get(node) {
             cur_node.make_setup_task()
         } else {
-            SpecReason::Miss(node.to_string()).err_result()
+            SpecReason::from(ElementReason::Miss(node.to_string())).err_result()
         }
     }
 }

@@ -163,7 +163,7 @@ mod tests {
     use super::*;
     use httpmock::{Method::GET, MockServer};
 
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_http_auth_download() -> SpecResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
@@ -192,7 +192,7 @@ mod tests {
         Ok(())
     }
     #[ignore = "need more time"]
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_http_addr() -> SpecResult<()> {
         let path = PathBuf::from("/tmp");
         let addr = HttpAddr::from("https://dy-sec-generic.pkg.coding.net/sec-hub/generic/warp-flow/wpflow?version=1.0.89-alpha")
@@ -204,7 +204,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_http_upload_post() -> SpecResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
@@ -237,7 +237,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_http_upload_put() -> SpecResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();

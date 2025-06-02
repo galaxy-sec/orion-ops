@@ -6,7 +6,7 @@ use winnow::{
     combinator::opt,
 };
 
-use crate::error::{SpecReason, SpecResult};
+use crate::error::{LocalizeReason, SpecReason, SpecResult};
 
 use super::{
     comment::CommentFmt,
@@ -51,7 +51,9 @@ impl LabelCoverter {
             ],
         )
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::Miss("tpl!".into()))
+        .owe(SpecReason::from(LocalizeReason::Templatize(
+            "covert".into(),
+        )))
         .position(err_code_prompt(pure_code.as_str()))
         .want("covert tpl label")?;
         Ok(coverted)
@@ -67,7 +69,9 @@ impl LabelCoverter {
             ],
         )
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::Miss("tpl!".into()))
+        .owe(SpecReason::from(LocalizeReason::Templatize(
+            "restore!".into(),
+        )))
         .position(err_code_prompt(code.as_str()))
         .want("covert tpl label")?;
         Ok(coverted)

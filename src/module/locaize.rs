@@ -11,7 +11,7 @@ use crate::{
     tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars},
 };
 
-use super::setting::TemplateCustom;
+use super::setting::TemplateConfig;
 
 pub struct LocalizeTemplate<'a> {
     handlebars: TplHandleBars<'a>,
@@ -26,7 +26,7 @@ impl Default for LocalizeTemplate<'_> {
     }
 }
 impl LocalizeTemplate<'_> {
-    pub fn new(cust: TemplateCustom) -> Self {
+    pub fn new(cust: TemplateConfig) -> Self {
         let convert = LabelCoverter::new(cust.origin().clone(), cust.target().clone());
         Self {
             handlebars: TplHandleBars::init(),
@@ -299,7 +299,7 @@ mod tests {
         let mut setting = TemplatePath::default();
         setting.exclude_mut().push(helm_dir.join("templates"));
 
-        let cust = TemplateCustom::example();
+        let cust = TemplateConfig::example();
 
         //let _result = LocalizeTemplate::default()
         let _result = LocalizeTemplate::new(cust)

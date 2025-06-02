@@ -77,12 +77,6 @@ pub enum Constraint {
     WithInScope(u64, u64),
 }
 
-#[allow(dead_code)]
-pub fn redis_confspec() -> ConfSpecRef {
-    let conf_path = "./spec/redis/config_spec.yml";
-    ConfSpecRef::new(conf_path)
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
@@ -147,7 +141,7 @@ mod tests {
         let redis = SoftWare::new(
             artifact,
             WorkSpec::new("redis"),
-            ConfSpecRef::new(conf_path),
+            ConfSpecRef::new(conf_path)?,
         );
 
         let path = root_path.join("redis_7.yml");

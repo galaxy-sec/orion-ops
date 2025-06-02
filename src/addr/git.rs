@@ -152,7 +152,7 @@ mod tests {
     use crate::error::SpecResult;
 
     use super::*;
-    use orion_error::ErrorOwe;
+    use orion_error::{ErrorOwe, TestAssert};
     use tempfile::tempdir;
 
     #[ignore = "need more time"]
@@ -185,11 +185,12 @@ mod tests {
         // 创建临时目录
         let dest_path = PathBuf::from("./temp");
         let target_path = dest_path.join("postgresql");
-        std::fs::create_dir_all(&dest_path).owe_res()?;
+        std::fs::create_dir_all(&dest_path).assert();
         if target_path.exists() {
             std::fs::remove_dir_all(&target_path)
-                .owe_res()
-                .with(&dest_path)?;
+                //.owe_res()
+                //.with(&dest_path)
+                .assert();
         }
 
         // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
@@ -198,7 +199,7 @@ mod tests {
             .path("postgresql"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let _cloned_path = git_addr.update_local(&dest_path).await?;
+        let _cloned_path = git_addr.update_local(&dest_path).await.assert();
         Ok(())
     }
 }

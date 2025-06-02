@@ -6,6 +6,7 @@ use std::{
 use crate::{
     action::act::SysWorkflows,
     const_vars::{SPEC_DIR, VALUE_JSON},
+    error::ElementReason,
     types::{JsonAble, Localizable, LocalizePath},
     vars::{VarCollection, VarType},
 };
@@ -118,7 +119,7 @@ impl SysModelSpec {
             self.mod_list.update().await?;
             Ok(())
         } else {
-            SpecReason::Miss("local path".into()).err_result()
+            SpecReason::from(ElementReason::Miss("local path".into())).err_result()
         }
     }
 }
@@ -137,7 +138,7 @@ impl Localizable for SysModelSpec {
             self.mod_list.localize(Some(base_path)).await?;
             Ok(())
         } else {
-            SpecReason::Miss("local path".into()).err_result()
+            SpecReason::from(ElementReason::Miss("local path".into())).err_result()
         }
     }
 }

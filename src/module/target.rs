@@ -13,7 +13,7 @@ use crate::{
     artifact::ArtifactPackage,
     conf::ConfSpec,
     const_vars::{ARTIFACT_YML, CONF_SPEC_YML, RES_SPEC_YML, SPEC_DIR, VARS_YML},
-    error::{SpecReason, SpecResult, ToErr},
+    error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
     types::{AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable},
@@ -23,7 +23,7 @@ use crate::{
 use super::{
     TargetNode,
     locaize::LocalizeTemplate,
-    setting::{Setting, TemplatePath},
+    setting::{Setting, TemplateConfig, TemplatePath},
 };
 
 #[derive(Getters, Clone, Debug)]
@@ -158,10 +158,11 @@ impl ModTargetSpec {
 impl Localizable for ModTargetSpec {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         let mut ctx = WithContext::want("modul localize");
-        let local = self
-            .local
-            .clone()
-            .ok_or(SpecReason::Miss("local-path".into()).to_err().with(&ctx))?;
+        let local = self.local.clone().ok_or(
+            SpecReason::from(ElementReason::Miss("local-path".into()))
+                .to_err()
+                .with(&ctx),
+        )?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
         let localize_path = dst_path.unwrap_or(LocalizePath::new(
             local.join(crate::const_vars::LOCAL_DIR),
@@ -188,16 +189,28 @@ impl Localizable for ModTargetSpec {
             let used = ValueDict::from_json(&value_path)?;
             used.save_json(&used_path)?;
         }
-        let path_setting = self
+        let tpl_path_opt = self
             .setting
             .as_ref()
             .and_then(|x| x.localize().clone())
-            .and_then(|x| x.paths().clone())
+            .and_then(|x| x.templatize_path().clone())
             .map(|x| x.export_paths(&local));
 
-        let tpl_setting = path_setting.unwrap_or(TemplatePath::default());
-        LocalizeTemplate::default()
-            .render_path(&tpl, local_path, &used_path, &tpl_setting)
+        let tpl_path = tpl_path_opt.unwrap_or(TemplatePath::default());
+        let tpl_custom = self
+            .setting
+            .as_ref()
+            .and_then(|x| x.localize().clone())
+            .and_then(|x| x.templatize_cust().clone())
+            .map(TemplateConfig::from);
+
+        let localizer = if let Some(cust) = tpl_custom {
+            LocalizeTemplate::new(cust)
+        } else {
+            LocalizeTemplate::default()
+        };
+        localizer
+            .render_path(&tpl, local_path, &used_path, &tpl_path)
             .with(&ctx)?;
         Ok(())
     }
