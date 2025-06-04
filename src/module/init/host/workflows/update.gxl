@@ -1,6 +1,6 @@
 mod update {
 
     flow do {
-      gx.echo { value= "this is host update" }
+      gx.echo ( value : "this is host update" );
     }
 }

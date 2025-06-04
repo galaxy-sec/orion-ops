@@ -7,8 +7,8 @@ use crate::{
     task::OperationType,
 };
 
-const SYS_SETUP_GXL: &str = include_str!("init/actions/setup.gxl");
-const SYS_UPDATE_GXL: &str = include_str!("init/actions/update.gxl");
+const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");
+const SYS_UPDATE_GXL: &str = include_str!("init/workflows/update.gxl");
 const SYS_SPC_PRJ: &str = include_str!("init/_gal/work.gxl");
 
 pub trait SysActIniter {

@@ -1,4 +1,4 @@
-extern mod setup { path = "./actions"; }
+extern mod setup { path = "./workflows"; }
 
 mod main {
     env default  {
