@@ -1,15 +1,21 @@
+use std::path::PathBuf;
+
+use orion_error::{ErrorOwe, ErrorWith};
+
 use crate::{
     action::{
         act::{ModWorkflows, Workflow},
         gxl::GxlAction,
         prj::GxlProject,
     },
+    error::SpecResult,
     task::OperationType,
 };
 
 const HOST_SETUP_GXL: &str = include_str!("init/host/workflows/setup.gxl");
 const HOST_UPDATE_GXL: &str = include_str!("init/host/workflows/update.gxl");
 const MOD_HOST_PRJ: &str = include_str!("init/host/_gal/work.gxl");
+pub const MOD_GITIGNORE: &str = include_str!("init/.gitignore");
 
 const K8S_SETUP_GXL: &str = include_str!("init/k8s/spec/workflows/setup.gxl");
 const K8S_UPDATE_GXL: &str = include_str!("init/k8s/spec/workflows/update.gxl");
@@ -87,4 +93,14 @@ impl ModIniter for ModWorkflows {
         ];
         Self::new(project, actions)
     }
+}
+
+pub fn mod_init_gitignore(path: &PathBuf) -> SpecResult<()> {
+    let ignore_path = path.join(".gitignore");
+    if !ignore_path.exists() {
+        std::fs::write(&ignore_path, MOD_GITIGNORE)
+            .owe_res()
+            .with(&ignore_path)?;
+    }
+    Ok(())
 }

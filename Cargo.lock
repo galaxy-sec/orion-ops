@@ -2043,6 +2043,7 @@ dependencies = [
  "orion-error",
  "regex",
  "reqwest",
+ "scopeguard",
  "serde",
  "serde_derive",
  "serde_ini",

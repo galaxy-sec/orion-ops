@@ -48,3 +48,20 @@ pub fn get_sub_dirs(path: &Path) -> SpecResult<Vec<std::path::PathBuf>> {
 pub fn test_init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
+
+pub struct BoolFlag {
+    is_suc: bool,
+}
+impl Default for BoolFlag {
+    fn default() -> Self {
+        Self { is_suc: false }
+    }
+}
+impl BoolFlag {
+    pub fn flag_suc(&mut self) {
+        self.is_suc = true;
+    }
+    pub fn is_suc(&self) -> bool {
+        self.is_suc
+    }
+}

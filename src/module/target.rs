@@ -5,6 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use derive_getters::Getters;
+use log::{debug, info};
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 
 use crate::{
@@ -117,6 +118,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         ctx.with_path("vars", &vars_path);
         let vars = VarCollection::from_conf(&vars_path).with(&ctx)?;
 
+        info!( target:"spec/mod/target", "lod mod-target success!: {}" ,root_path.display() );
         Ok(Self {
             target,
             artifact,
@@ -172,6 +174,7 @@ impl Localizable for ModTargetSpec {
         let value_path = localize_path.value().join(crate::const_vars::VALUE_JSON);
         let used_path = localize_path.value().join(crate::const_vars::USED_JSON);
         let local_path = localize_path.local();
+        debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         if local_path.exists() {
             std::fs::remove_dir_all(local_path).owe_res()?;
         }
@@ -216,6 +219,7 @@ impl Localizable for ModTargetSpec {
         localizer
             .render_path(&tpl, local_path, &used_path, &tpl_path)
             .with(&ctx)?;
+        info!( target:"spec/mod/target", "localize mod-target success!: {}" ,local_path.display() );
         Ok(())
     }
 }

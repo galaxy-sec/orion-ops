@@ -7,12 +7,15 @@ use crate::{
     addr::{AddrType, path_file_name},
     const_vars::CONFS_DIR,
     error::SpecResult,
+    log_flag,
     types::{AsyncUpdateable, Configable},
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
+use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde_derive::{Deserialize, Serialize};
+// 由于 `crate::tools::log_flag` 未定义，移除该导入
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
 pub struct ConfSpec {
     version: String,
@@ -120,12 +123,20 @@ impl ConfSpec {
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+        debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
+
+        let mut is_suc = log_flag!(
+            info!( target:"spec/confspec", "upload_local confspec suc: {}" ,path.display() ),
+            error!( target:"spec/confspec", "upload_local confspec fail: {}" ,path.display() )
+        );
         let root = path.join(self.local_root());
         std::fs::create_dir_all(&root).owe_res()?;
         for f in &self.files {
             if let Some(addr) = f.addr() {
                 let filename = path_file_name(&PathBuf::from(f.path.as_str()))?;
-                return addr.update_rename(&root, filename.as_str()).await;
+                let x = addr.update_rename(&root, filename.as_str()).await?;
+                is_suc.flag_suc();
+                return Ok(x);
             }
         }
         Ok(root)
@@ -134,7 +145,10 @@ impl AsyncUpdateable for ConfSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::addr::{GitAddr, HttpAddr, LocalAddr};
+    use crate::{
+        addr::{GitAddr, HttpAddr, LocalAddr},
+        tools::test_init,
+    };
 
     use super::*;
     use httpmock::{Method::GET, MockServer};
@@ -159,6 +173,7 @@ mod tests {
     }
     #[tokio::test]
     async fn test_async_update() -> SpecResult<()> {
+        test_init();
         let src_dir = PathBuf::from("./temp/src");
         let dst_dir = PathBuf::from("./temp/dst");
 

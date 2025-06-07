@@ -2,6 +2,8 @@ pub mod action;
 pub mod addr;
 pub mod artifact;
 pub mod conf;
+#[macro_use]
+pub mod log;
 pub mod const_vars;
 pub mod deploy;
 pub mod error;
@@ -11,6 +13,7 @@ pub mod software;
 pub mod spec;
 pub mod system;
 pub mod task;
+#[macro_use]
 pub mod tools;
 pub mod tpl;
 pub mod types;

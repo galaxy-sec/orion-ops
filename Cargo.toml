@@ -41,6 +41,7 @@ regex = "1.10"
 derive-getters = "0.5.0"
 git2 = "0.20"
 indicatif = "0.17"
+scopeguard = "1.2.0"
 derive_more = { version = "2.0", features = ["full"] }
 tokio-util = { version = "0.7", features = ["codec"] }
 bytes = "1.0"

@@ -67,15 +67,15 @@ impl HttpAddr {
         // 记录本地文件大小
         println!("本地文件大小: {} 字节", file_content.len());
         // 创建进度条
-        let pb = ProgressBar::new(file_content.len() as u64);
+        let content_len = file_content.len() as u64;
+        let pb = ProgressBar::new(content_len);
         pb.set_style(ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})").owe_logic()?
             .progress_chars("#>-"));
 
-        let form = reqwest::multipart::Form::new().part(
-            "file",
-            reqwest::multipart::Part::bytes(file_content).file_name(file_name),
-        );
+        let part = reqwest::multipart::Part::stream_with_length(file_content, content_len)
+            .file_name(file_name);
+        let form = reqwest::multipart::Form::new().part("file", part);
 
         ctx.with("url", self.url());
         let mut request = match method.to_uppercase().as_str() {

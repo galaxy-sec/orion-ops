@@ -26,7 +26,10 @@ use crate::{
 };
 
 use super::{
-    CpuArch, OsCPE, RunSPC, TargetNode, init::ModIniter, setting::Setting, target::ModTargetSpec,
+    CpuArch, OsCPE, RunSPC, TargetNode,
+    init::{ModIniter, mod_init_gitignore},
+    setting::Setting,
+    target::ModTargetSpec,
 };
 
 #[derive(Getters, Clone, Debug)]
@@ -94,9 +97,11 @@ impl Persistable<ModuleSpec> for ModuleSpec {
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
 
+        mod_init_gitignore(&mod_path)?;
         for node in self.targets.values() {
             node.save_to(&mod_path, None)?;
         }
+
         Ok(())
     }
 
@@ -236,7 +241,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 #[cfg(test)]
 pub mod test {
 
-    use crate::{const_vars::MODULES_SPC_ROOT, error::SpecResult};
+    use crate::{const_vars::MODULES_SPC_ROOT, error::SpecResult, tools::test_init};
 
     use super::*;
 
@@ -246,6 +251,7 @@ pub mod test {
 
     #[tokio::test]
     async fn build_mod_example() -> SpecResult<()> {
+        test_init();
         let spec = make_mod_spec_example()?;
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
         let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;

@@ -3,11 +3,11 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use home::home_dir;
-use log::debug;
+use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, tools::get_last_segment, types::AsyncUpdateable};
+use crate::{error::SpecResult, log_flag, tools::get_last_segment, types::AsyncUpdateable};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename = "git")]
@@ -62,6 +62,17 @@ impl AsyncUpdateable for GitAddr {
 
         ctx.with("repo", &self.repo);
         ctx.with_path("path", &git_local);
+        let git_local_copy = git_local.clone();
+        let mut flag = log_flag!(
+            info!(
+                target : "spec/addr/git",
+                "update {} to {} success!", self.repo,git_local_copy.display()
+            ),
+            error!(
+                target : "spec/addr/local",
+                "update {} to {} failed", self.repo,git_local_copy.display()
+            )
+        );
 
         match git2::Repository::open(&git_local) {
             Ok(re) => {
@@ -93,6 +104,7 @@ impl AsyncUpdateable for GitAddr {
         fs_extra::copy_items(&[&git_local], path, &options)
             .owe_res()
             .with(&ctx)?;
+        flag.flag_suc();
         Ok(real_path)
     }
 }
@@ -219,7 +231,7 @@ mod tests {
     #[tokio::test]
     async fn test_git_addr_pull_hole() -> SpecResult<()> {
         // 创建临时目录
-        env_logger::init();
+        test_init();
         let dest_path = PathBuf::from("./test/temp/git2");
         if dest_path.exists() {
             std::fs::remove_dir_all(&dest_path).assert();

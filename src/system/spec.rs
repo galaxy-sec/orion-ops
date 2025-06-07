@@ -23,7 +23,10 @@ use crate::{
     types::{Configable, Persistable},
 };
 
-use super::{ModelResource, ModulesList, NetAllocator, NetResSpace, init::SysIniter};
+use super::{
+    ModelResource, ModulesList, NetAllocator, NetResSpace,
+    init::{SysIniter, sys_init_gitignore},
+};
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
     name: String,
@@ -49,6 +52,7 @@ impl SysModelSpec {
         let root = path.join(name);
         let spec_path = root.join(SPEC_DIR);
         std::fs::create_dir_all(&spec_path).owe_conf()?;
+        sys_init_gitignore(&root)?;
         let list_path = spec_path.join(crate::const_vars::MOD_LIST_YML);
         self.mod_list.save_conf(&list_path)?;
 
