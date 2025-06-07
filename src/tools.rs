@@ -49,13 +49,9 @@ pub fn test_init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
 
+#[derive(Default)]
 pub struct BoolFlag {
     is_suc: bool,
-}
-impl Default for BoolFlag {
-    fn default() -> Self {
-        Self { is_suc: false }
-    }
 }
 impl BoolFlag {
     pub fn flag_suc(&mut self) {

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use orion_error::{ErrorOwe, ErrorWith};
 
@@ -62,7 +62,7 @@ impl<T> SysIniter for Workflows<T> {
     }
 }
 
-pub fn sys_init_gitignore(path: &PathBuf) -> SpecResult<()> {
+pub fn sys_init_gitignore(path: &Path) -> SpecResult<()> {
     let ignore_path = path.join(".gitignore");
     if !ignore_path.exists() {
         std::fs::write(&ignore_path, SYS_GITIGNORE)
