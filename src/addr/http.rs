@@ -248,8 +248,7 @@ mod tests {
         let mock = server.mock(|when, then| {
             when.method(httpmock::Method::PUT)
                 .path("/upload_put")
-                .header_exists("content-type")  // 检查 multipart 头
-                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");
+                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");  // 移除content-type检查，PUT请求不使用multipart
             then.status(200)
                 .body("upload success");
         });
@@ -327,3 +326,4 @@ mod tests2 {
         assert_eq!(addr.get_filename(), Some("file%20name.txt".to_string()));
     }
 }
+
