@@ -172,6 +172,10 @@ impl Localizable for ModTargetSpec {
         let value_path = localize_path.value().join(crate::const_vars::VALUE_JSON);
         let used_path = localize_path.value().join(crate::const_vars::USED_JSON);
         let local_path = localize_path.local();
+        if local_path.exists() {
+            std::fs::remove_dir_all(local_path).owe_res()?;
+        }
+        std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
         self.update_local(&tpl).await?;
