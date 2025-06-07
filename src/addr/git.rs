@@ -90,7 +90,7 @@ impl AsyncUpdateable for GitAddr {
         debug!(target:"spec", "dst-path:{}", path.display() );
         ctx.with_path("src-path", &git_local);
         ctx.with_path("dst-path", &real_path);
-        fs_extra::copy_items(&[&git_local], &path, &options)
+        fs_extra::copy_items(&[&git_local], path, &options)
             .owe_res()
             .with(&ctx)?;
         Ok(real_path)
