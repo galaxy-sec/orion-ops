@@ -73,14 +73,18 @@ impl HttpAddr {
             .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})").owe_logic()?
             .progress_chars("#>-"));
 
-        let part = reqwest::multipart::Part::stream_with_length(file_content, content_len)
-            .file_name(file_name);
-        let form = reqwest::multipart::Form::new().part("file", part);
-
         ctx.with("url", self.url());
         let mut request = match method.to_uppercase().as_str() {
-            "POST" => client.post(&self.url),
-            "PUT" => client.put(&self.url),
+            "POST" => {
+                let part = reqwest::multipart::Part::stream_with_length(file_content, content_len)
+                    .file_name(file_name);
+                let form = reqwest::multipart::Form::new().part("file", part);
+                client.post(&self.url).multipart(form)
+            }
+            "PUT" => {
+                // PUT方法直接使用文件内容作为请求体，避免multipart额外头部
+                client.put(&self.url).body(file_content)
+            }
             _ => {
                 return Err(StructError::from_res(format!(
                     "Unsupported HTTP method: {}",
@@ -88,8 +92,6 @@ impl HttpAddr {
                 )));
             }
         };
-
-        request = request.multipart(form);
 
         if let (Some(u), Some(p)) = (&self.username, &self.password) {
             request = request.basic_auth(u, Some(p));
