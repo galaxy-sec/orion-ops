@@ -16,7 +16,12 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
 pub struct ConfSpec {
     version: String,
+    #[serde(default = "default_local_root")]
+    local_root: String,
     files: Vec<ConfFile>,
+}
+fn default_local_root() -> String {
+    CONFS_DIR.to_string()
 }
 
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
@@ -85,15 +90,6 @@ impl ConfFile {
     }
 }
 impl ConfSpec {
-    pub fn try_load(path: &PathBuf) -> SpecResult<Self> {
-        let mut ctx = WithContext::want("load conf spec");
-        ctx.with("path", format!("path: {}", path.display()));
-        let file_content = fs::read_to_string(path).owe_conf().with(&ctx)?;
-        let loaded: Self = toml::from_str(file_content.as_str())
-            .owe_conf()
-            .with(&ctx)?;
-        Ok(loaded)
-    }
     pub fn save(&self, path: &PathBuf) -> SpecResult<()> {
         let mut ctx = WithContext::want("save conf spec");
         ctx.with("path", format!("path: {}", path.display()));
@@ -102,17 +98,18 @@ impl ConfSpec {
         Ok(())
     }
 
-    pub fn new<S: Into<String>>(version: S) -> Self {
+    pub fn new<S: Into<String>>(version: S, local_root: S) -> Self {
         Self {
             version: version.into(),
+            local_root: local_root.into(),
             files: Vec::new(),
         }
     }
     pub fn add(&mut self, file: ConfFile) {
         self.files.push(file);
     }
-    pub fn from_files(values: Vec<&str>) -> Self {
-        let mut ins = ConfSpec::new("1.0");
+    pub fn default_from_files(values: Vec<&str>) -> Self {
+        let mut ins = ConfSpec::new("1.0", CONFS_DIR);
         for item in values {
             ins.add(ConfFile::new(item));
         }
@@ -123,12 +120,12 @@ impl ConfSpec {
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
-        let root = path.join(CONFS_DIR);
+        let root = path.join(self.local_root());
         std::fs::create_dir_all(&root).owe_res()?;
         for f in &self.files {
             if let Some(addr) = f.addr() {
                 let filename = path_file_name(&PathBuf::from(f.path.as_str()))?;
-                addr.update_rename(&root, filename.as_str()).await?;
+                return addr.update_rename(&root, filename.as_str()).await;
             }
         }
         Ok(root)
@@ -137,17 +134,16 @@ impl AsyncUpdateable for ConfSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::addr::{HttpAddr, LocalAddr};
+    use crate::addr::{GitAddr, HttpAddr, LocalAddr};
 
     use super::*;
     use httpmock::{Method::GET, MockServer};
     use orion_error::TestAssert;
-    use tempfile::env::temp_dir;
     use tokio::fs;
 
     #[test]
     fn test_conf_spec_new() {
-        let spec = ConfSpec::new("1.0");
+        let spec = ConfSpec::new("1.0", CONFS_DIR);
         assert_eq!(spec.version(), "1.0");
         assert!(spec.files().is_empty());
     }
@@ -167,7 +163,7 @@ mod tests {
         let dst_dir = PathBuf::from("./temp/dst");
 
         // 创建带地址的配置
-        let mut spec = ConfSpec::new("3.0");
+        let mut spec = ConfSpec::new("3.0", CONFS_DIR);
         spec.add(
             ConfFile::new("db.yml")
                 .with_addr(AddrType::Local(LocalAddr::from("./temp/src/db.yml"))),
@@ -200,22 +196,51 @@ mod tests {
         });
 
         // 创建包含HttpAddr的配置
-        let mut conf = ConfSpec::new("1.0");
+        let mut conf = ConfSpec::new("1.0", CONFS_DIR);
         conf.add(ConfFile::new("remote.yml").with_addr(HttpAddr::from(server.url("/global.yml"))));
 
         // 测试更新
         //let src_dir = PathBuf::from("./temp/src");
         //let dst_dir = PathBuf::from("./temp/dst");
-        let temp_dir = temp_dir();
+        //let temp_dir = temp_dir();
+        let temp_dir = PathBuf::from("./test/temp/http");
+        if temp_dir.exists() {
+            std::fs::remove_dir_all(&temp_dir).assert();
+        }
+        std::fs::create_dir_all(&temp_dir).assert();
+
         let updated_path = conf.update_local(&temp_dir).await.assert();
 
+        assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("remote.yml"));
         // 验证下载的文件
-        let content = fs::read_to_string(updated_path.join("remote.yml"))
+        let content = fs::read_to_string(updated_path.clone())
             .await
             .owe_res()
             .with(format!("path: {}", updated_path.display()))?;
         assert!(content.contains("env=\"test\""));
         //fs::remove_dir_all(dst_dir).await.owe_res()?;
+        Ok(())
+    }
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_conf_with_addr_addr() -> SpecResult<()> {
+        // 创建包含HttpAddr的配置
+        let mut conf = ConfSpec::new("1.0", CONFS_DIR);
+        conf.add(ConfFile::new("bitnami").with_addr(GitAddr::from(
+            "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
+        )));
+
+        // 测试更新
+        //let src_dir = PathBuf::from("./temp/src");
+        //let dst_dir = PathBuf::from("./temp/dst");
+        //let temp_dir = temp_dir();
+        let temp_dir = PathBuf::from("./test/temp/conf_dst");
+        if temp_dir.exists() {
+            std::fs::remove_dir_all(&temp_dir).assert();
+        }
+        std::fs::create_dir_all(&temp_dir).assert();
+        let updated_path = conf.update_local(&temp_dir).await.assert();
+        assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("bitnami"));
+
         Ok(())
     }
 }

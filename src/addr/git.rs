@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use home::home_dir;
+use log::debug;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
@@ -53,32 +54,46 @@ impl GitAddr {
 impl AsyncUpdateable for GitAddr {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
         let name = get_last_segment(self.repo.as_str()).unwrap_or("unknow".into());
-        let mut base_local = home_dir()
+        let mut git_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".galaxy/cache")
-            .join(name);
+            .join(name.clone());
         let mut ctx = WithContext::want("update repository");
 
         ctx.with("repo", &self.repo);
-        ctx.with_path("path", &base_local);
+        ctx.with_path("path", &git_local);
 
-        match git2::Repository::open(&base_local) {
-            Ok(re) => self.pull_repository(&re, ctx.clone())?,
-            Err(_) => self.clone_repository(&base_local, ctx.clone())?,
+        match git2::Repository::open(&git_local) {
+            Ok(re) => {
+                debug!(target :"spec", "pull repo : {}", git_local.display());
+                self.pull_repository(&re, ctx.clone())?;
+            }
+            Err(_) => {
+                debug!(target :"spec", "clone repo : {}", git_local.display());
+                self.clone_repository(&git_local, ctx.clone())?;
+            }
         }
-        let mut dst_path = path.to_path_buf();
+        let mut real_path = path.to_path_buf();
         if let Some(sub) = &self.path {
-            base_local = base_local.join(sub);
-            dst_path = dst_path.join(sub);
+            git_local = git_local.join(sub);
+            real_path = real_path.join(sub);
+        } else {
+            real_path = real_path.join(name);
         }
-        if dst_path.exists() {
-            std::fs::remove_dir_all(&dst_path).owe_res().with(&ctx)?;
+        if real_path.exists() {
+            std::fs::remove_dir_all(&real_path).owe_res().with(&ctx)?;
         }
+
+        std::fs::create_dir_all(&real_path).owe_res().with(&ctx)?;
         let options = CopyOptions::new();
-        fs_extra::copy_items(&[&base_local], path, &options)
+        debug!(target:"spec", "src-path:{}", git_local.display() );
+        debug!(target:"spec", "dst-path:{}", path.display() );
+        ctx.with_path("src-path", &git_local);
+        ctx.with_path("dst-path", &real_path);
+        fs_extra::copy_items(&[&git_local], &path, &options)
             .owe_res()
             .with(&ctx)?;
-        Ok(dst_path)
+        Ok(real_path)
     }
 }
 
@@ -149,7 +164,7 @@ impl GitAddr {
 
 #[cfg(test)]
 mod tests {
-    use crate::error::SpecResult;
+    use crate::{error::SpecResult, tools::test_init};
 
     use super::*;
     use orion_error::{ErrorOwe, TestAssert};
@@ -181,25 +196,44 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_git_addr_update_local2() -> SpecResult<()> {
+    async fn test_git_addr_update_local_sub() -> SpecResult<()> {
         // 创建临时目录
-        let dest_path = PathBuf::from("./temp");
-        let target_path = dest_path.join("postgresql");
-        std::fs::create_dir_all(&dest_path).assert();
-        if target_path.exists() {
-            std::fs::remove_dir_all(&target_path)
-                //.owe_res()
-                //.with(&dest_path)
-                .assert();
+        test_init();
+        let dest_path = PathBuf::from("./test/temp/git");
+        //let target_path = dest_path.join("git");
+        if dest_path.exists() {
+            std::fs::remove_dir_all(&dest_path).assert();
         }
+        std::fs::create_dir_all(&dest_path).assert();
 
-        // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
         let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")
             .branch("master")
             .path("postgresql"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let _cloned_path = git_addr.update_local(&dest_path).await.assert();
+        let real_path = git_addr.update_local(&dest_path).await.assert();
+        assert_eq!(real_path, dest_path.join("postgresql"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_git_addr_pull_hole() -> SpecResult<()> {
+        // 创建临时目录
+        env_logger::init();
+        let dest_path = PathBuf::from("./test/temp/git2");
+        if dest_path.exists() {
+            std::fs::remove_dir_all(&dest_path).assert();
+        }
+        std::fs::create_dir_all(&dest_path).assert();
+
+        let git_addr =
+            GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git").branch("master");
+        //.path("*");
+        //;
+
+        // 执行克隆
+        let real_path = git_addr.update_local(&dest_path).await.assert();
+        assert_eq!(real_path, dest_path.join("modspec.git"));
         Ok(())
     }
 }

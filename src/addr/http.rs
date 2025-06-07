@@ -64,6 +64,8 @@ impl HttpAddr {
             self.url(),
         );
         let file_content = std::fs::read(file_path).owe_data().with(&ctx)?;
+        // 记录本地文件大小
+        println!("本地文件大小: {} 字节", file_content.len());
         // 创建进度条
         let pb = ProgressBar::new(file_content.len() as u64);
         pb.set_style(ProgressStyle::default_bar()

@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{
+    const_vars::CONFS_DIR,
     error::ElementReason,
     types::{Localizable, LocalizePath},
     vars::{VarCollection, VarType},
@@ -141,7 +142,7 @@ impl Localizable for ModuleSpec {
 }
 
 pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
-    let mut conf = ConfSpec::new("1.0.0");
+    let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
     conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
         "https://mirrors.aliyun.com/postgresql/README",
     )));
@@ -194,7 +195,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
-    let mut conf = ConfSpec::new("1.0.0");
+    let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
     conf.add(ConfFile::new("postgresql.conf").with_addr(HttpAddr::from(
         "https://mirrors.aliyun.com/postgresql/README",
     )));

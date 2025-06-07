@@ -26,7 +26,7 @@ impl AsyncUpdateable for SysModelSpecRef {
         self.addr.update_local(path).await
     }
 
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
         self.addr.update_rename(path, name).await
     }
 }

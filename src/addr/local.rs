@@ -35,10 +35,9 @@ impl AsyncUpdateable for LocalAddr {
         Ok(dst)
     }
 
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
         let target = self.update_local(path).await?;
-        rename_path(&target, name)?;
-        Ok(())
+        rename_path(&target, name)
     }
 }
 
@@ -49,7 +48,7 @@ pub fn path_file_name(path: &Path) -> SpecResult<String> {
         .ok_or(StructError::from_conf("get file_name error".to_string()))?;
     Ok(file_name.to_string())
 }
-pub fn rename_path(local: &Path, name: &str) -> SpecResult<()> {
+pub fn rename_path(local: &Path, name: &str) -> SpecResult<PathBuf> {
     let mut ctx = WithContext::want("rename path");
     let new_src = local
         .parent()
@@ -57,7 +56,7 @@ pub fn rename_path(local: &Path, name: &str) -> SpecResult<()> {
         .ok_or(StructError::from_conf("bad path".to_string()))?;
     ctx.with("new-from", format!("{}", new_src.display()));
     std::fs::rename(local, &new_src).owe_conf().with(&ctx)?;
-    Ok(())
+    Ok(new_src)
 }
 impl LocalAddr {
     pub fn from<S: Into<String>>(path: S) -> Self {
@@ -71,8 +70,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_local() -> SpecResult<()> {
-        let path = PathBuf::from("./test/temp");
-        std::fs::remove_dir_all(&path).owe_conf()?;
+        let path = PathBuf::from("./test/temp/local");
+        if path.exists() {
+            std::fs::remove_dir_all(&path).owe_conf()?;
+        }
         std::fs::create_dir_all(&path).owe_conf()?;
         let local = LocalAddr::from("./test/data/sys-1");
         local.update_rename(&path, "sys-2").await?;

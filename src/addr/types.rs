@@ -28,7 +28,7 @@ impl AsyncUpdateable for AddrType {
         }
     }
 
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
         match self {
             AddrType::Git(addr) => addr.update_rename(path, name).await,
             AddrType::Http(addr) => addr.update_rename(path, name).await,

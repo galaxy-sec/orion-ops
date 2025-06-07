@@ -88,6 +88,7 @@ mod tests {
         addr::LocalAddr,
         artifact::OsType,
         conf::{ConfFile, ConfSpec},
+        const_vars::CONFS_DIR,
         error::SpecResult,
         types::Configable,
     };
@@ -97,7 +98,7 @@ mod tests {
     // 基础功能测试
     #[test]
     fn test_conf_spec_creation() {
-        let spec = ConfSpec::new("1.0");
+        let spec = ConfSpec::new("1.0", CONFS_DIR);
         assert_eq!(spec.version(), "1.0");
     }
 
@@ -106,7 +107,7 @@ mod tests {
     fn confspec_save_load() -> SpecResult<()> {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
-        let mut redis = ConfSpec::new("1.0");
+        let mut redis = ConfSpec::new("1.0", CONFS_DIR);
         redis.add(ConfFile::new("./nginx.conf"));
 
         let path = root_path.join("config_spec.yml");
@@ -114,7 +115,7 @@ mod tests {
         let loaded = ConfSpec::from_conf(&path).unwrap();
         assert_eq!(redis.version(), loaded.version());
 
-        let warpflow = ConfSpec::from_files(vec![
+        let warpflow = ConfSpec::default_from_files(vec![
             "./conf/dvron.toml",
             "./conf/dvgen.toml",
             "./sink/framework.toml",

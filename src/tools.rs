@@ -44,3 +44,7 @@ pub fn get_sub_dirs(path: &Path) -> SpecResult<Vec<std::path::PathBuf>> {
     }
     Ok(dirs)
 }
+
+pub fn test_init() {
+    let _ = env_logger::builder().is_test(true).try_init();
+}

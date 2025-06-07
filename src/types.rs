@@ -22,10 +22,9 @@ pub trait Persistable<T> {
 #[async_trait]
 pub trait AsyncUpdateable {
     async fn update_local(&self, path: &Path) -> SpecResult<PathBuf>;
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<()> {
+    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
         let target = self.update_local(path).await?;
-        rename_path(&target, name)?;
-        Ok(())
+        rename_path(&target, name)
     }
 }
 
