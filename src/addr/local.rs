@@ -46,17 +46,15 @@ impl AsyncUpdateable for LocalAddr {
 
         if src.is_file() {
             std::fs::copy(&src, &dst).owe_res()?;
+        } else if dst.exists() && !up_options.force() {
+            info!(
+                target : "spec/addr/local",
+                "ignore update {} to {} !", src.display(),dst_copy.display()
+            );
         } else {
-            if dst.exists() && !up_options.force() {
-                info!(
-                    target : "spec/addr/local",
-                    "ignore update {} to {} !", src.display(),dst_copy.display()
-                );
-            } else {
-                fs_extra::dir::copy(&src, path, &options)
-                    .owe_data()
-                    .with(&ctx)?;
-            }
+            fs_extra::dir::copy(&src, path, &options)
+                .owe_data()
+                .with(&ctx)?;
         }
         flag.flag_suc();
         Ok(dst)

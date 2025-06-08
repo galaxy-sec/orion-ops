@@ -74,7 +74,7 @@ impl ModuleSpecRef {
     }
 }
 impl ModuleSpecRef {
-    pub async fn update(&self, sys_root: &PathBuf, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 std::fs::create_dir_all(local).owe_res().with(local)?;

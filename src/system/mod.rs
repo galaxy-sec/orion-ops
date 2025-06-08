@@ -1,6 +1,7 @@
 pub mod init;
 pub mod refs;
 pub mod spec;
+use std::path::Path;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
 use crate::types::{Localizable, LocalizePath, UpdateOptions};
@@ -46,7 +47,7 @@ impl ModulesList {
 }
 
 impl ModulesList {
-    async fn update(&self, sys_root: &PathBuf, options: &UpdateOptions) -> SpecResult<()> {
+    async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         for m in &self.mods {
             m.update(sys_root, options).await?;
         }
