@@ -241,6 +241,8 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 #[cfg(test)]
 pub mod test {
 
+    use orion_error::TestAssert;
+
     use crate::{const_vars::MODULES_SPC_ROOT, error::SpecResult, tools::test_init};
 
     use super::*;
@@ -252,14 +254,17 @@ pub mod test {
     #[tokio::test]
     async fn build_mod_example() -> SpecResult<()> {
         test_init();
-        let spec = make_mod_spec_example()?;
+        let spec = make_mod_spec_example().assert();
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)
+            .assert();
+        let loaded =
+            ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name())).assert();
+        loaded.localize(None).await.assert();
+        let spec = make_mod_spec_mod1().assert();
         spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
-        let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
-        loaded.localize(None).await?;
-        let spec = make_mod_spec_mod1()?;
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
-        let loaded = ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name()))?;
-        loaded.localize(None).await?;
+        let loaded =
+            ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name())).assert();
+        loaded.localize(None).await.assert();
         Ok(())
     }
 }

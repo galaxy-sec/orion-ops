@@ -248,9 +248,8 @@ mod tests {
         let mock = server.mock(|when, then| {
             when.method(httpmock::Method::PUT)
                 .path("/upload_put")
-                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");  // 移除content-type检查，PUT请求不使用multipart
-            then.status(200)
-                .body("upload success");
+                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM="); // 移除content-type检查，PUT请求不使用multipart
+            then.status(200).body("upload success");
         });
 
         // 2. 创建临时测试文件
@@ -326,4 +325,3 @@ mod tests2 {
         assert_eq!(addr.get_filename(), Some("file%20name.txt".to_string()));
     }
 }
-

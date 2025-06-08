@@ -38,28 +38,32 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
-        addr::GitAddr,
-        const_vars::SYS_MODEL_INS_ROOT,
+        addr::LocalAddr,
+        const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
         error::SpecResult,
         system::{refs::SysModelSpecRef, spec::SysModelSpec},
-        types::{AsyncUpdateable, Localizable},
+        tools::test_init,
+        types::{AsyncUpdateable, Configable, Localizable},
     };
 
     #[tokio::test]
     async fn test_sys_running() -> SpecResult<()> {
-        let target = "example-sys-x1";
+        test_init();
+        let target = "example-sys";
         let spec_ref = SysModelSpecRef::from(
             target,
-            GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git")
-                .path(target),
+            LocalAddr::from(format!("{}/{}", SYS_MODEL_SPC_ROOT, "example-sys")),
         );
         std::fs::create_dir_all(SYS_MODEL_INS_ROOT).assert("yes");
         let root = PathBuf::from(SYS_MODEL_INS_ROOT);
-        spec_ref.update_local(&root).await?;
+        spec_ref
+            .save_conf(&root.join("sys_model_ref.yml"))
+            .assert("save spec_ref");
+        spec_ref.update_local(&root).await.assert("update_local");
         let spec_path = root.join(target);
-        let spec = SysModelSpec::load_from(&spec_path)?;
-        spec.update_local().await?;
-        spec.localize(None).await?;
+        let spec = SysModelSpec::load_from(&spec_path).assert("sysmodel-spec");
+        spec.update_local().await.assert("spec.update_local");
+        spec.localize(None).await.assert("spec.localize");
         Ok(())
     }
 }

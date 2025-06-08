@@ -5,7 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use derive_getters::Getters;
-use log::{debug, info};
+use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 
 use crate::{
@@ -13,7 +13,9 @@ use crate::{
     addr::path_file_name,
     artifact::ArtifactPackage,
     conf::ConfSpec,
-    const_vars::{ARTIFACT_YML, CONF_SPEC_YML, RES_SPEC_YML, SPEC_DIR, VARS_YML},
+    const_vars::{
+        ARTIFACT_YML, CONF_SPEC_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML, SPEC_DIR, VARS_YML,
+    },
     error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
@@ -31,7 +33,7 @@ use super::{
 pub struct ModTargetSpec {
     target: TargetNode,
     artifact: ArtifactPackage,
-    actions: ModWorkflows,
+    workflow: ModWorkflows,
     conf_spec: ConfSpec,
     logs_spec: LogsSpec,
     res_spec: CaculateResSpec,
@@ -53,80 +55,107 @@ impl ModTargetSpec {
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
-        self.actions.save_to(&target_path, None)?;
+        self.workflow.save_to(&target_path, None)?;
         Ok(())
+    }
+}
+
+#[derive(Getters, Clone, Debug)]
+pub struct ModTargetPaths {
+    target_root: PathBuf,
+    spec_path: PathBuf,
+    conf_path: PathBuf,
+    logs_path: PathBuf,
+    res_path: PathBuf,
+    vars_path: PathBuf,
+    setting_path: PathBuf,
+    artifact_path: PathBuf,
+    workflow_path: PathBuf,
+}
+impl From<&PathBuf> for ModTargetPaths {
+    fn from(target_root: &PathBuf) -> Self {
+        let spec_path = target_root.join(SPEC_DIR);
+        Self {
+            target_root: target_root.to_path_buf(),
+            conf_path: spec_path.join(CONF_SPEC_YML),
+            logs_path: spec_path.join(LOGS_SPEC_YML),
+            res_path: spec_path.join(RES_SPEC_YML),
+            vars_path: target_root.join(VARS_YML),
+            setting_path: target_root.join(SETTING_YML),
+            artifact_path: spec_path.join(ARTIFACT_YML),
+            workflow_path: target_root.to_path_buf(),
+            spec_path,
+        }
     }
 }
 
 impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
         let target_path = root.join(name.unwrap_or(self.target().to_string()));
-        let spec_path = root.join(self.target().to_string()).join(SPEC_DIR);
-        std::fs::create_dir_all(&spec_path)
+
+        let mut flag = log_flag!(
+            info!(target: "spec/mod/target", "save target  success!:{}", target_path.display()),
+            error!(target: "spec/mod/target", "save target failed!:{}", target_path.display())
+        );
+        let paths = ModTargetPaths::from(&target_path);
+        std::fs::create_dir_all(paths.spec_path())
             .owe_conf()
-            .with(format!("path: {}", spec_path.display()))?;
+            .with(format!("path: {}", paths.spec_path().display()))?;
 
         if let Some(setting) = &self.setting {
-            let setting_path = target_path.join(crate::const_vars::SETTING_YML);
-            setting.save_conf(&setting_path)?;
+            setting.save_conf(paths.setting_path())?;
         }
-        self.actions.save_to(&target_path, None)?;
-        let artifact_path = spec_path.join(crate::const_vars::ARTIFACT_YML);
-        self.artifact.save_conf(&artifact_path)?;
+        self.workflow.save_to(paths.workflow_path(), None)?;
+        self.artifact.save_conf(paths.artifact_path())?;
 
-        let conf_path = spec_path.join(crate::const_vars::CONF_SPEC_YML);
-        self.conf_spec.save_conf(&conf_path)?;
-        let logs_path = spec_path.join(crate::const_vars::LOGS_SPEC_YML);
-        self.logs_spec.save_conf(&logs_path)?;
+        self.conf_spec.save_conf(paths.conf_path())?;
+        self.logs_spec.save_conf(paths.logs_path())?;
 
-        let res_path = spec_path.join(RES_SPEC_YML);
-        self.res_spec.save_conf(&res_path)?;
-        let vars_path = spec_path.join(VARS_YML);
-        self.vars.save_conf(&vars_path)?;
+        self.res_spec.save_conf(paths.res_path())?;
+        self.vars.save_conf(paths.vars_path())?;
+        flag.flag_suc();
         Ok(())
     }
 
-    fn load_from(root_path: &Path) -> SpecResult<Self> {
+    fn load_from(target_root: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load target mod spec");
 
-        let target = TargetNode::from_str(path_file_name(root_path)?.as_str())
+        let mut flag = log_flag!(
+            info!(target: "spec/mod/target", "load target  success!:{}", target_root.display()),
+            error!(target: "spec/mod/target", "load target failed!:{}", target_root.display())
+        );
+        let paths = ModTargetPaths::from(&target_root.to_path_buf());
+        let target = TargetNode::from_str(path_file_name(target_root)?.as_str())
             .owe_res()
             .with(&ctx)?;
-        let actions = ModWorkflows::load_from(root_path).with(&ctx)?;
-        let target_path = root_path.join(SPEC_DIR);
+        let actions = ModWorkflows::load_from(paths.workflow_path()).with(&ctx)?;
 
-        let setting_path = root_path.join(crate::const_vars::SETTING_YML);
-        let setting = if setting_path.exists() {
-            Some(Setting::from_conf(&setting_path)?)
+        let setting = if paths.setting_path().exists() {
+            Some(Setting::from_conf(paths.setting_path())?)
         } else {
             None
         };
-        let artifact_path = target_path.join(ARTIFACT_YML);
-        ctx.with_path("artifact", &artifact_path);
-        let artifact = ArtifactPackage::from_conf(&artifact_path).with(&ctx)?;
+        ctx.with_path("artifact", paths.artifact_path());
+        let artifact = ArtifactPackage::from_conf(paths.artifact_path()).with(&ctx)?;
 
-        let spec_path = target_path.join(CONF_SPEC_YML);
-        ctx.with_path("conf_spec", &spec_path);
-        let conf_spec = ConfSpec::from_conf(&spec_path).with(&ctx)?;
-        let logs_path = target_path.join(crate::const_vars::LOGS_SPEC_YML);
-        ctx.with_path("logs_spec", &logs_path);
-        let logs_spec = LogsSpec::from_conf(&logs_path).with(&ctx)?;
-        let res_path = target_path.join(crate::const_vars::RES_SPEC_YML);
-        ctx.with_path("res_spec", &logs_path);
-        let res_spec = CaculateResSpec::from_conf(&res_path).with(&ctx)?;
-        let vars_path = target_path.join(crate::const_vars::VARS_YML);
-        ctx.with_path("vars", &vars_path);
-        let vars = VarCollection::from_conf(&vars_path).with(&ctx)?;
+        ctx.with_path("conf_spec", paths.conf_path());
+        let conf_spec = ConfSpec::from_conf(paths.conf_path()).with(&ctx)?;
+        ctx.with_path("logs_spec", paths.logs_path());
+        let logs_spec = LogsSpec::from_conf(paths.logs_path()).with(&ctx)?;
+        ctx.with_path("res_spec", paths.res_path());
+        let res_spec = CaculateResSpec::from_conf(paths.res_path()).with(&ctx)?;
+        ctx.with_path("vars", paths.vars_path());
+        let vars = VarCollection::from_conf(paths.vars_path()).with(&ctx)?;
 
-        info!( target:"spec/mod/target", "lod mod-target success!: {}" ,root_path.display() );
+        flag.flag_suc();
         Ok(Self {
             target,
             artifact,
-            actions,
+            workflow: actions,
             conf_spec,
             logs_spec,
             res_spec,
-            local: Some(root_path.to_path_buf()),
+            local: Some(target_root.to_path_buf()),
             vars,
             setting,
         })
@@ -144,7 +173,7 @@ impl ModTargetSpec {
     ) -> Self {
         Self {
             target,
-            actions,
+            workflow: actions,
             artifact,
             conf_spec,
             logs_spec: LogsSpec::tpl_init(),

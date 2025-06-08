@@ -82,8 +82,8 @@ where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
     fn from_conf(path: &Path) -> SpecResult<T> {
-        let mut ctx = WithContext::want("load object from toml");
-        ctx.with("path", format!("path: {}", path.display()));
+        let mut ctx = WithContext::want("load object from file");
+        ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
         //let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
         let loaded: T = serde_yaml::from_str(file_content.as_str())
@@ -92,8 +92,8 @@ where
         Ok(loaded)
     }
     fn save_conf(&self, path: &Path) -> SpecResult<()> {
-        let mut ctx = WithContext::want("save toml");
-        ctx.with("path", format!("path: {}", path.display()));
+        let mut ctx = WithContext::want("save object fo file");
+        ctx.with_path("path", path);
         let data_content = serde_yaml::to_string(self).owe_data().with(&ctx)?;
         fs::write(path, data_content).owe_res().with(&ctx)?;
         Ok(())
