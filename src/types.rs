@@ -19,9 +19,14 @@ pub trait Persistable<T> {
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
-#[derive(Clone, Debug, Serialize, Default)]
+#[derive(Clone, Debug, Serialize)]
 pub struct UpdateOptions {
     force: bool,
+}
+impl Default for UpdateOptions {
+    fn default() -> Self {
+        Self { force: true }
+    }
 }
 impl UpdateOptions {
     pub fn force(&self) -> bool {
