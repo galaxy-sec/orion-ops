@@ -15,10 +15,24 @@ use crate::{
 use super::{TargetNode, spec::ModuleSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
+pub struct DependItem {
+    addr: AddrType,
+    local: PathBuf,
+}
+
+impl DependItem {
+    pub fn new(addr: AddrType, local: PathBuf) -> Self {
+        Self { addr, local }
+    }
+}
+
+#[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
     name: String,
     addr: AddrType,
     node: TargetNode,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    depends: Vec<DependItem>,
     effective: Option<bool>,
     #[serde(skip)]
     local: Option<PathBuf>,
@@ -36,10 +50,16 @@ impl ModuleSpecRef {
             node,
             effective: None,
             local: None,
+            depends: Vec::new(),
         }
     }
     pub fn with_effective(mut self, effective: bool) -> Self {
         self.effective = Some(effective);
+        self
+    }
+
+    pub fn with_depend(mut self, depend: DependItem) -> Self {
+        self.depends.push(depend);
         self
     }
 
@@ -54,11 +74,14 @@ impl ModuleSpecRef {
     }
 }
 impl ModuleSpecRef {
-    pub async fn update(&self) -> SpecResult<()> {
+    pub async fn update(&self, sys_root: &PathBuf) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let _spec_path = self.addr.update_local(local).await?;
+                for item in self.depends() {
+                    item.update_local(sys_root).await?;
+                }
                 let mod_path = local.join(self.name.as_str());
                 let mut spec = ModuleSpec::load_from(&mod_path)?;
                 let _x = spec.update_local(&mod_path).await?;
@@ -66,6 +89,15 @@ impl ModuleSpecRef {
             }
         }
         Ok(())
+    }
+}
+
+#[async_trait]
+impl AsyncUpdateable for DependItem {
+    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+        let target = path.join(self.local());
+        self.addr.update_local(&target).await?;
+        Ok(target)
     }
 }
 

@@ -46,9 +46,9 @@ impl ModulesList {
 }
 
 impl ModulesList {
-    async fn update(&self) -> SpecResult<()> {
+    async fn update(&self, sys_root: &PathBuf) -> SpecResult<()> {
         for m in &self.mods {
-            m.update().await?;
+            m.update(sys_root).await?;
         }
         Ok(())
     }

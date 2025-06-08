@@ -148,8 +148,8 @@ impl SysModelSpec {
     }
 
     pub async fn update_local(&self) -> SpecResult<()> {
-        if let Some(_local) = &self.local {
-            self.mod_list.update().await?;
+        if let Some(local) = &self.local {
+            self.mod_list.update(local).await?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()
@@ -285,6 +285,7 @@ pub mod tests {
     use crate::{
         addr::LocalAddr,
         const_vars::{MODULES_SPC_ROOT, SYS_MODEL_SPC_ROOT},
+        module::refs::DependItem,
         tools::test_init,
     };
 
@@ -335,11 +336,17 @@ pub mod tests {
             .with_effective(false),
         );
         let mod_name = "postgresql";
-        modul_spec.add_mod_ref(ModuleSpecRef::from(
-            mod_name,
-            LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
-            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
-        ));
+        modul_spec.add_mod_ref(
+            ModuleSpecRef::from(
+                mod_name,
+                LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
+                TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+            )
+            .with_depend(DependItem::new(
+                LocalAddr::from("./example/knowlege/mysql").into(),
+                PathBuf::from("depends"),
+            )),
+        );
 
         Ok(modul_spec)
     }
