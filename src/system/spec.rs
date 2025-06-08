@@ -7,7 +7,7 @@ use crate::{
     action::act::SysWorkflows,
     const_vars::{MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, SPEC_DIR, VALUE_JSON, VARS_YML},
     error::ElementReason,
-    types::{JsonAble, Localizable, LocalizePath},
+    types::{JsonAble, Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
 };
 use async_trait::async_trait;
@@ -147,9 +147,9 @@ impl SysModelSpec {
         }
     }
 
-    pub async fn update_local(&self) -> SpecResult<()> {
+    pub async fn update_local(&self, options: &UpdateOptions) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            self.mod_list.update(local).await?;
+            self.mod_list.update(local, options).await?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()
@@ -301,7 +301,9 @@ pub mod tests {
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         spec.save_to(&spec_root).assert("spec save");
         let spec = SysModelSpec::load_from(&spec_root.join(spec.name())).assert("spec load");
-        spec.update_local().await.assert("update");
+        spec.update_local(&UpdateOptions::for_test())
+            .await
+            .assert("update");
         spec.localize(None).await.assert("localize");
         Ok(())
     }

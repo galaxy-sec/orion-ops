@@ -3,7 +3,10 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, types::AsyncUpdateable};
+use crate::{
+    error::SpecResult,
+    types::{AsyncUpdateable, UpdateOptions},
+};
 
 use super::{GitAddr, HttpAddr, LocalAddr};
 
@@ -20,19 +23,24 @@ pub enum AddrType {
 
 #[async_trait]
 impl AsyncUpdateable for AddrType {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         match self {
-            AddrType::Git(addr) => addr.update_local(path).await,
-            AddrType::Http(addr) => addr.update_local(path).await,
-            AddrType::Local(addr) => addr.update_local(path).await,
+            AddrType::Git(addr) => addr.update_local(path, options).await,
+            AddrType::Http(addr) => addr.update_local(path, options).await,
+            AddrType::Local(addr) => addr.update_local(path, options).await,
         }
     }
 
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
+    async fn update_rename(
+        &self,
+        path: &Path,
+        name: &str,
+        options: &UpdateOptions,
+    ) -> SpecResult<PathBuf> {
         match self {
-            AddrType::Git(addr) => addr.update_rename(path, name).await,
-            AddrType::Http(addr) => addr.update_rename(path, name).await,
-            AddrType::Local(addr) => addr.update_rename(path, name).await,
+            AddrType::Git(addr) => addr.update_rename(path, name, options).await,
+            AddrType::Http(addr) => addr.update_rename(path, name, options).await,
+            AddrType::Local(addr) => addr.update_rename(path, name, options).await,
         }
     }
 }

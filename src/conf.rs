@@ -8,7 +8,7 @@ use crate::{
     const_vars::CONFS_DIR,
     error::SpecResult,
     log_flag,
-    types::{AsyncUpdateable, Configable},
+    types::{AsyncUpdateable, Configable, UpdateOptions},
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -122,7 +122,7 @@ impl ConfSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = log_flag!(
@@ -134,7 +134,9 @@ impl AsyncUpdateable for ConfSpec {
         for f in &self.files {
             if let Some(addr) = f.addr() {
                 let filename = path_file_name(&PathBuf::from(f.path.as_str()))?;
-                let x = addr.update_rename(&root, filename.as_str()).await?;
+                let x = addr
+                    .update_rename(&root, filename.as_str(), options)
+                    .await?;
                 is_suc.flag_suc();
                 return Ok(x);
             }
@@ -193,7 +195,9 @@ mod tests {
             .owe_res()?;
 
         // 执行更新
-        let _ = spec.update_local(&dst_dir).await?;
+        let _ = spec
+            .update_local(&dst_dir, &UpdateOptions::for_test())
+            .await?;
         assert!(dst_dir.join("confs/db.yml").exists());
 
         // 清理
@@ -224,7 +228,10 @@ mod tests {
         }
         std::fs::create_dir_all(&temp_dir).assert();
 
-        let updated_path = conf.update_local(&temp_dir).await.assert();
+        let updated_path = conf
+            .update_local(&temp_dir, &UpdateOptions::for_test())
+            .await
+            .assert();
 
         assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("remote.yml"));
         // 验证下载的文件
@@ -253,7 +260,10 @@ mod tests {
             std::fs::remove_dir_all(&temp_dir).assert();
         }
         std::fs::create_dir_all(&temp_dir).assert();
-        let updated_path = conf.update_local(&temp_dir).await.assert();
+        let updated_path = conf
+            .update_local(&temp_dir, &UpdateOptions::for_test())
+            .await
+            .assert();
         assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("bitnami"));
 
         Ok(())

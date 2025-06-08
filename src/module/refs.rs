@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     addr::AddrType,
     error::SpecResult,
-    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
+    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateOptions},
 };
 
 use super::{TargetNode, spec::ModuleSpec};
@@ -74,17 +74,18 @@ impl ModuleSpecRef {
     }
 }
 impl ModuleSpecRef {
-    pub async fn update(&self, sys_root: &PathBuf) -> SpecResult<()> {
+    pub async fn update(&self, sys_root: &PathBuf, options: &UpdateOptions) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 std::fs::create_dir_all(local).owe_res().with(local)?;
-                let _spec_path = self.addr.update_local(local).await?;
+                let _spec_path = self.addr.update_local(local, options).await?;
                 for item in self.depends() {
-                    item.update_local(sys_root).await?;
+                    item.update_local(sys_root, &UpdateOptions::for_depend())
+                        .await?;
                 }
                 let mod_path = local.join(self.name.as_str());
                 let mut spec = ModuleSpec::load_from(&mod_path)?;
-                let _x = spec.update_local(&mod_path).await?;
+                let _x = spec.update_local(&mod_path, options).await?;
                 spec.clean_other(self.node())?;
             }
         }
@@ -94,9 +95,9 @@ impl ModuleSpecRef {
 
 #[async_trait]
 impl AsyncUpdateable for DependItem {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         let target = path.join(self.local());
-        self.addr.update_local(&target).await?;
+        self.addr.update_local(&target, options).await?;
         Ok(target)
     }
 }

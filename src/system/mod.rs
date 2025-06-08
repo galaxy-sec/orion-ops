@@ -3,7 +3,7 @@ pub mod refs;
 pub mod spec;
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
 
-use crate::types::{Localizable, LocalizePath};
+use crate::types::{Localizable, LocalizePath, UpdateOptions};
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -46,9 +46,9 @@ impl ModulesList {
 }
 
 impl ModulesList {
-    async fn update(&self, sys_root: &PathBuf) -> SpecResult<()> {
+    async fn update(&self, sys_root: &PathBuf, options: &UpdateOptions) -> SpecResult<()> {
         for m in &self.mods {
-            m.update(sys_root).await?;
+            m.update(sys_root, options).await?;
         }
         Ok(())
     }

@@ -5,9 +5,13 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
+use tracing::info;
 use url::Url;
 
-use crate::{error::SpecResult, types::AsyncUpdateable};
+use crate::{
+    error::SpecResult,
+    types::{AsyncUpdateable, UpdateOptions},
+};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "http")]
@@ -103,8 +107,13 @@ impl HttpAddr {
         Ok(())
     }
 
-    pub async fn download(&self, dest_path: &Path) -> SpecResult<PathBuf> {
+    pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
+
+        if dest_path.exists() && !options.force() {
+            info!(target :"spec/addr", "{} exists , ignore!! ",dest_path.display());
+            return Ok(dest_path.to_path_buf());
+        }
         let mut ctx = WithContext::want("download url");
         ctx.with("url", self.url());
         let client = reqwest::Client::new();
@@ -155,10 +164,10 @@ impl HttpAddr {
 
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, dest_dir: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        self.download(&dest_path).await
+        self.download(&dest_path, options).await
     }
 }
 
@@ -187,7 +196,7 @@ mod tests {
         );
 
         http_addr
-            .update_local(&temp_dir.path().to_path_buf())
+            .update_local(&temp_dir.path().to_path_buf(), &UpdateOptions::for_test())
             .await?;
 
         // 3. 验证结果
@@ -204,7 +213,7 @@ mod tests {
                 "generic-1747535977632",
                 "5b2c9e9b7f111af52f0375c1fd9d35cd4d0dabc3",
             );
-        addr.update_local(&path).await?;
+        addr.update_local(&path, &UpdateOptions::for_test()).await?;
         Ok(())
     }
 

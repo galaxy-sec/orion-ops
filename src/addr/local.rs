@@ -8,7 +8,11 @@ use log::{error, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, log_flag, types::AsyncUpdateable};
+use crate::{
+    error::SpecResult,
+    log_flag,
+    types::{AsyncUpdateable, UpdateOptions},
+};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
@@ -18,7 +22,7 @@ pub struct LocalAddr {
 #[async_trait]
 impl AsyncUpdateable for LocalAddr {
     //#[debug_ensures(matches!(*result, Ok(v) if v.exists()), "path not exists")]
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, up_options: &UpdateOptions) -> SpecResult<PathBuf> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -43,16 +47,28 @@ impl AsyncUpdateable for LocalAddr {
         if src.is_file() {
             std::fs::copy(&src, &dst).owe_res()?;
         } else {
-            fs_extra::dir::copy(&src, path, &options)
-                .owe_data()
-                .with(&ctx)?;
+            if dst.exists() && !up_options.force() {
+                info!(
+                    target : "spec/addr/local",
+                    "ignore update {} to {} !", src.display(),dst_copy.display()
+                );
+            } else {
+                fs_extra::dir::copy(&src, path, &options)
+                    .owe_data()
+                    .with(&ctx)?;
+            }
         }
         flag.flag_suc();
         Ok(dst)
     }
 
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
-        let target = self.update_local(path).await?;
+    async fn update_rename(
+        &self,
+        path: &Path,
+        name: &str,
+        options: &UpdateOptions,
+    ) -> SpecResult<PathBuf> {
+        let target = self.update_local(path, options).await?;
         rename_path(&target, name)
     }
 }
@@ -107,6 +123,8 @@ impl LocalAddr {
 
 #[cfg(test)]
 mod tests {
+    use crate::types::UpdateOptions;
+
     use super::*;
 
     #[tokio::test]
@@ -117,8 +135,12 @@ mod tests {
         }
         std::fs::create_dir_all(&path).owe_conf()?;
         let local = LocalAddr::from("./test/data/sys-1");
-        local.update_rename(&path, "sys-2").await?;
-        local.update_local(&path).await?;
+        local
+            .update_rename(&path, "sys-2", &UpdateOptions::for_test())
+            .await?;
+        local
+            .update_local(&path, &UpdateOptions::for_test())
+            .await?;
 
         assert!(std::fs::exists(path.join("sys-2")).owe_conf()?);
         assert!(std::fs::exists(path.join("sys-1")).owe_conf()?);

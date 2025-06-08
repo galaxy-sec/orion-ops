@@ -19,11 +19,31 @@ pub trait Persistable<T> {
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
+#[derive(Clone, Debug, Serialize, Default)]
+pub struct UpdateOptions {
+    force: bool,
+}
+impl UpdateOptions {
+    pub fn force(&self) -> bool {
+        self.force
+    }
+    pub fn for_test() -> Self {
+        Self { force: true }
+    }
+    pub fn for_depend() -> Self {
+        Self { force: false }
+    }
+}
 #[async_trait]
 pub trait AsyncUpdateable {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf>;
-    async fn update_rename(&self, path: &Path, name: &str) -> SpecResult<PathBuf> {
-        let target = self.update_local(path).await?;
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf>;
+    async fn update_rename(
+        &self,
+        path: &Path,
+        name: &str,
+        options: &UpdateOptions,
+    ) -> SpecResult<PathBuf> {
+        let target = self.update_local(path, options).await?;
         rename_path(&target, name)
     }
 }

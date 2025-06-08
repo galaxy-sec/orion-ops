@@ -6,7 +6,7 @@ use std::{
 use crate::{
     const_vars::CONFS_DIR,
     error::ElementReason,
-    types::{Localizable, LocalizePath},
+    types::{Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
 };
 use async_trait::async_trait;
@@ -82,9 +82,10 @@ impl ModuleSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModuleSpec {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         for (target, node) in &self.targets {
-            node.update_local(&path.join(target.to_string())).await?;
+            node.update_local(&path.join(target.to_string()), options)
+                .await?;
         }
         Ok(path.to_path_buf())
     }

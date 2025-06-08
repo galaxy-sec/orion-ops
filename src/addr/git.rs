@@ -7,7 +7,12 @@ use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, log_flag, tools::get_last_segment, types::AsyncUpdateable};
+use crate::{
+    error::SpecResult,
+    log_flag,
+    tools::get_last_segment,
+    types::{AsyncUpdateable, UpdateOptions},
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename = "git")]
@@ -52,7 +57,7 @@ impl GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, _options: &UpdateOptions) -> SpecResult<PathBuf> {
         let name = get_last_segment(self.repo.as_str()).unwrap_or("unknow".into());
         let mut git_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
@@ -193,7 +198,9 @@ mod tests {
         let git_addr = GitAddr::from("https://github.com/octocat/Hello-World.git").branch("master"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let cloned_path = git_addr.update_local(&dest_path).await?;
+        let cloned_path = git_addr
+            .update_local(&dest_path, &UpdateOptions::default())
+            .await?;
 
         // 验证克隆结果
         assert!(cloned_path.exists());
@@ -223,7 +230,10 @@ mod tests {
             .path("postgresql"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let real_path = git_addr.update_local(&dest_path).await.assert();
+        let real_path = git_addr
+            .update_local(&dest_path, &UpdateOptions::default())
+            .await
+            .assert();
         assert_eq!(real_path, dest_path.join("postgresql"));
         Ok(())
     }
@@ -244,7 +254,10 @@ mod tests {
         //;
 
         // 执行克隆
-        let real_path = git_addr.update_local(&dest_path).await.assert();
+        let real_path = git_addr
+            .update_local(&dest_path, &UpdateOptions::default())
+            .await
+            .assert();
         assert_eq!(real_path, dest_path.join("modspec.git"));
         Ok(())
     }

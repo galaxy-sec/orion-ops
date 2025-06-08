@@ -19,7 +19,10 @@ use crate::{
     error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
-    types::{AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable},
+    types::{
+        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
+        UpdateOptions,
+    },
     vars::{ValueDict, VarCollection},
 };
 
@@ -44,8 +47,8 @@ pub struct ModTargetSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModTargetSpec {
-    async fn update_local(&self, path: &Path) -> SpecResult<PathBuf> {
-        self.conf_spec.update_local(path).await?;
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+        self.conf_spec.update_local(path, options).await?;
         Ok(path.to_path_buf())
     }
 }
@@ -210,7 +213,7 @@ impl Localizable for ModTargetSpec {
         std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
-        self.update_local(&tpl).await?;
+        self.update_local(&tpl, &UpdateOptions::default()).await?;
         if !value_path.exists() {
             value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
