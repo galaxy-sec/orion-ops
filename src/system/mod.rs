@@ -1,5 +1,4 @@
 pub mod init;
-pub mod proj;
 pub mod refs;
 pub mod spec;
 use std::path::Path;
@@ -48,7 +47,7 @@ impl ModulesList {
 }
 
 impl ModulesList {
-    async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         for m in &self.mods {
             m.update(sys_root, options).await?;
         }

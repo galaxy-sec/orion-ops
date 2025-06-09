@@ -1,29 +1,31 @@
 use std::path::PathBuf;
 
 use crate::{
-    addr::{AddrType, GitAddr},
+    addr::{AddrType, GitAddr, LocalAddr},
     error::SpecResult,
-    module::refs::DependItem,
-    system::spec::SysModelSpec,
+    module::{
+        CpuArch, OsCPE, RunSPC, TargetNode,
+        refs::{DependItem, ModuleSpecRef},
+    },
+    system::{ModulesList, refs::SysModelSpecRef, spec::SysModelSpec},
     types::{AsyncUpdateable, Localizable, LocalizePath, UpdateOptions},
 };
 
-use super::refs::SysModelSpecRef;
 use async_trait::async_trait;
 use derive_getters::Getters;
 use derive_more::{Deref, DerefMut};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
-pub struct SysCustProject {
-    model_spec: SysModelSpecRef,
+pub struct ModCustProject {
+    mod_list: ModulesList,
     local_res: LocalRes,
     root_local: PathBuf,
 }
-impl SysCustProject {
-    pub fn new(model_spec: SysModelSpecRef, local_res: LocalRes, root_local: PathBuf) -> Self {
+impl ModCustProject {
+    pub fn new(model_spec: ModulesList, local_res: LocalRes, root_local: PathBuf) -> Self {
         Self {
-            model_spec,
+            mod_list: model_spec,
             local_res,
             root_local,
         }
@@ -35,13 +37,11 @@ pub struct LocalRes {
     resource: Vec<DependItem>,
 }
 
-impl SysCustProject {
+impl ModCustProject {
     pub async fn update(&self) -> SpecResult<()> {
         let path = &self.root_local;
         let options = &UpdateOptions::default();
-        self.model_spec
-            .update_rename(path, "system", options)
-            .await?;
+        self.mod_list.update(path, options).await?;
         for res in self.local_res.iter() {
             res.update(options).await?;
         }
@@ -50,25 +50,23 @@ impl SysCustProject {
 }
 
 #[async_trait]
-impl Localizable for SysCustProject {
+impl Localizable for ModCustProject {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        let options = &UpdateOptions::default();
-        let sys_path = self.root_local().join("system");
-        let spec = SysModelSpec::load_from(&sys_path)?;
-        spec.update_local(options).await?;
         let local_path = LocalizePath::from_root(self.root_local());
-        spec.localize(Some(local_path)).await?;
+        self.mod_list().localize(Some(local_path)).await?;
         Ok(())
     }
 }
 
-pub fn make_sys_cust_example(prj_path: PathBuf) -> SpecResult<SysCustProject> {
-    let target = "example-sys-x1";
-    let spec_ref = SysModelSpecRef::from(
-        target,
-        GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git")
-            .path("example-sys-x1"),
-    );
+pub fn make_mod_cust_example(prj_path: PathBuf) -> SpecResult<ModCustProject> {
+    let mod_name = "postgresql";
+    let mut mod_list = ModulesList::default();
+    mod_list.add_ref(ModuleSpecRef::from(
+        mod_name,
+        LocalAddr::from("./example/modules/postgresql"),
+        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+    ));
+
     let mut res = LocalRes::default();
     res.push(
         DependItem::new(
@@ -79,7 +77,7 @@ pub fn make_sys_cust_example(prj_path: PathBuf) -> SpecResult<SysCustProject> {
         )
         .with_rename("bit-common"),
     );
-    Ok(SysCustProject::new(spec_ref, res, prj_path.clone()))
+    Ok(ModCustProject::new(mod_list, res, prj_path.clone()))
 }
 
 #[cfg(test)]
@@ -89,38 +87,18 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
-        addr::{AddrType, LocalAddr},
-        const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
+        const_vars::MODULES_INS_ROOT,
+        cust::{modprj::make_mod_cust_example, sysproj::SysCustProject},
         error::SpecResult,
-        module::refs::DependItem,
-        system::{
-            proj::{LocalRes, SysCustProject},
-            refs::SysModelSpecRef,
-        },
         tools::test_init,
         types::{Configable, Localizable},
     };
 
     #[tokio::test]
-    async fn test_cust_prj_running() -> SpecResult<()> {
+    async fn test_mod_cust_prj_running() -> SpecResult<()> {
         test_init();
-        let prj_path = PathBuf::from(SYS_MODEL_INS_ROOT).join("dss-prj-1");
-        let target = "example-sys";
-        let spec_ref = SysModelSpecRef::from(
-            target,
-            LocalAddr::from(format!("{}/{}", SYS_MODEL_SPC_ROOT, "example-sys")),
-        );
-
-        let mut res = LocalRes::default();
-        res.push(
-            DependItem::new(
-                AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-                prj_path.join("env_res"),
-            )
-            .with_rename("mysql2"),
-        );
-        let project = SysCustProject::new(spec_ref, res, prj_path.clone());
-
+        let prj_path = PathBuf::from(MODULES_INS_ROOT).join("mod_cust-prj");
+        let project = make_mod_cust_example(prj_path.clone()).assert("make cust");
         if prj_path.exists() {
             std::fs::remove_dir_all(&prj_path).assert("ok");
         }

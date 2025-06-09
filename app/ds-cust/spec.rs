@@ -1,8 +1,8 @@
 use orion_error::ErrorConv;
 use orion_syspec::addr::GitAddr;
+use orion_syspec::cust::sysproj::{SysCustProject, make_sys_cust_example};
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
-use orion_syspec::system::proj::{SysCustProject, make_sys_cust_example};
 use orion_syspec::system::refs::SysModelSpecRef;
 use orion_syspec::types::{AsyncUpdateable, Configable, Localizable, UpdateOptions};
 

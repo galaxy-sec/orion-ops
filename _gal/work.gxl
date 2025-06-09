@@ -89,14 +89,17 @@ mod main   {
     gx.cmd (  "cp ${MAIN_BLD_BINS}/ds-cust ${MAIN_PRJ_BINS}/${AP}cust"  );
     gx.cmd (  "cp ${MAIN_PRJ_BINS}/${AP}* ${MAIN_USR_BINS}/"  );
   }
-  flow _pub_gsys: : _pub_dysec {
-    UP_TARGET = "gsys";
+  flow _pub_sys: : _pub_dysec {
+    UP_TARGET = "ds-sys";
   }
-  flow _pub_gmod: : _pub_dysec {
-    UP_TARGET = "gmod";
+  flow _pub_mod: : _pub_dysec {
+    UP_TARGET = "ds-mod";
+  }
+  flow _pub_cust: : _pub_dysec {
+    UP_TARGET = "ds-cust";
   }
 
-  flow pub_dysec  : _pub_gmod,_pub_gsys ;
+  flow pub_dysec  : _pub_mod,_pub_sys,_pub_cust ;
 
   flow _pub_dysec :ver.use {
     gx.echo (  "pub ${UP_TARGET} to dysec " );
