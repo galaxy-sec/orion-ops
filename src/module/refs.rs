@@ -106,8 +106,7 @@ impl ModuleSpecRef {
 #[async_trait]
 impl AsyncUpdateable for DependItem {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        //let target = path.join(self.local());
-        self.addr.update_local(&path, options).await
+        self.addr.update_local(path, options).await
     }
 }
 
