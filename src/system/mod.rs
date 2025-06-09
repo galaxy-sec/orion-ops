@@ -1,4 +1,5 @@
 pub mod init;
+pub mod proj;
 pub mod refs;
 pub mod spec;
 use std::path::Path;

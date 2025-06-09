@@ -4,12 +4,17 @@ version = "0.4.1"
 edition = "2024"
 
 [[bin]]
-name = "gsys"
-path = "app/gsys/main.rs"
+name = "ds-sys"
+path = "app/ds-sys/main.rs"
 
 [[bin]]
-name = "gmod"
-path = "app/gmod/main.rs"
+name = "ds-mod"
+path = "app/ds-mod/main.rs"
+
+[[bin]]
+name = "ds-cust"
+path = "app/ds-cust/main.rs"
+
 
 [workspace]
 members = [
