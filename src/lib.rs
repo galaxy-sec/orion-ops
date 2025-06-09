@@ -15,6 +15,7 @@ pub mod system;
 pub mod task;
 #[macro_use]
 pub mod tools;
+pub mod infra;
 pub mod tpl;
 pub mod types;
 pub mod vars;

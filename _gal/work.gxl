@@ -1,33 +1,118 @@
 extern mod head { path = "./_gal/"; }
-mod envs  {
-   env _common    {
+
+mod env  {
+   env _common  : rust_env.init   {
     sudo      = "false";
     root      = ".";
-    run       = "./.run";
-    prj_key   = "you_project" ;
+    run       = "./run";
+    target_name = "";
+    prj_key   = "orion-syspec" ;
+    DIST_REPO = "unknow";
+    AFT_PREFIX = "g";
 
   }
 
-  #[usage(desp="cicd env",color="red")]
-  env ci : _common  {
+  #[usage(desp="use debug ",color="blue")]
+  env debug :  _common,rust_env.debug {
+    AFT_PREFIX = "d" ;
   }
- #[usage(desp="developer local env",color="red")]
-  env local : _common {
+  #[usage(desp="use debug ",color="blue")]
+  env release :  _common,rust_env.release{
+    AFT_PREFIX = "g" ;
   }
 
-  #[usage(desp="default auto ")]
-  env default    : local;
+
+  #[usage(desp="default mamcos", color="green")]
+  env default    : _common,debug;
 }
 
 mod main   {
-
-    #[auto_load(entry)]
-    flow __into  {
+      bld_bins = "target/${ENV_BUILD_NAME}" ;
+      rls_bins = "target/release" ;
       prj_bins = "${ENV_ROOT}/bin" ;
       usr_bins = "${HOME}/bin" ;
 
+    #[auto_load(entry)]
+    flow __into  {
+        DIST_REPO = "unkonw";
+        gx.echo ( value: "${GXL_OS_SYS}" )
+        if ${GXL_OS_SYS} =* "arm64_macos_*" {
+            DIST_REPO = "macos";
+        } else if ${GXL_OS_SYS} =* "x86_64_ubuntu*" {
+            DIST_REPO = "ubuntu22";
+        }
+        else {
+            DIST_REPO = "other";
+        }
+
     }
     flow conf  {
-      gx.echo ( "PRJ_BINS: ${PRJ_BINS} ");
+
+      gx.echo ( "${ENV_PRJ_KEY}" );
+      gx.echo ( "PRJ_BINS: ${MAIN_PRJ_BINS} " );
+      gx.echo ( "USR_BIN : ${MAIN_USR_BINS} " );
+      gx.echo ( "GXL_OS_SYS: ${GXL_OS_SYS} " );
+
+      gx.echo (  "ENV_BUILD_FLAG :  ${ENV_BUILD_FLAG}  " );
+      gx.echo (  "ENV_TARGET_FLAG : ${ENV_TARGET_FLAG} " );
+      gx.cmd (  "mkdir -p ${ENV_RUN}"  );
     }
+
+
+  #[usage(desp="use project cargo conf")]
+  flow cargo_env {
+    gx.cmd  ( cmd : "cp -f build/cargo.conf $CARGO_HOME/config" );
+  }
+
+  #[usage(desp="build system")]
+  flow build: ver.use ,conf , rust_flow.build : pub_local {
+      gx.cmd (  "mkdir -p ${MAIN_USR_BINS}" );
+      gx.cmd (  "mkdir -p ${MAIN_PRJ_BINS}" );
+  }
+  #[usage(desp="lint code")]
+  flow lint : rust_flow.lint {} ;
+  flow test : build : {
+    gx.cmd ( "cargo test --all ${ENV_BUILD_FLAG}", log : "1" , out:"true"  );
+  }
+  flow sys_test : main.build : {
+    gx.cmd ( "cargo test --test sys_tests  --all-features  ${ENV_BUILD_FLAG}", log : "1" , out:"true"  );
+  }
+
+  flow pub_local   {
+
+    AP = "${ENV_AFT_PREFIX}";
+    gx.cmd (  "mkdir -p ${MAIN_USR_BINS}" );
+    gx.cmd (  "mkdir -p ${MAIN_PRJ_BINS}" );
+    gx.cmd  (  "rm -f ${MAIN_PRJ_BINS}/r*"  );
+    gx.cmd (  "cp ${MAIN_BLD_BINS}/gmod ${MAIN_PRJ_BINS}/${AP}mod"  );
+    gx.cmd (  "cp ${MAIN_BLD_BINS}/gsys ${MAIN_PRJ_BINS}/${AP}sys"  );
+    gx.cmd (  "cp ${MAIN_PRJ_BINS}/${AP}* ${MAIN_USR_BINS}/"  );
+  }
+  flow _pub_gsys: : _pub_dysec {
+    UP_TARGET = "gsys";
+  }
+  flow _pub_gmod: : _pub_dysec {
+    UP_TARGET = "gmod";
+  }
+
+  flow pub_dysec  : _pub_gmod,_pub_gsys ;
+
+  flow _pub_dysec :ver.use {
+    gx.echo (  "pub ${UP_TARGET} to dysec " );
+    gx.upload (
+        url : "https://dy-sec-generic.pkg.coding.net/galaxy-open/${DIST_REPO}/${UP_TARGET}?version=${VERSION}",
+        username : "${SEC_GFLOW_LOGIN}",
+        method : "PUT",
+        password : "${SEC_GFLOW_PASSWORD}",
+        local_file : "./${MAIN_RLS_BINS}/${UP_TARGET}"
+    );
+    gx.upload (
+        url : "https://dy-sec-generic.pkg.coding.net/galaxy-open/${DIST_REPO}/${UP_TARGET}_latest_version.txt?version=latest",
+        username : "${SEC_GFLOW_LOGIN}",
+        method : "PUT",
+        password : "${SEC_GFLOW_PASSWORD}",
+        local_file : "./version.txt"
+    );
+  }
+
 }

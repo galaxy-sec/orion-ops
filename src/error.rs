@@ -1,5 +1,5 @@
 use derive_more::From;
-use orion_error::{DomainReason, ErrorCode, StructError, UvsReason};
+use orion_error::{DomainReason, ErrorCode, StructError, StructErrorTrait, UvsReason};
 use serde_derive::Serialize;
 use thiserror::Error;
 #[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
@@ -73,3 +73,60 @@ where
 pub type SpecResult<T> = Result<T, StructError<SpecReason>>;
 
 pub const PATH_NOT_EXIST: &str = "path not exists";
+
+pub fn report_error(e: StructError<SpecReason>) {
+    println!("Galaxy Flow Parse Error (Code: {})", e.error_code());
+    println!("--------------------------");
+    if let Some(target) = e.target() {
+        println!("[TARGET]:\n{}\n", target);
+    }
+    println!("[REASON]:");
+    match e.get_reason() {
+        SpecReason::Uvs(uvs_reason) => match uvs_reason {
+            UvsReason::LogicError(e) => {
+                println!("LOGIC ERROR: {}\n", e);
+            }
+            UvsReason::BizError(e) => {
+                println!("BIZ ERROR: {}\n", e);
+            }
+            UvsReason::DataError(e, _) => {
+                println!("DATA ERROR: {}\n", e);
+            }
+            UvsReason::SysError(e) => {
+                println!("SYS ERROR: {}\n", e);
+            }
+            UvsReason::ResError(e) => {
+                println!("RES ERROR: {}\n", e);
+            }
+            UvsReason::ConfError(e) => {
+                println!("CONF ERROR: {}\n", e);
+            }
+            UvsReason::RuleError(e) => {
+                println!("RULE ERROR: {}\n", e);
+            }
+            UvsReason::PrivacyError(e) => {
+                println!("PRIVACY ERROR: {}\n", e);
+            }
+        },
+
+        SpecReason::Localize(e) => {
+            println!("Localize ERROR: {}\n", e);
+        }
+        SpecReason::Element(e) => {
+            println!("Element ERROR: {}\n", e);
+        }
+        SpecReason::UnKnow => {
+            println!("Unknow Error!\n");
+        }
+    }
+    if let Some(pos) = e.position() {
+        println!("\n[POSITION]:\n{}", pos);
+    }
+    if let Some(detail) = e.detail() {
+        println!("\n[DETAIL]:\n{}", detail);
+    }
+    println!("\n[CONTEXT]:\n");
+    for x in e.context() {
+        println!("{}", x)
+    }
+}
