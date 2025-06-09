@@ -121,6 +121,9 @@ pub mod tests {
         );
         let project = SysCustProject::new(spec_ref, res, prj_path.clone());
 
+        if prj_path.exists() {
+            std::fs::remove_dir_all(&prj_path).assert("ok");
+        }
         std::fs::create_dir_all(&prj_path).assert("yes");
         let conf_file = prj_path.join("sys_cust_prj.yml");
         project.save_conf(&conf_file).assert("save dss_prj");
