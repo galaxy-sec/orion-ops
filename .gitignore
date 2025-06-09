@@ -22,3 +22,4 @@ target/
 test/temp
 temp
 .run.gxl
+bin

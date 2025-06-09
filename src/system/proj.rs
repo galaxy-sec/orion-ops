@@ -43,8 +43,7 @@ impl SysCustProject {
             .update_rename(path, "system", options)
             .await?;
         for res in self.local_res.iter() {
-            //let res_local = path.join(res.local());
-            res.update_local(res.local(), options).await?;
+            res.update(options).await?;
         }
         Ok(())
     }
@@ -71,12 +70,15 @@ pub fn make_sys_cust_example(prj_path: PathBuf) -> SpecResult<SysCustProject> {
             .path("example-sys-x1"),
     );
     let mut res = LocalRes::default();
-    res.push(DependItem::new(
-        AddrType::from(GitAddr::from(
-            "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
-        )),
-        prj_path.join("env_res"),
-    ));
+    res.push(
+        DependItem::new(
+            AddrType::from(GitAddr::from(
+                "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
+            )),
+            prj_path.join("env_res"),
+        )
+        .with_rename("bit-common"),
+    );
     Ok(SysCustProject::new(spec_ref, res, prj_path.clone()))
 }
 
@@ -110,10 +112,13 @@ pub mod tests {
         );
 
         let mut res = LocalRes::default();
-        res.push(DependItem::new(
-            AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-            prj_path.join("env_res"),
-        ));
+        res.push(
+            DependItem::new(
+                AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+                prj_path.join("env_res"),
+            )
+            .with_rename("mysql2"),
+        );
         let project = SysCustProject::new(spec_ref, res, prj_path.clone());
 
         std::fs::create_dir_all(&prj_path).assert("yes");

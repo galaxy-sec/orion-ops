@@ -18,11 +18,21 @@ use super::{TargetNode, spec::ModuleSpec};
 pub struct DependItem {
     addr: AddrType,
     local: PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    rename: Option<String>,
 }
 
 impl DependItem {
     pub fn new(addr: AddrType, local: PathBuf) -> Self {
-        Self { addr, local }
+        Self {
+            addr,
+            local,
+            rename: None,
+        }
+    }
+    pub fn with_rename<S: Into<String>>(mut self, name: S) -> Self {
+        self.rename = Some(name.into());
+        self
     }
 }
 
@@ -96,9 +106,20 @@ impl ModuleSpecRef {
 #[async_trait]
 impl AsyncUpdateable for DependItem {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        let target = path.join(self.local());
-        self.addr.update_local(&target, options).await?;
-        Ok(target)
+        //let target = path.join(self.local());
+        self.addr.update_local(&path, options).await
+    }
+}
+
+impl DependItem {
+    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<PathBuf> {
+        //let item_path = path.join(self.local());
+        let path = self.local();
+        if let Some(rename) = self.rename() {
+            self.update_rename(path, rename, options).await
+        } else {
+            self.update_local(path, options).await
+        }
     }
 }
 
@@ -121,5 +142,36 @@ impl Localizable for ModuleSpecRef {
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use std::path::PathBuf;
+
+    use orion_error::TestAssertWithMsg;
+
+    use crate::{
+        addr::{AddrType, LocalAddr},
+        types::UpdateOptions,
+    };
+
+    use super::DependItem;
+    #[tokio::test]
+    async fn test_depend() {
+        let prj_path = PathBuf::from("./test/temp/depend/");
+        if prj_path.exists() {
+            std::fs::remove_dir_all(&prj_path).assert("remove dir");
+        }
+        std::fs::create_dir_all(&prj_path).assert("create prj_path");
+        let item = DependItem::new(
+            AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+            prj_path.join("env_res"),
+        )
+        .with_rename("mysql2");
+        item.update(&UpdateOptions::for_test())
+            .await
+            .assert("update");
+        assert!(prj_path.join("env_res").join("mysql2").exists())
     }
 }

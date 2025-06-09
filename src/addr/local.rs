@@ -121,9 +121,13 @@ impl LocalAddr {
 
 #[cfg(test)]
 mod tests {
+    use std::env::temp_dir;
+
     use crate::types::UpdateOptions;
 
     use super::*;
+    use orion_error::TestAssert;
+    use tempfile::tempdir;
 
     #[tokio::test]
     async fn test_local() -> SpecResult<()> {
@@ -142,6 +146,89 @@ mod tests {
 
         assert!(std::fs::exists(path.join("sys-2")).owe_conf()?);
         assert!(std::fs::exists(path.join("sys-1")).owe_conf()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_rename_path_file_new_target() -> SpecResult<()> {
+        // 创建临时目录
+        let temp_dir = tempdir().assert();
+        let src_path = temp_dir.path().join("source.txt");
+        std::fs::write(&src_path, "test content").assert();
+
+        // 执行重命名（目标不存在）
+        let renamed = rename_path(&src_path, "renamed.txt").assert();
+
+        // 验证结果
+        assert!(renamed.exists());
+        assert!(!src_path.exists());
+        assert_eq!(renamed.file_name().unwrap(), "renamed.txt");
+        Ok(())
+    }
+
+    #[test]
+    fn test_rename_path_file_overwrite_existing_file() -> SpecResult<()> {
+        // 创建临时目录
+        let temp_dir = tempdir().assert();
+        let src_path = temp_dir.path().join("source.txt");
+        let target_path = temp_dir.path().join("existing.txt");
+        std::fs::write(&src_path, "source content").assert();
+        std::fs::write(&target_path, "existing content").assert();
+
+        // 执行重命名（覆盖现有文件）
+        let renamed = rename_path(&src_path, "existing.txt").assert();
+
+        // 验证结果
+        assert!(renamed.exists());
+        assert!(!src_path.exists());
+        assert_eq!(std::fs::read_to_string(&renamed).assert(), "source content"); // 应覆盖原有内容
+        Ok(())
+    }
+
+    #[test]
+    fn test_rename_path_dir_new_target() -> SpecResult<()> {
+        // 创建临时目录
+        let temp_dir = PathBuf::from("./test/temp/rename_test");
+        if temp_dir.exists() {
+            std::fs::remove_dir_all(&temp_dir).assert();
+        }
+        std::fs::create_dir_all(&temp_dir).assert();
+
+        let src_dir = temp_dir.join("source_dir");
+        let new_dir = temp_dir.join("renamed_dir");
+        std::fs::create_dir(&src_dir).assert();
+        std::fs::write(src_dir.join("file.txt"), "test").assert();
+
+        // 执行重命名（目标不存在）
+        let renamed = rename_path(&src_dir, "renamed_dir").assert();
+
+        // 验证结果
+        assert!(renamed.exists());
+        assert!(renamed.join("file.txt").exists());
+        assert!(!src_dir.exists());
+        assert!(new_dir.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn test_rename_path_dir_overwrite_existing_dir() -> SpecResult<()> {
+        // 创建临时目录
+        let temp_dir = tempdir().assert();
+        let src_dir = temp_dir.path().join("source_dir");
+        let target_dir = temp_dir.path().join("existing_dir");
+        std::fs::create_dir(&src_dir).assert();
+        std::fs::create_dir(&target_dir).assert();
+        std::fs::write(src_dir.join("source_file.txt"), "source").assert();
+        std::fs::write(target_dir.join("existing_file.txt"), "existing").assert();
+
+        // 执行重命名（覆盖现有目录）
+        let renamed = rename_path(&src_dir, "existing_dir")?;
+
+        // 验证结果
+        assert!(renamed.exists());
+        assert!(renamed.join("source_file.txt").exists()); // 源目录内容应保留
+        assert!(!renamed.join("existing_file.txt").exists()); // 原目标目录应被删除
+        assert!(!src_dir.exists());
         Ok(())
     }
 }
