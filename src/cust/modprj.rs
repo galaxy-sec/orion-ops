@@ -1,4 +1,4 @@
-use std::{fs::exists, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{
     action::prj::GxlProject,
@@ -10,9 +10,7 @@ use crate::{
         refs::{DependItem, ModuleSpecRef},
     },
     system::ModulesList,
-    types::{
-        Configable, JsonAble, Localizable, LocalizePath, Persistable, Tomlable, UpdateOptions,
-    },
+    types::{Configable, Localizable, LocalizePath, Persistable, UpdateOptions, ValueConfable},
     vars::{ValueDict, ValueType},
 };
 
@@ -74,7 +72,7 @@ impl ModLocallyProject {
         let project = GxlProject::load_from(root)?;
         let val_root = root.join("value");
         let val_file = val_root.join(VALUE_FILE);
-        let val_dict = ValueDict::from_json(&val_file)?;
+        let val_dict = ValueDict::from_valconf(&val_file)?;
         conf.mod_list.set_mods_local(conf.root_local.clone());
         flag.flag_suc();
         Ok(Self {
@@ -102,7 +100,7 @@ impl ModLocallyProject {
         flag.flag_suc();
         if !val_file.exists() {
             std::fs::create_dir_all(val_root).owe_logic()?;
-            self.val_dict.save_toml(&val_file)?;
+            self.val_dict.save_valconf(&val_file)?;
         }
         Ok(())
     }

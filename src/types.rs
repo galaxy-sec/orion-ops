@@ -10,7 +10,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
     addr::rename_path,
-    const_vars::{GLOBAL_JSON, LOCAL_DIR},
+    const_vars::{GLOBAL_VALUE_FILE, LOCAL_DIR},
     error::SpecResult,
 };
 
@@ -71,7 +71,7 @@ impl LocalizePath {
         Self {
             local: root.join(LOCAL_DIR),
             value: root.join("value"),
-            global: Some(root.join(GLOBAL_JSON)),
+            global: Some(root.join(GLOBAL_VALUE_FILE)),
         }
     }
     pub fn join_all<P: AsRef<Path>>(&self, path: P) -> Self {
@@ -107,21 +107,10 @@ where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
     fn from_conf(path: &Path) -> SpecResult<T> {
-        let mut ctx = WithContext::want("load object from file");
-        ctx.with_path("path", path);
-        let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
-        //let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
-        let loaded: T = serde_yaml::from_str(file_content.as_str())
-            .owe_res()
-            .with(&ctx)?;
-        Ok(loaded)
+        T::from_yml(path)
     }
     fn save_conf(&self, path: &Path) -> SpecResult<()> {
-        let mut ctx = WithContext::want("save object fo file");
-        ctx.with_path("path", path);
-        let data_content = serde_yaml::to_string(self).owe_data().with(&ctx)?;
-        fs::write(path, data_content).owe_res().with(&ctx)?;
-        Ok(())
+        self.save_yml(path)
     }
 }
 
@@ -198,14 +187,14 @@ where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
     fn from_toml(path: &Path) -> SpecResult<T> {
-        let mut ctx = WithContext::want("load object from json");
+        let mut ctx = WithContext::want("load object from toml");
         ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
         let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
         Ok(loaded)
     }
     fn save_toml(&self, path: &Path) -> SpecResult<()> {
-        let mut ctx = WithContext::want("save json");
+        let mut ctx = WithContext::want("save object to toml");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = toml::to_string(self).owe_data().with(&ctx)?;
         fs::write(path, data_content).owe_res().with(&ctx)?;
@@ -213,7 +202,7 @@ where
     }
 }
 
-pub trait ValueConfable<T>: Tomlable<T>
+pub trait ValueConfable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
@@ -226,9 +215,40 @@ where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
     fn from_valconf(path: &Path) -> SpecResult<T> {
-        T::from_toml(path)
+        T::from_yml(path)
     }
     fn save_valconf(&self, path: &Path) -> SpecResult<()> {
-        T::save_toml(&self, path)
+        T::save_yml(&self, path)
+    }
+}
+
+pub trait Yamlable<T>
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_yml(path: &Path) -> SpecResult<T>;
+    fn save_yml(&self, path: &Path) -> SpecResult<()>;
+}
+
+impl<T> Yamlable<T> for T
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_yml(path: &Path) -> SpecResult<T> {
+        let mut ctx = WithContext::want("load object from yml");
+        ctx.with_path("path", path);
+        let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
+        //let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
+        let loaded: T = serde_yaml::from_str(file_content.as_str())
+            .owe_res()
+            .with(&ctx)?;
+        Ok(loaded)
+    }
+    fn save_yml(&self, path: &Path) -> SpecResult<()> {
+        let mut ctx = WithContext::want("save object fo yml");
+        ctx.with_path("path", path);
+        let data_content = serde_yaml::to_string(self).owe_data().with(&ctx)?;
+        fs::write(path, data_content).owe_res().with(&ctx)?;
+        Ok(())
     }
 }

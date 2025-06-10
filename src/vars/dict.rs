@@ -7,17 +7,32 @@ use serde_derive::{Deserialize, Serialize};
 use super::types::ValueType;
 
 pub type ValueMap = HashMap<String, ValueType>;
+pub type OriginMap = HashMap<String, OriginValue>;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct DictItem {
     #[serde(skip, default)]
-    source: Option<String>,
+    origin: Option<String>,
     value: ValueType,
 }
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct OriginValue {
+    origin: Option<String>,
+    value: ValueType,
+}
+impl From<DictItem> for OriginValue {
+    fn from(value: DictItem) -> Self {
+        OriginValue {
+            origin: value.origin,
+            value: value.value,
+        }
+    }
+}
+
 impl From<ValueType> for DictItem {
     fn from(value: ValueType) -> Self {
         Self {
-            source: None,
+            origin: None,
             value,
         }
     }
@@ -40,8 +55,8 @@ impl ValueDict {
     }
     pub fn set_source<S: Into<String> + Clone>(&mut self, lable: S) {
         for x in self.dict.values_mut() {
-            if x.source().is_none() {
-                x.source = Some(lable.clone().into());
+            if x.origin().is_none() {
+                x.origin = Some(lable.clone().into());
             }
         }
     }
@@ -52,10 +67,17 @@ impl ValueDict {
             }
         }
     }
-    pub fn export(&self) -> ValueMap {
+    pub fn export_value(&self) -> ValueMap {
         let mut map = ValueMap::new();
         for (k, v) in &self.dict {
             map.insert(k.clone(), v.value().clone());
+        }
+        map
+    }
+    pub fn export_origin(&self) -> OriginMap {
+        let mut map = OriginMap::new();
+        for (k, v) in &self.dict {
+            map.insert(k.clone(), OriginValue::from(v.clone()));
         }
         map
     }
