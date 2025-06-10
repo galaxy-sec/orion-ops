@@ -184,3 +184,51 @@ where
         Ok(())
     }
 }
+
+pub trait Tomlable<T>
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_toml(path: &Path) -> SpecResult<T>;
+    fn save_toml(&self, path: &Path) -> SpecResult<()>;
+}
+
+impl<T> Tomlable<T> for T
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_toml(path: &Path) -> SpecResult<T> {
+        let mut ctx = WithContext::want("load object from json");
+        ctx.with_path("path", path);
+        let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
+        let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
+        Ok(loaded)
+    }
+    fn save_toml(&self, path: &Path) -> SpecResult<()> {
+        let mut ctx = WithContext::want("save json");
+        ctx.with("path", format!("path: {}", path.display()));
+        let data_content = toml::to_string(self).owe_data().with(&ctx)?;
+        fs::write(path, data_content).owe_res().with(&ctx)?;
+        Ok(())
+    }
+}
+
+pub trait ValueConfable<T>: Tomlable<T>
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_valconf(path: &Path) -> SpecResult<T>;
+    fn save_valconf(&self, path: &Path) -> SpecResult<()>;
+}
+
+impl<T> ValueConfable<T> for T
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    fn from_valconf(path: &Path) -> SpecResult<T> {
+        T::from_toml(path)
+    }
+    fn save_valconf(&self, path: &Path) -> SpecResult<()> {
+        T::save_toml(&self, path)
+    }
+}

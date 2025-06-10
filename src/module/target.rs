@@ -20,8 +20,8 @@ use crate::{
     resource::CaculateResSpec,
     software::LogsSpec,
     types::{
-        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
-        UpdateOptions,
+        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable, Tomlable,
+        UpdateOptions, ValueConfable,
     },
     vars::{ValueDict, VarCollection},
 };
@@ -191,6 +191,11 @@ impl ModTargetSpec {
 #[async_trait]
 impl Localizable for ModTargetSpec {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
+        let mut flag = log_flag!(
+            info!(target : "spec/mod/", "mod-target localize {} success!", self.target()),
+            error!(target: "spec/mod/", "mod-target localize {} fail!",
+                self.local.clone().unwrap_or(PathBuf::from("unknow")).display())
+        );
         let mut ctx = WithContext::want("modul localize");
         let local = self.local.clone().ok_or(
             SpecReason::from(ElementReason::Miss("local-path".into()))
@@ -203,8 +208,9 @@ impl Localizable for ModTargetSpec {
             local.clone(),
         ));
 
-        let value_path = localize_path.value().join(crate::const_vars::VALUE_JSON);
-        let used_path = localize_path.value().join(crate::const_vars::USED_JSON);
+        let value_path = localize_path.value().join(crate::const_vars::VALUE_FILE);
+        let used_toml_path = localize_path.value().join(crate::const_vars::USED_TOML);
+        let used_json_path = localize_path.value().join(crate::const_vars::USED_JSON);
         let local_path = localize_path.local();
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         if local_path.exists() {
@@ -217,16 +223,21 @@ impl Localizable for ModTargetSpec {
         if !value_path.exists() {
             value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
-            vars_dict.save_json(&value_path)?;
+            vars_dict.save_valconf(&value_path)?;
         }
         if let Some(global) = localize_path.global() {
-            let mut used = ValueDict::from_json(global)?;
-            let sec = ValueDict::from_json(&value_path)?;
-            used.merge(&sec);
-            used.save_json(&used_path)?;
+            let mut used = ValueDict::from_valconf(global)?;
+            used.set_source("global");
+            let mut cur_mod = ValueDict::from_valconf(&value_path)?;
+            cur_mod.set_source("mod");
+            used.merge(&cur_mod);
+            used.save_toml(&used_toml_path)?;
+            used.export().save_json(&used_json_path)?;
         } else {
-            let used = ValueDict::from_json(&value_path)?;
-            used.save_json(&used_path)?;
+            let used = ValueDict::from_valconf(&value_path)?;
+
+            used.save_toml(&used_toml_path)?;
+            used.export().save_json(&used_json_path)?;
         }
         let tpl_path_opt = self
             .setting
@@ -249,9 +260,10 @@ impl Localizable for ModTargetSpec {
             LocalizeTemplate::default()
         };
         localizer
-            .render_path(&tpl, local_path, &used_path, &tpl_path)
+            .render_path(&tpl, local_path, &used_json_path, &tpl_path)
             .with(&ctx)?;
-        info!( target:"spec/mod/target", "localize mod-target success!: {}" ,local_path.display() );
+        //info!( target:"spec/mod/target", "localize mod-target success!: {}" ,local_path.display() );
+        flag.flag_suc();
         Ok(())
     }
 }

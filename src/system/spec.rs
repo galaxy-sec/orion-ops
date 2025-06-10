@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     action::act::SysWorkflows,
-    const_vars::{MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, SPEC_DIR, VALUE_JSON, VARS_YML},
+    const_vars::{MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, SPEC_DIR, VALUE_FILE, VARS_YML},
     error::ElementReason,
     types::{JsonAble, Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
@@ -162,7 +162,7 @@ impl Localizable for SysModelSpec {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if let Some(local) = &self.local {
             let base_path = dst_path.unwrap_or(LocalizePath::from_root(local));
-            let value_path = base_path.value().join(VALUE_JSON);
+            let value_path = base_path.value().join(VALUE_FILE);
             if !value_path.exists() {
                 value_path.parent().map(std::fs::create_dir_all);
                 let export = self.vars().value_dict();

@@ -6,10 +6,27 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::types::ValueType;
 
+pub type ValueMap = HashMap<String, ValueType>;
+
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DictItem {
+    #[serde(skip, default)]
+    source: Option<String>,
+    value: ValueType,
+}
+impl From<ValueType> for DictItem {
+    fn from(value: ValueType) -> Self {
+        Self {
+            source: None,
+            value,
+        }
+    }
+}
+
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]
 #[serde(transparent)]
 pub struct ValueDict {
-    dict: HashMap<String, ValueType>,
+    dict: HashMap<String, DictItem>,
 }
 impl ValueDict {
     pub fn new() -> Self {
@@ -18,15 +35,29 @@ impl ValueDict {
         }
     }
 
-    pub fn insert<S: Into<String>>(&mut self, k: S, v: ValueType) -> Option<ValueType> {
-        self.dict.insert(k.into(), v)
+    pub fn insert<S: Into<String>>(&mut self, k: S, v: ValueType) -> Option<DictItem> {
+        self.dict.insert(k.into(), DictItem::from(v))
+    }
+    pub fn set_source<S: Into<String> + Clone>(&mut self, lable: S) {
+        for x in self.dict.values_mut() {
+            if x.source().is_none() {
+                x.source = Some(lable.clone().into());
+            }
+        }
     }
     pub fn merge(&mut self, other: &ValueDict) {
         for (k, v) in other.iter() {
             if !self.contains_key(k) {
-                self.insert(k.clone(), v.clone());
+                self.dict.insert(k.clone(), v.clone());
             }
         }
+    }
+    pub fn export(&self) -> ValueMap {
+        let mut map = ValueMap::new();
+        for (k, v) in &self.dict {
+            map.insert(k.clone(), v.value().clone());
+        }
+        map
     }
 }
 
