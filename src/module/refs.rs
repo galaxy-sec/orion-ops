@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use derive_getters::Getters;
 
+use log::{error, info};
 use orion_error::{ErrorOwe, ErrorWith};
 use serde_derive::{Deserialize, Serialize};
 
@@ -87,6 +88,10 @@ impl ModuleSpecRef {
     pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
+                let mut flag = log_flag!(
+                    info!(target: "spec/mod/", "update mod {} success!", self.name ),
+                    error!(target: "spec/mod/", "update mod {} fail!", self.name )
+                );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let _spec_path = self.addr.update_local(local, options).await?;
                 for item in self.depends() {
@@ -97,6 +102,7 @@ impl ModuleSpecRef {
                 let mut spec = ModuleSpec::load_from(&mod_path)?;
                 let _x = spec.update_local(&mod_path, options).await?;
                 spec.clean_other(self.node())?;
+                flag.flag_suc();
             }
         }
         Ok(())
@@ -127,6 +133,10 @@ impl Localizable for ModuleSpecRef {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if self.effective.is_none_or(|x| x) {
             if let Some(local) = &self.local {
+                let mut flag = log_flag!(
+                    info!(target: "spec/mod/", "localize mod {} success!", self.name ),
+                    error!(target: "spec/mod/", "localize mod {} fail!", self.name )
+                );
                 let mod_path = local.join(self.name.as_str());
                 let spec = ModuleSpec::load_from(&mod_path)?;
                 if let Some(dst) = &dst_path {
@@ -136,6 +146,7 @@ impl Localizable for ModuleSpecRef {
                 let local = PathBuf::from(self.name()).join("local");
                 let cur_dst_path = dst_path.map(|x| x.join(local, value));
                 spec.localize(cur_dst_path).await?;
+                flag.flag_suc();
             }
             Ok(())
         } else {

@@ -138,7 +138,7 @@ where
     T: DeserializeOwned + Serialize,
 {
     fn from_ini(path: &Path) -> SpecResult<T> {
-        let mut ctx = WithContext::want("load object from toml");
+        let mut ctx = WithContext::want("load object from ini");
         ctx.with("path", format!("path: {}", path.display()));
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
         let loaded: T = serde_ini::de::from_str(file_content.as_str())
@@ -168,8 +168,8 @@ where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
     fn from_json(path: &Path) -> SpecResult<T> {
-        let mut ctx = WithContext::want("load object from toml");
-        ctx.with("path", format!("path: {}", path.display()));
+        let mut ctx = WithContext::want("load object from json");
+        ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
         let loaded: T = serde_json::from_str(file_content.as_str())
             .owe_res()
@@ -177,7 +177,7 @@ where
         Ok(loaded)
     }
     fn save_json(&self, path: &Path) -> SpecResult<()> {
-        let mut ctx = WithContext::want("save toml");
+        let mut ctx = WithContext::want("save json");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = serde_json::to_string(self).owe_data().with(&ctx)?;
         fs::write(path, data_content).owe_res().with(&ctx)?;

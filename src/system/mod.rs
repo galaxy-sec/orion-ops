@@ -39,7 +39,7 @@ impl ModulesList {
         dict
     }
 
-    fn set_mods_local(&mut self, spec_path: PathBuf) {
+    pub fn set_mods_local(&mut self, spec_path: PathBuf) {
         self.mods
             .iter_mut()
             .for_each(|x| x.set_local(spec_path.join("mods")));
@@ -58,7 +58,6 @@ impl ModulesList {
 impl Localizable for ModulesList {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         let root = dst_path.map(|x| x.join_all("mods"));
-        //std::fs::create_dir_all(&root).owe_data()?;
         for m in &self.mods {
             m.localize(root.clone()).await?;
         }
