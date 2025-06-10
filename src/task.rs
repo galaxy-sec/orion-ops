@@ -24,9 +24,6 @@ pub trait Task {
 }
 
 pub type TaskHandle = Box<dyn Task>;
-pub trait SetupTaskBuilder {
-    fn make_setup_task(&self) -> SpecResult<TaskHandle>;
-}
 
 pub trait NodeSetupTaskBuilder {
     fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle>;

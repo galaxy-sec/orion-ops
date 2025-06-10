@@ -2,7 +2,7 @@ pub mod init;
 pub mod refs;
 pub mod spec;
 use std::path::Path;
-use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf};
+use std::{net::Ipv4Addr, path::PathBuf};
 
 use crate::types::{Localizable, LocalizePath, UpdateOptions};
 use crate::vars::{ValueDict, ValueType};
@@ -16,14 +16,14 @@ use crate::{
     error::SpecResult,
     resource::{ResouceTypes, Vps},
     software::FileFormat,
-    task::{CombinedTask, NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},
 };
 
 #[derive(Getters, Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct ModulesList {
     mods: Vec<ModuleSpecRef>,
-    #[serde(skip)]
-    mod_map: HashMap<String, ModuleSpec>,
+    //#[serde(skip)]
+    //mod_map: HashMap<String, ModuleSpec>,
 }
 impl ModulesList {
     pub fn add_ref(&mut self, spec_ref: ModuleSpecRef) {
@@ -32,7 +32,7 @@ impl ModulesList {
     pub fn export(&self) -> ValueDict {
         let mut dict = ValueDict::new();
         for item in self.mods().iter() {
-            if item.is_effective() {
+            if item.is_enable() {
                 dict.insert(item.name(), ValueType::from(item.name().as_str()));
             }
         }
@@ -71,11 +71,13 @@ pub enum NoneValue<T> {
     Value(T),
 }
 impl ModulesList {
-    pub fn add_mod(&mut self, modx: ModuleSpec) {
-        self.mod_map.insert(modx.name().clone(), modx);
+    pub fn add_mod(&mut self, _modx: ModuleSpec) {
+        todo!();
+        //self.mod_map.insert(modx.name().clone(), modx);
     }
 }
 
+/*
 impl SetupTaskBuilder for ModulesList {
     fn make_setup_task(&self) -> SpecResult<TaskHandle> {
         let mut task = CombinedTask::new("model setup");
@@ -87,6 +89,7 @@ impl SetupTaskBuilder for ModulesList {
         Ok(Box::new(task))
     }
 }
+*/
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModelConfig {

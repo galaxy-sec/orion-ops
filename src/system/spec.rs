@@ -20,7 +20,6 @@ use crate::{
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
     resource::{CaculateResSpec, Vps},
-    task::{SetupTaskBuilder, TaskHandle},
     types::{Configable, Persistable},
 };
 
@@ -175,11 +174,6 @@ impl Localizable for SysModelSpec {
         }
     }
 }
-impl SetupTaskBuilder for SysModelSpec {
-    fn make_setup_task(&self) -> SpecResult<TaskHandle> {
-        self.mod_list().make_setup_task()
-    }
-}
 
 pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
     let repo = "https://e.coding.net/dy-sec/galaxy-open/modspec.git";
@@ -209,7 +203,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
             GitAddr::from(repo).branch("master").path(mod_name),
             TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
-        .with_effective(false),
+        .with_enable(false),
     );
     let mod_name = "postgresql";
     modul_spec.add_mod_ref(ModuleSpecRef::from(
@@ -223,7 +217,7 @@ pub fn make_sys_spec_example() -> SpecResult<SysModelSpec> {
             GitAddr::from("http://github").tag("v1.0.0"),
             TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         )
-        .with_effective(false),
+        .with_enable(false),
     );
 
     Ok(modul_spec)
@@ -255,7 +249,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
             GitAddr::from(repo).path("example_mod1"),
             TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
-        .with_effective(false),
+        .with_enable(false),
     );
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
@@ -263,7 +257,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
             GitAddr::from(repo).path("postgresql"),
             TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         )
-        .with_effective(false),
+        .with_enable(false),
     );
     modul_spec.add_mod_ref(
         ModuleSpecRef::from(
@@ -271,7 +265,7 @@ pub fn make_sys_spec_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
             GitAddr::from("http://github").tag("v1.0.0"),
             TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         )
-        .with_effective(false),
+        .with_enable(false),
     );
 
     Ok(modul_spec)
@@ -335,7 +329,7 @@ pub mod tests {
                 LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
                 TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
-            .with_effective(false),
+            .with_enable(false),
         );
         let mod_name = "postgresql";
         modul_spec.add_mod_ref(

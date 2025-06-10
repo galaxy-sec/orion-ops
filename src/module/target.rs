@@ -20,7 +20,7 @@ use crate::{
     resource::CaculateResSpec,
     software::LogsSpec,
     types::{
-        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable, Tomlable,
+        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
         UpdateOptions, ValueConfable,
     },
     vars::{ValueDict, VarCollection},

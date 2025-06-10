@@ -21,6 +21,8 @@ pub struct DependItem {
     local: PathBuf,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     rename: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    enable: Option<bool>,
 }
 
 impl DependItem {
@@ -29,6 +31,7 @@ impl DependItem {
             addr,
             local,
             rename: None,
+            enable: None,
         }
     }
     pub fn with_rename<S: Into<String>>(mut self, name: S) -> Self {
@@ -44,7 +47,8 @@ pub struct ModuleSpecRef {
     node: TargetNode,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     depends: Vec<DependItem>,
-    effective: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    enable: Option<bool>,
     #[serde(skip)]
     local: Option<PathBuf>,
 }
@@ -59,13 +63,13 @@ impl ModuleSpecRef {
             name: name.into(),
             addr: addr.into(),
             node,
-            effective: None,
+            enable: None,
             local: None,
             depends: Vec::new(),
         }
     }
-    pub fn with_effective(mut self, effective: bool) -> Self {
-        self.effective = Some(effective);
+    pub fn with_enable(mut self, effective: bool) -> Self {
+        self.enable = Some(effective);
         self
     }
 
@@ -74,8 +78,8 @@ impl ModuleSpecRef {
         self
     }
 
-    pub fn is_effective(&self) -> bool {
-        self.effective.is_none_or(|x| x)
+    pub fn is_enable(&self) -> bool {
+        self.enable.is_none_or(|x| x)
     }
     pub fn spec_path(&self, root: &Path) -> PathBuf {
         root.join("mods").join(self.name.as_str())
@@ -86,7 +90,7 @@ impl ModuleSpecRef {
 }
 impl ModuleSpecRef {
     pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
-        if self.effective.is_none_or(|x| x) {
+        if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 let mut flag = log_flag!(
                     info!(target: "spec/mod/", "update mod {} success!", self.name ),
@@ -126,12 +130,15 @@ impl DependItem {
             self.update_local(path, options).await
         }
     }
+    pub fn is_enable(&self) -> bool {
+        self.enable.unwrap_or(true)
+    }
 }
 
 #[async_trait]
 impl Localizable for ModuleSpecRef {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        if self.effective.is_none_or(|x| x) {
+        if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 let mut flag = log_flag!(
                     info!(target: "spec/mod/", "localize mod {} success!", self.name ),

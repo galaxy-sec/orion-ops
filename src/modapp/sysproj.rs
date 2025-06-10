@@ -90,8 +90,8 @@ pub mod tests {
     use crate::{
         addr::{AddrType, LocalAddr},
         const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
-        cust::sysproj::{LocalRes, SysCustProject},
         error::SpecResult,
+        modapp::sysproj::{LocalRes, SysCustProject},
         module::refs::DependItem,
         system::refs::SysModelSpecRef,
         tools::test_init,

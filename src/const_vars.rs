@@ -22,3 +22,5 @@ pub const LOCAL_DIR: &str = "local";
 pub const CONFS_DIR: &str = "confs";
 pub const WORKFLOWS_DIR: &str = "workflows";
 pub const SETUP_SH: &str = "setup.sh";
+pub const MOD_LOCAL_PRJ: &str = "mod_local_prj.yml";
+pub const SYS_LOCAL_PRJ: &str = "sys_local_prj.yml";

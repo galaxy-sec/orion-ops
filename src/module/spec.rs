@@ -5,7 +5,6 @@ use std::{
 
 use crate::{
     const_vars::CONFS_DIR,
-    error::ElementReason,
     types::{Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
 };
@@ -18,9 +17,8 @@ use crate::{
     addr::{HttpAddr, path_file_name},
     artifact::{Artifact, ArtifactPackage, OsType},
     conf::{ConfFile, ConfSpec},
-    error::{SpecReason, SpecResult, ToErr},
+    error::SpecResult,
     resource::CaculateResSpec,
-    task::{NodeSetupTaskBuilder, SetupTaskBuilder, TaskHandle},
     tools::get_sub_dirs,
     types::{AsyncUpdateable, Persistable},
 };
@@ -119,21 +117,6 @@ impl Persistable<ModuleSpec> for ModuleSpec {
             targets,
             local: Some(path.to_path_buf()),
         })
-    }
-}
-impl NodeSetupTaskBuilder for ModuleSpec {
-    fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle> {
-        if let Some(cur_node) = self.targets().get(node) {
-            cur_node.make_setup_task()
-        } else {
-            SpecReason::from(ElementReason::Miss(node.to_string())).err_result()
-        }
-    }
-}
-
-impl SetupTaskBuilder for ModTargetSpec {
-    fn make_setup_task(&self) -> SpecResult<TaskHandle> {
-        todo!()
     }
 }
 

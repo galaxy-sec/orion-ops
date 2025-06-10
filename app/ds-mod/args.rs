@@ -6,8 +6,23 @@ use orion_syspec::infra::DfxArgsGetter;
 #[command(name = "gmod")]
 #[command(version, about)]
 pub enum GxModCmd {
+    #[command(subcommand)]
+    Def(SpecCmd),
+    #[command(subcommand)]
+    App(CustCmd),
+}
+
+#[derive(Debug, Subcommand)] // requires `derive` feature
+pub enum SpecCmd {
     Example,
     New(SpecArgs),
+}
+
+#[derive(Debug, Subcommand)] // requires `derive` feature
+pub enum CustCmd {
+    Example,
+    New(SpecArgs),
+    Update(DfxArgs),
     Localize(DfxArgs),
 }
 
