@@ -3,7 +3,7 @@ use std::path::Path;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
-    action::{
+    workflow::{
         act::{ModWorkflows, Workflow},
         gxl::GxlAction,
         prj::GxlProject,

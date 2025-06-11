@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     error::SpecResult,
-    log_flag,
+    log_guard,
     tools::get_repo_name,
     types::{AsyncUpdateable, UpdateOptions},
 };
@@ -118,7 +118,7 @@ impl AsyncUpdateable for GitAddr {
         ctx.with("repo", &self.repo);
         ctx.with_path("path", &git_local);
         let git_local_copy = git_local.clone();
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(
                 target : "spec/addr/git",
                 "update {} to {} success!", self.repo,git_local_copy.display()
@@ -168,7 +168,7 @@ impl AsyncUpdateable for GitAddr {
 
 impl GitAddr {
     fn pull_repository(&self, repo: &git2::Repository, mut ctx: WithContext) -> SpecResult<()> {
-        ctx.with("action", "pull code");
+        ctx.with("workflow", "pull code");
         let mut remote = repo.find_remote("origin").owe_res().with(&ctx)?;
         let cb = self.build_remote_callbacks(); // 使用构建的回调
 
@@ -206,7 +206,7 @@ impl GitAddr {
     }
 
     fn clone_repository(&self, path: &Path, mut ctx: WithContext) -> SpecResult<()> {
-        ctx.with("action", "clone code");
+        ctx.with("workflow", "clone code");
 
         let mut fetch_options = git2::FetchOptions::new();
         let callbacks = self.build_remote_callbacks(); // 构建回调

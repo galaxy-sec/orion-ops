@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    action::act::SysWorkflows,
+    workflow::act::SysWorkflows,
     const_vars::{MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, SPEC_DIR, VALUE_FILE, VARS_YML},
     error::ElementReason,
     types::{JsonAble, Localizable, LocalizePath, UpdateOptions},
@@ -75,7 +75,7 @@ impl SysModelSpec {
     pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
 
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target: "spec/sys", "load sys spec success!:{}", root.display()),
             error!(target: "spec/sys", "load sys spec failed!:{}", root.display())
         );
@@ -99,7 +99,7 @@ impl SysModelSpec {
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target: "spec/sys", "load sys spec success!:{}", root.display()),
             error!(target: "spec/sys", "load sys spec failed!:{}", root.display())
         );

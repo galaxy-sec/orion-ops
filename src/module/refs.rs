@@ -60,7 +60,7 @@ impl ModuleSpecRef {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if self.is_enable() {
             if let Some(local) = &self.local {
-                let mut flag = log_flag!(
+                let mut flag = log_guard!(
                     info!(target: "/mod/ref",  "update mod ref {} success!", self.name ),
                     error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
                 );
@@ -83,7 +83,7 @@ impl Localizable for ModuleSpecRef {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
-                let mut flag = log_flag!(
+                let mut flag = log_guard!(
                     info!(target: "spec/mod/", "localize mod {} success!", self.name ),
                     error!(target: "spec/mod/", "localize mod {} fail!", self.name )
                 );

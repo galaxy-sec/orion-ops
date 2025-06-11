@@ -5,13 +5,13 @@ use crate::{
     error::SpecResult,
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
-        depend::{DependItem, DependVec},
+        depend::{Dependency, DependVec},
         refs::ModuleSpecRef,
     },
     system::ModulesList,
 };
 
-use super::mod_app::ModAppProject;
+use super::app::ModAppProject;
 
 pub fn make_mod_cust_example(prj_path: &Path) -> SpecResult<ModAppProject> {
     let mod_name = "postgresql";
@@ -36,7 +36,7 @@ pub fn make_mod_cust_example(prj_path: &Path) -> SpecResult<ModAppProject> {
 
     let mut res = DependVec::default();
     res.push(
-        DependItem::new(
+        Dependency::new(
             AddrType::from(GitAddr::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),

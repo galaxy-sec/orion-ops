@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     addr::{AddrType, GitAddr},
     error::SpecResult,
-    module::depend::{DependItem, DependVec},
+    module::depend::{Dependency, DependVec},
     system::{refs::SysModelSpecRef, spec::SysModelSpec},
     types::{AsyncUpdateable, Localizable, LocalizePath, UpdateOptions},
 };
@@ -31,7 +31,7 @@ impl SysCustProject {
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Deref, DerefMut, Default)]
 pub struct LocalRes {
-    resource: Vec<DependItem>,
+    resource: Vec<Dependency>,
 }
 
 impl SysCustProject {
@@ -68,7 +68,7 @@ pub fn make_sys_cust_example(prj_path: PathBuf) -> SpecResult<SysCustProject> {
     );
     let mut res = DependVec::default();
     res.push(
-        DependItem::new(
+        Dependency::new(
             AddrType::from(GitAddr::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
@@ -89,12 +89,12 @@ pub mod tests {
         addr::{AddrType, LocalAddr},
         const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
         error::SpecResult,
-        m_app::sysproj::SysCustProject,
-        module::depend::{DependItem, DependVec},
+        module::depend::{Dependency, DependVec},
         system::refs::SysModelSpecRef,
         tools::test_init,
         types::{Configable, Localizable},
     };
+    use crate::app_sys::sysproj::SysCustProject;
 
     #[tokio::test]
     async fn test_cust_prj_running() -> SpecResult<()> {
@@ -108,7 +108,7 @@ pub mod tests {
 
         let mut res = DependVec::default();
         res.push(
-            DependItem::new(
+            Dependency::new(
                 AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
                 prj_path.join("env_res"),
             )

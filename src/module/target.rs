@@ -9,7 +9,7 @@ use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 
 use crate::{
-    action::act::ModWorkflows,
+    workflow::act::ModWorkflows,
     addr::path_file_name,
     artifact::ArtifactPackage,
     //conf::ConfSpec,
@@ -109,7 +109,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
         let target_path = root.join(name.unwrap_or(self.target().to_string()));
 
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target: "spec/mod/target", "save target  success!:{}", target_path.display()),
             error!(target: "spec/mod/target", "save target failed!:{}", target_path.display())
         );
@@ -137,7 +137,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
     fn load_from(target_root: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load target mod spec");
 
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target: "spec/mod/target", "load target  success!:{}", target_root.display()),
             error!(target: "spec/mod/target", "load target failed!:{}", target_root.display())
         );
@@ -210,7 +210,7 @@ impl ModTargetSpec {
 #[async_trait]
 impl Localizable for ModTargetSpec {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target : "/mod/target", "mod-target localize {} success!", self.target()),
             error!(target: "/mod/target", "mod-target localize {} fail!",
                 self.local.clone().unwrap_or(PathBuf::from("unknow")).display())

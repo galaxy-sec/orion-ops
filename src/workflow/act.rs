@@ -71,7 +71,7 @@ where
             .owe_res()
             .with(&actions_path)
             .want("read workflows")
-            .with(("action", "read workflows"))?
+            .with(("workflow", "read workflows"))?
         {
             let entry = entry.owe_res()?;
             let entry_path = entry.path();

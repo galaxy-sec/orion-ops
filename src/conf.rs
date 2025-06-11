@@ -7,7 +7,7 @@ use crate::{
     addr::{AddrType, path_file_name},
     const_vars::CONFS_DIR,
     error::SpecResult,
-    log_flag,
+    log_guard,
     types::{AsyncUpdateable, Configable, UpdateOptions},
 };
 use async_trait::async_trait;
@@ -125,7 +125,7 @@ impl AsyncUpdateable for ConfSpec {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
-        let mut is_suc = log_flag!(
+        let mut is_suc = log_guard!(
             info!( target:"spec/confspec", "upload_local confspec suc: {}" ,path.display() ),
             error!( target:"spec/confspec", "upload_local confspec fail: {}" ,path.display() )
         );

@@ -1,13 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    action::prj::GxlProject,
+    workflow::prj::GxlProject,
     addr::{AddrType, GitAddr, LocalAddr},
     const_vars::VALUE_FILE,
     error::{SpecError, SpecResult},
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
-        depend::{DependItem, DependVec},
+        depend::{Dependency, DependVec},
         refs::ModuleSpecRef,
     },
     system::ModulesList,
@@ -60,7 +60,7 @@ impl ModAppProject {
         }
     }
     pub fn load(root: &Path) -> SpecResult<Self> {
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(
                 target : "spec/local/modprj",
                 "load modprj  to {} success!", root.display()
@@ -87,7 +87,7 @@ impl ModAppProject {
         })
     }
     pub fn save(&self, root: &Path) -> SpecResult<()> {
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(
                 target : "spec/local/modprj",
                 "save modprj  to {} success!", root.display()
@@ -118,7 +118,7 @@ impl ModAppProject {
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Deref, DerefMut, Default)]
 pub struct LocalRes {
-    resource: Vec<DependItem>,
+    resource: Vec<Dependency>,
 }
 
 impl ModAppConf {
@@ -172,7 +172,7 @@ pub fn make_mod_cust_testins(prj_path: &Path) -> SpecResult<ModAppProject> {
 
     let mut res = DependVec::default();
     res.push(
-        DependItem::new(
+        Dependency::new(
             AddrType::from(GitAddr::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
@@ -192,7 +192,7 @@ pub mod tests {
     use crate::{
         const_vars::MODULES_INS_ROOT,
         error::SpecResult,
-        m_app::mod_app::{ModAppProject, make_mod_cust_testins},
+        app_mod::app::{ModAppProject, make_mod_cust_testins},
         tools::test_init,
         types::Localizable,
     };

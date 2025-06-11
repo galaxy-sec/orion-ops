@@ -14,7 +14,7 @@ use log::{error, info};
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
-    action::act::ModWorkflows,
+    workflow::act::ModWorkflows,
     addr::{HttpAddr, path_file_name},
     artifact::{Artifact, ArtifactPackage, OsType},
     conf::{ConfFile, ConfSpec},
@@ -111,7 +111,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         let subs = get_sub_dirs(path)?;
 
         let name_copy = name.clone();
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(target: "mod/spec", "load mod-spec {} success!", name_copy ),
             error!(target: "mod/spec", "load mod-spec {} fail!", name_copy)
         );

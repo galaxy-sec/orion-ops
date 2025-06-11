@@ -10,7 +10,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     error::SpecResult,
-    log_flag,
+    log_guard,
     types::{AsyncUpdateable, UpdateOptions},
 };
 
@@ -33,7 +33,7 @@ impl AsyncUpdateable for LocalAddr {
         let name = path_file_name(&src)?;
         let dst = path.join(name);
         let dst_copy = dst.clone();
-        let mut flag = log_flag!(
+        let mut flag = log_guard!(
             info!(
                 target : "spec/addr/local",
                 "update {} to {} success!", src.display(),dst_copy.display()
@@ -87,7 +87,7 @@ pub fn rename_path(local: &Path, name: &str) -> SpecResult<PathBuf> {
         .ok_or(StructError::from_conf("bad path".to_string()))?;
 
     let dst_copy = dst_path.clone();
-    let mut flag = log_flag!(
+    let mut flag = log_guard!(
         info!(target:"spec","rename {} to {} sucess!",local.display(),dst_copy.display()),
         error!(target:"spec","rename {} to {} failed!",local.display(),dst_copy.display())
     );

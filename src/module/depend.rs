@@ -11,7 +11,7 @@ use crate::{
     types::{AsyncUpdateable, UpdateOptions},
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
-pub struct DependItem {
+pub struct Dependency {
     addr: AddrType,
     local: PathBuf,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -23,19 +23,19 @@ pub struct DependItem {
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Default)]
 pub struct DependVec {
     local_root: PathBuf,
-    depends: Vec<DependItem>,
+    depends: Vec<Dependency>,
 }
 
 impl DependVec {
     pub fn example() -> Self {
         let depends = vec![
-            DependItem {
+            Dependency {
                 addr: AddrType::from(LocalAddr::from("./example/data")),
                 local: PathBuf::from("env_res"),
                 rename: Some("mysql2".to_string()),
                 enable: Some(false),
             },
-            DependItem {
+            Dependency {
                 addr: AddrType::from(GitAddr::from("https://github.com/xxx")),
                 local: PathBuf::from("env_res"),
                 rename: Some("mylib".to_string()),
@@ -49,7 +49,7 @@ impl DependVec {
         }
     }
     pub fn for_test() -> Self {
-        let depends = vec![DependItem {
+        let depends = vec![Dependency {
             addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
             local: PathBuf::from("env_res"),
             rename: Some("mysql_x86".to_string()),
@@ -70,7 +70,7 @@ impl DependVec {
         }
         Ok(())
     }
-    pub fn push(&mut self, item: DependItem) {
+    pub fn push(&mut self, item: Dependency) {
         self.depends.push(item);
     }
     pub fn check_exists(&self) -> Result<(), PathBuf> {
@@ -84,7 +84,7 @@ impl DependVec {
     }
 }
 
-impl DependItem {
+impl Dependency {
     pub fn new(addr: AddrType, local: PathBuf) -> Self {
         Self {
             addr,
@@ -100,13 +100,13 @@ impl DependItem {
 }
 
 #[async_trait]
-impl AsyncUpdateable for DependItem {
+impl AsyncUpdateable for Dependency {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         self.addr.update_local(path, options).await
     }
 }
 
-impl DependItem {
+impl Dependency {
     pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local());
@@ -129,7 +129,7 @@ pub mod tests {
 
     use crate::{
         addr::{AddrType, LocalAddr},
-        module::depend::{DependItem, DependVec},
+        module::depend::{Dependency, DependVec},
         types::UpdateOptions,
     };
 
@@ -140,7 +140,7 @@ pub mod tests {
             std::fs::remove_dir_all(&prj_path).assert("remove dir");
         }
         std::fs::create_dir_all(&prj_path).assert("create prj_path");
-        let item = DependItem::new(
+        let item = Dependency::new(
             AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
             "env_res".into(),
         )
@@ -153,7 +153,7 @@ pub mod tests {
 
     #[test]
     fn test_serialize_to_yaml() {
-        let item = DependItem {
+        let item = Dependency {
             addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
             local: PathBuf::from("env_res"),
             rename: Some("mysql2".to_string()),

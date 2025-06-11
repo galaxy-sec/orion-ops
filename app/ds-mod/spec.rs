@@ -1,8 +1,8 @@
 use orion_error::ErrorConv;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
-use orion_syspec::m_app::example::make_mod_cust_example;
-use orion_syspec::m_app::mod_app::ModAppProject;
+use orion_syspec::app_mod::example::make_mod_cust_example;
+use orion_syspec::app_mod::app::ModAppProject;
 use orion_syspec::module::spec::{ModuleSpec, make_mod_spec_example, make_mod_spec_new};
 use orion_syspec::types::{AsyncUpdateable, Localizable, Persistable, UpdateOptions};
 use std::path::PathBuf;
