@@ -27,7 +27,15 @@ impl GxShell {
 #[derive(Default, Clone, Debug)]
 pub struct Http {}
 impl Http {}
-pub fn get_last_segment(url_str: &str) -> Option<String> {
+pub fn get_repo_name(url_str: &str) -> Option<String> {
+    // 先尝试处理SSH格式的Git地址
+    if url_str.starts_with("git@") {
+        if let Some(repo_part) = url_str.split(':').last() {
+            return repo_part.split('/').last().map(String::from);
+        }
+    }
+    
+    // 原有HTTP/HTTPS URL处理逻辑
     let url = Url::parse(url_str).ok()?;
     let last = url.path_segments()?.rev().find(|s| !s.is_empty());
     last.map(String::from)
@@ -60,4 +68,35 @@ impl BoolFlag {
     pub fn is_suc(&self) -> bool {
         self.is_suc
     }
+}
+
+
+#[test]
+fn test_get_last_segment() {
+    // 测试HTTP URL
+    assert_eq!(
+        get_repo_name("https://github.com/user/repo.git"),
+        Some("repo.git".to_string())
+    );
+    
+    // 测试HTTPS URL
+    assert_eq!(
+        get_repo_name("https://github.com/user/repo"),
+        Some("repo".to_string())
+    );
+    
+    // 测试SSH格式Git地址
+    assert_eq!(
+        get_repo_name("git@github.com:user/repo.git"),
+        Some("repo.git".to_string())
+    );
+    
+    // 测试SSH格式不带.git后缀
+    assert_eq!(
+        get_repo_name("git@gitlab.com:group/subgroup/repo"),
+        Some("repo".to_string())
+    );
+    
+    // 测试无效URL
+    assert_eq!(get_repo_name("not_a_url"), None);
 }

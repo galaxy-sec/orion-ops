@@ -10,7 +10,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     error::SpecResult,
     log_flag,
-    tools::get_last_segment,
+    tools::get_repo_name,
     types::{AsyncUpdateable, UpdateOptions},
 };
 
@@ -28,6 +28,12 @@ pub struct GitAddr {
     rev: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     path: Option<String>,
+    // 新增：SSH私钥路径
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ssh_key: Option<String>,
+    // 新增：SSH密钥密码
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ssh_passphrase: Option<String>,
 }
 
 impl GitAddr {
@@ -53,12 +59,58 @@ impl GitAddr {
         self.path = Some(path.into());
         self
     }
+    // 新增：设置SSH私钥
+    pub fn ssh_key<S: Into<String>>(mut self, ssh_key: S) -> Self {
+        self.ssh_key = Some(ssh_key.into());
+        self
+    }
+    // 新增：设置SSH密钥密码
+    pub fn ssh_passphrase<S: Into<String>>(mut self, ssh_passphrase: S) -> Self {
+        self.ssh_passphrase = Some(ssh_passphrase.into());
+        self
+    }
+
+    /// 构建远程回调（包含SSH认证）
+    fn build_remote_callbacks(&self) -> git2::RemoteCallbacks<'_> {
+        let mut callbacks = git2::RemoteCallbacks::new();
+        let ssh_key = self.ssh_key.clone();
+        let ssh_passphrase = self.ssh_passphrase.clone();
+
+        callbacks.credentials(move |_url, username_from_url, allowed_types| {
+            // 检查是否允许SSH认证
+            if allowed_types.contains(git2::CredentialType::SSH_KEY) {
+                let username = username_from_url.unwrap_or("git");
+
+                // 使用提供的私钥路径或默认路径
+                let key_path = ssh_key
+                    .clone()
+                    .map(PathBuf::from)
+                    .or_else(|| {
+                        home_dir().map(|mut path| {
+                            path.push(".ssh/id_rsa");
+                            path
+                        })
+                    })
+                    .ok_or_else(|| git2::Error::from_str("无法确定SSH密钥路径"))?;
+
+                git2::Cred::ssh_key(
+                    username,
+                    None, // 不使用默认公钥路径
+                    &key_path,
+                    ssh_passphrase.as_deref(), // 传递密码（如果有）
+                )
+            } else {
+                Err(git2::Error::from_str("不支持所需的认证类型"))
+            }
+        });
+        callbacks
+    }
 }
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
     async fn update_local(&self, path: &Path, _options: &UpdateOptions) -> SpecResult<PathBuf> {
-        let name = get_last_segment(self.repo.as_str()).unwrap_or("unknow".into());
+        let name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         let mut git_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".galaxy/cache")
@@ -118,8 +170,10 @@ impl GitAddr {
     fn pull_repository(&self, repo: &git2::Repository, mut ctx: WithContext) -> SpecResult<()> {
         ctx.with("action", "pull code");
         let mut remote = repo.find_remote("origin").owe_res().with(&ctx)?;
+        let cb = self.build_remote_callbacks();  // 使用构建的回调
 
         let mut fetch_options = git2::FetchOptions::new();
+        fetch_options.remote_callbacks(cb);  // 应用SSH回调
         let refspecs: &[&str] = &[]; //
         remote
             .fetch(refspecs, Some(&mut fetch_options), None)
@@ -153,9 +207,16 @@ impl GitAddr {
 
     fn clone_repository(&self, path: &PathBuf, mut ctx: WithContext) -> SpecResult<()> {
         ctx.with("action", "clone code");
-        let repo = git2::Repository::clone(&self.repo, path)
-            .owe_res()
-            .with(&ctx)?;
+        
+        let mut fetch_options = git2::FetchOptions::new();
+        let callbacks = self.build_remote_callbacks();  // 构建回调
+        fetch_options.remote_callbacks(callbacks);     // 应用SSH回调
+        
+        let mut builder = git2::build::RepoBuilder::new();
+        builder.fetch_options(fetch_options);
+        let repo = builder.clone(&self.repo, path)
+        .owe_res()
+        .with(&ctx)?;
 
         // 处理分支/标签
         if let Some(branch_or_tag) = self.branch.as_ref().or(self.tag.as_ref()) {
@@ -179,6 +240,31 @@ impl GitAddr {
     }
 }
 
+    /// 查找常见的默认SSH密钥路径
+    fn find_default_ssh_key() -> Option<PathBuf> {
+        // 获取用户主目录
+        let home = home_dir()?;
+        let ssh_dir = home.join(".ssh");
+        
+        // 尝试的密钥文件列表（按优先级排序）
+        let key_files = [
+            "id_ed25519",    // 首选ed25519
+            "id_rsa",         // 其次是RSA
+            "id_ecdsa",       // 然后是ECDSA
+            "identity",       // 通用名称
+        ];
+        
+        // 检查每个密钥文件是否存在
+        for key_file in &key_files {
+            let key_path = ssh_dir.join(key_file);
+            if key_path.exists() {
+                return Some(key_path);
+            }
+        }
+        
+        None
+    }
+
 #[cfg(test)]
 mod tests {
     use crate::{error::SpecResult, tools::test_init};
@@ -186,6 +272,39 @@ mod tests {
     use super::*;
     use orion_error::{ErrorOwe, TestAssert};
     use tempfile::tempdir;
+
+    //git@e.coding.net:dy-sec/s-devkit/kubeconfig.git
+
+    #[tokio::test]
+    async fn test_git_addr_ssh() -> SpecResult<()> {
+        // 创建临时目录
+        let temp_dir = tempdir().owe_res()?;
+        let dest_path = temp_dir.path().to_path_buf();
+
+        // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
+        let git_addr = GitAddr::from("git@e.coding.net:dy-sec/s-devkit/kubeconfig.git")
+        .ssh_key("/Users/zuowenjian/.ssh/id_ed25519")
+        ; // 或使用 .tag("v1.0") 测试标签
+
+        // 执行克隆
+        let cloned_path = git_addr
+            .update_local(&dest_path, &UpdateOptions::default())
+            .await?;
+
+        // 验证克隆结果
+        assert!(cloned_path.exists());
+        assert!(cloned_path.join(".git").exists());
+
+        // 验证分支/标签是否正确检出
+        let repo = git2::Repository::open(&cloned_path).owe_res()?;
+        let head = repo.head().owe_res()?;
+        assert!(head.is_branch() || head.is_tag());
+
+        Ok(())
+    }
+
+
+
 
     #[ignore = "need more time"]
     #[tokio::test]
