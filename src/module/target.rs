@@ -12,9 +12,10 @@ use crate::{
     action::act::ModWorkflows,
     addr::path_file_name,
     artifact::ArtifactPackage,
-    conf::ConfSpec,
+    //conf::ConfSpec,
     const_vars::{
-        ARTIFACT_YML, CONF_SPEC_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML, SPEC_DIR, VARS_YML,
+        ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML,
+        SPEC_DIR, VARS_YML,
     },
     error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
@@ -28,6 +29,7 @@ use crate::{
 
 use super::{
     TargetNode,
+    depend::DependVec,
     locaize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
 };
@@ -37,18 +39,27 @@ pub struct ModTargetSpec {
     target: TargetNode,
     artifact: ArtifactPackage,
     workflow: ModWorkflows,
-    conf_spec: ConfSpec,
+    //conf_spec: ConfSpec,
     logs_spec: LogsSpec,
     res_spec: CaculateResSpec,
     vars: VarCollection,
     local: Option<PathBuf>,
     setting: Option<Setting>,
+    depends: DependVec,
+}
+
+impl ModTargetSpec {
+    pub fn with_depends(mut self, depends: DependVec) -> Self {
+        self.depends = depends;
+        self
+    }
 }
 
 #[async_trait]
 impl AsyncUpdateable for ModTargetSpec {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.conf_spec.update_local(path, options).await?;
+    async fn update_local(&self, path: &Path, _options: &UpdateOptions) -> SpecResult<PathBuf> {
+        //self.conf_spec.update_local(path, options).await?;
+        self.depends.update().await?;
         Ok(path.to_path_buf())
     }
 }
@@ -74,6 +85,7 @@ pub struct ModTargetPaths {
     setting_path: PathBuf,
     artifact_path: PathBuf,
     workflow_path: PathBuf,
+    depends_path: PathBuf,
 }
 impl From<&PathBuf> for ModTargetPaths {
     fn from(target_root: &PathBuf) -> Self {
@@ -86,6 +98,7 @@ impl From<&PathBuf> for ModTargetPaths {
             vars_path: target_root.join(VARS_YML),
             setting_path: target_root.join(SETTING_YML),
             artifact_path: spec_path.join(ARTIFACT_YML),
+            depends_path: spec_path.join(DEPENDS_YML),
             workflow_path: target_root.to_path_buf(),
             spec_path,
         }
@@ -111,7 +124,8 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         self.workflow.save_to(paths.workflow_path(), None)?;
         self.artifact.save_conf(paths.artifact_path())?;
 
-        self.conf_spec.save_conf(paths.conf_path())?;
+        self.depends.save_conf(paths.depends_path())?;
+        //self.conf_spec.save_conf(paths.conf_path())?;
         self.logs_spec.save_conf(paths.logs_path())?;
 
         self.res_spec.save_conf(paths.res_path())?;
@@ -141,10 +155,13 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         ctx.with_path("artifact", paths.artifact_path());
         let artifact = ArtifactPackage::from_conf(paths.artifact_path()).with(&ctx)?;
 
-        ctx.with_path("conf_spec", paths.conf_path());
-        let conf_spec = ConfSpec::from_conf(paths.conf_path()).with(&ctx)?;
+        //ctx.with_path("conf_spec", paths.conf_path());
+        //let conf_spec = ConfSpec::from_conf(paths.conf_path()).with(&ctx)?;
         ctx.with_path("logs_spec", paths.logs_path());
         let logs_spec = LogsSpec::from_conf(paths.logs_path()).with(&ctx)?;
+
+        ctx.with_path("depends", paths.depends_path());
+        let depends = DependVec::from_conf(paths.depends_path()).with(&ctx)?;
         ctx.with_path("res_spec", paths.res_path());
         let res_spec = CaculateResSpec::from_conf(paths.res_path()).with(&ctx)?;
         ctx.with_path("vars", paths.vars_path());
@@ -155,12 +172,13 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             target,
             artifact,
             workflow: actions,
-            conf_spec,
+            //conf_spec,
             logs_spec,
             res_spec,
             local: Some(target_root.to_path_buf()),
             vars,
             setting,
+            depends,
         })
     }
 }
@@ -169,7 +187,7 @@ impl ModTargetSpec {
         target: TargetNode,
         artifact: ArtifactPackage,
         actions: ModWorkflows,
-        conf_spec: ConfSpec,
+        //conf_spec: ConfSpec,
         res_spec: CaculateResSpec,
         vars: VarCollection,
         setting: Option<Setting>,
@@ -178,12 +196,13 @@ impl ModTargetSpec {
             target,
             workflow: actions,
             artifact,
-            conf_spec,
+            //conf_spec,
             logs_spec: LogsSpec::tpl_init(),
             res_spec,
             local: None,
             vars,
             setting,
+            depends: DependVec::default(),
         }
     }
 }

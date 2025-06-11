@@ -279,7 +279,6 @@ pub mod tests {
     use crate::{
         addr::LocalAddr,
         const_vars::{MODULES_SPC_ROOT, SYS_MODEL_SPC_ROOT},
-        module::refs::DependItem,
         tools::test_init,
     };
 
@@ -332,17 +331,11 @@ pub mod tests {
             .with_enable(false),
         );
         let mod_name = "postgresql";
-        modul_spec.add_mod_ref(
-            ModuleSpecRef::from(
-                mod_name,
-                LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
-                TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
-            )
-            .with_depend(DependItem::new(
-                LocalAddr::from("./example/knowlege/mysql").into(),
-                PathBuf::from("depends"),
-            )),
-        );
+        modul_spec.add_mod_ref(ModuleSpecRef::from(
+            mod_name,
+            LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+        ));
 
         Ok(modul_spec)
     }

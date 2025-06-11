@@ -13,6 +13,7 @@ pub const GLOBAL_VALUE_FILE: &str = "value/value.yml";
 pub const USED_JSON: &str = "used.json";
 pub const USED_READABLE_FILE: &str = "used.yml";
 pub const ARTIFACT_YML: &str = "artifact.yml";
+pub const DEPENDS_YML: &str = "depends.yml";
 pub const CONF_SPEC_YML: &str = "conf.yml";
 pub const SETTING_YML: &str = "setting.yml";
 pub const LOGS_SPEC_YML: &str = "logs.yml";

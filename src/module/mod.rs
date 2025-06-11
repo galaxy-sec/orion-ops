@@ -1,3 +1,4 @@
+pub mod depend;
 pub mod init;
 pub mod locaize;
 pub mod metrc;
@@ -80,6 +81,29 @@ pub struct TargetNode {
     arch: CpuArch,
     os: OsCPE,
     spc: RunSPC,
+}
+impl TargetNode {
+    pub fn arm_mac14_host() -> Self {
+        Self {
+            arch: CpuArch::Arm,
+            os: OsCPE::MAC14,
+            spc: RunSPC::Host,
+        }
+    }
+    pub fn x86_ubt22_host() -> Self {
+        Self {
+            arch: CpuArch::X86,
+            os: OsCPE::UBT22,
+            spc: RunSPC::Host,
+        }
+    }
+    pub fn x86_ubt22_k8s() -> Self {
+        Self {
+            arch: CpuArch::X86,
+            os: OsCPE::UBT22,
+            spc: RunSPC::K8S,
+        }
+    }
 }
 
 // 紧凑的序列化实现

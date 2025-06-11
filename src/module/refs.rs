@@ -16,37 +16,10 @@ use crate::{
 use super::{TargetNode, spec::ModuleSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
-pub struct DependItem {
-    addr: AddrType,
-    local: PathBuf,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    rename: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    enable: Option<bool>,
-}
-
-impl DependItem {
-    pub fn new(addr: AddrType, local: PathBuf) -> Self {
-        Self {
-            addr,
-            local,
-            rename: None,
-            enable: None,
-        }
-    }
-    pub fn with_rename<S: Into<String>>(mut self, name: S) -> Self {
-        self.rename = Some(name.into());
-        self
-    }
-}
-
-#[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
     name: String,
     addr: AddrType,
     node: TargetNode,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    depends: Vec<DependItem>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     enable: Option<bool>,
     #[serde(skip)]
@@ -65,16 +38,10 @@ impl ModuleSpecRef {
             node,
             enable: None,
             local: None,
-            depends: Vec::new(),
         }
     }
     pub fn with_enable(mut self, effective: bool) -> Self {
         self.enable = Some(effective);
-        self
-    }
-
-    pub fn with_depend(mut self, depend: DependItem) -> Self {
-        self.depends.push(depend);
         self
     }
 
@@ -89,21 +56,17 @@ impl ModuleSpecRef {
     }
 }
 impl ModuleSpecRef {
-    pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, _sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if self.is_enable() {
             if let Some(local) = &self.local {
                 let mut flag = log_flag!(
-                    info!(target: "spec/mod/",  "update mod ref {} success!", self.name ),
-                    error!(target: "spec/mod/", "update mod ref {} fail!", self.name )
+                    info!(target: "/mod/ref",  "update mod ref {} success!", self.name ),
+                    error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let _spec_path = self.addr.update_local(local, options).await?;
-                for item in self.depends() {
-                    item.update_local(sys_root, &UpdateOptions::for_depend())
-                        .await?;
-                }
-                debug!(target: "spec/mod/",  "update target success!" );
+                debug!(target: "mod/ref",  "update target success!" );
                 let mod_path = local.join(self.name.as_str());
                 let mut spec = ModuleSpec::load_from(&mod_path).with(&mod_path)?;
                 let _x = spec.update_local(&mod_path, options).await?;
@@ -112,28 +75,6 @@ impl ModuleSpecRef {
             }
         }
         Ok(())
-    }
-}
-
-#[async_trait]
-impl AsyncUpdateable for DependItem {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.addr.update_local(path, options).await
-    }
-}
-
-impl DependItem {
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        //let item_path = path.join(self.local());
-        let path = self.local();
-        if let Some(rename) = self.rename() {
-            self.update_rename(path, rename, options).await
-        } else {
-            self.update_local(path, options).await
-        }
-    }
-    pub fn is_enable(&self) -> bool {
-        self.enable.unwrap_or(true)
     }
 }
 
@@ -161,36 +102,5 @@ impl Localizable for ModuleSpecRef {
         } else {
             Ok(())
         }
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use std::path::PathBuf;
-
-    use orion_error::TestAssertWithMsg;
-
-    use crate::{
-        addr::{AddrType, LocalAddr},
-        types::UpdateOptions,
-    };
-
-    use super::DependItem;
-    #[tokio::test]
-    async fn test_depend() {
-        let prj_path = PathBuf::from("./test/temp/depend/");
-        if prj_path.exists() {
-            std::fs::remove_dir_all(&prj_path).assert("remove dir");
-        }
-        std::fs::create_dir_all(&prj_path).assert("create prj_path");
-        let item = DependItem::new(
-            AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-            prj_path.join("env_res"),
-        )
-        .with_rename("mysql2");
-        item.update(&UpdateOptions::for_test())
-            .await
-            .assert("update");
-        assert!(prj_path.join("env_res").join("mysql2").exists())
     }
 }
