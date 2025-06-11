@@ -1,0 +1,14 @@
+
+mod main   {
+    env default {}
+    flow setup  : : proxy.setup  {
+        mod_name = "you_mod" ;
+    }
+}
+
+mod  proxy {
+   flow setup {
+        gx.run ( local : "./local/mods/${MOD_NAME}", env : "default" : flow : "setup" ) ;
+   }
+
+}

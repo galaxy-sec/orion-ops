@@ -21,6 +21,8 @@ use log::{error, info};
 use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
+use super::init::{MOD_APP_GAL_WORK, mod_app_gitignore};
+
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModAppConf {
     mod_list: ModulesList,
@@ -51,7 +53,7 @@ impl ModAppProject {
         val_dict.insert("KEY1", ValueType::from("VALUE1"));
         Self {
             conf,
-            project: GxlProject::from("".to_string()),
+            project: GxlProject::from(MOD_APP_GAL_WORK.to_string()),
             val_dict,
         }
     }
@@ -97,11 +99,12 @@ impl ModAppProject {
         let val_file = val_root.join(VALUE_FILE);
         self.conf.save_conf(&conf_file)?;
         self.project.save_to(root, None)?;
-        flag.flag_suc();
         if !val_file.exists() {
             std::fs::create_dir_all(val_root).owe_logic()?;
             self.val_dict.save_valconf(&val_file)?;
         }
+        mod_app_gitignore(root)?;
+        flag.flag_suc();
         Ok(())
     }
 }

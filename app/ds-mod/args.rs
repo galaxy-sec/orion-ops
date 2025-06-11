@@ -16,6 +16,7 @@ pub enum GxModCmd {
 pub enum SpecCmd {
     Example,
     New(SpecArgs),
+    Update(DfxArgs),
 }
 
 #[derive(Debug, Subcommand)] // requires `derive` feature

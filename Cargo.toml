@@ -11,9 +11,6 @@ path = "app/ds-sys/main.rs"
 name = "ds-mod"
 path = "app/ds-mod/main.rs"
 
-[[bin]]
-name = "ds-cust"
-path = "app/ds-cust/main.rs"
 
 
 [workspace]

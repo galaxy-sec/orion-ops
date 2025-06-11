@@ -75,7 +75,7 @@ pub type SpecResult<T> = Result<T, StructError<SpecReason>>;
 pub const PATH_NOT_EXIST: &str = "path not exists";
 
 pub fn report_error(e: StructError<SpecReason>) {
-    println!("Galaxy Flow Parse Error (Code: {})", e.error_code());
+    println!("Run Error (Code: {})", e.error_code());
     println!("--------------------------");
     if let Some(target) = e.target() {
         println!("[TARGET]:\n{}\n", target);
