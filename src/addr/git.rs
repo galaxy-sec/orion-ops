@@ -142,7 +142,7 @@ impl AsyncUpdateable for GitAddr {
         let mut real_path = path.to_path_buf();
         if let Some(sub) = &self.path {
             git_local = git_local.join(sub);
-            if let Some(sub_path) = PathBuf::from(sub).iter().last() {
+            if let Some(sub_path) = PathBuf::from(sub).iter().next_back() {
                 real_path = real_path.join(sub_path);
             }
         } else {
@@ -205,7 +205,7 @@ impl GitAddr {
         }
     }
 
-    fn clone_repository(&self, path: &PathBuf, mut ctx: WithContext) -> SpecResult<()> {
+    fn clone_repository(&self, path: &Path, mut ctx: WithContext) -> SpecResult<()> {
         ctx.with("action", "clone code");
 
         let mut fetch_options = git2::FetchOptions::new();

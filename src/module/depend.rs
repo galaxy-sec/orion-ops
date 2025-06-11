@@ -65,7 +65,7 @@ impl DependVec {
         let options = UpdateOptions::for_depend();
         for dep in self.depends().iter() {
             if dep.is_enable() {
-                dep.update(&self.local_root(), &options).await?;
+                dep.update(self.local_root(), &options).await?;
             }
         }
         Ok(())
@@ -107,7 +107,7 @@ impl AsyncUpdateable for DependItem {
 }
 
 impl DependItem {
-    pub async fn update(&self, root: &PathBuf, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local());
         if let Some(rename) = self.rename() {
