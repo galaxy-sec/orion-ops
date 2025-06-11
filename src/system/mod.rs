@@ -8,6 +8,7 @@ use crate::types::{Localizable, LocalizePath, UpdateOptions};
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_getters::Getters;
+use derive_more::Deref;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::module::refs::ModuleSpecRef;
@@ -18,7 +19,7 @@ use crate::{
     software::FileFormat,
 };
 
-#[derive(Getters, Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Getters, Clone, Debug, Default, Serialize, Deserialize, Deref)]
 #[serde(transparent)]
 pub struct ModulesList {
     mods: Vec<ModuleSpecRef>,
@@ -44,12 +45,18 @@ impl ModulesList {
             .iter_mut()
             .for_each(|x| x.set_local(spec_path.join("mods")));
     }
+
+    pub fn find(&self, arg: &str) -> Option<&ModuleSpecRef> {
+        self.mods.iter().find(|x| x.name() == arg)
+    }
 }
 
 impl ModulesList {
     pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
         for m in &self.mods {
-            m.update(sys_root, options).await?;
+            if m.is_enable() {
+                m.update(sys_root, options).await?;
+            }
         }
         Ok(())
     }
@@ -59,7 +66,9 @@ impl Localizable for ModulesList {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         let root = dst_path.map(|x| x.join_all("mods"));
         for m in &self.mods {
-            m.localize(root.clone()).await?;
+            if m.is_enable() {
+                m.localize(root.clone()).await?;
+            }
         }
         Ok(())
     }

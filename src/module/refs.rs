@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use derive_getters::Getters;
 
-use log::{error, info};
+use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith};
 use serde_derive::{Deserialize, Serialize};
 
@@ -79,7 +79,7 @@ impl ModuleSpecRef {
     }
 
     pub fn is_enable(&self) -> bool {
-        self.enable.is_none_or(|x| x)
+        self.enable.unwrap_or(true)
     }
     pub fn spec_path(&self, root: &Path) -> PathBuf {
         root.join("mods").join(self.name.as_str())
@@ -90,11 +90,12 @@ impl ModuleSpecRef {
 }
 impl ModuleSpecRef {
     pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
-        if self.enable.is_none_or(|x| x) {
+        //trace!(target: "spec/mod/",  "{:?}",self );
+        if self.is_enable() {
             if let Some(local) = &self.local {
                 let mut flag = log_flag!(
-                    info!(target: "spec/mod/", "update mod {} success!", self.name ),
-                    error!(target: "spec/mod/", "update mod {} fail!", self.name )
+                    info!(target: "spec/mod/",  "update mod ref {} success!", self.name ),
+                    error!(target: "spec/mod/", "update mod ref {} fail!", self.name )
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let _spec_path = self.addr.update_local(local, options).await?;
@@ -102,8 +103,9 @@ impl ModuleSpecRef {
                     item.update_local(sys_root, &UpdateOptions::for_depend())
                         .await?;
                 }
+                debug!(target: "spec/mod/",  "update target success!" );
                 let mod_path = local.join(self.name.as_str());
-                let mut spec = ModuleSpec::load_from(&mod_path)?;
+                let mut spec = ModuleSpec::load_from(&mod_path).with(&mod_path)?;
                 let _x = spec.update_local(&mod_path, options).await?;
                 spec.clean_other(self.node())?;
                 flag.flag_suc();

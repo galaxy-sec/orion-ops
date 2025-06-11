@@ -71,6 +71,7 @@ where
 }
 
 pub type SpecResult<T> = Result<T, StructError<SpecReason>>;
+pub type SpecError = StructError<SpecReason>;
 
 pub const PATH_NOT_EXIST: &str = "path not exists";
 

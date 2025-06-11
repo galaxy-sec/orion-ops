@@ -10,6 +10,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
+use log::{error, info};
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
@@ -107,11 +108,18 @@ impl Persistable<ModuleSpec> for ModuleSpec {
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
         let subs = get_sub_dirs(path)?;
+
+        let name_copy = name.clone();
+        let mut flag = log_flag!(
+            info!(target: "mod/spec", "load mod-spec {} success!", name_copy ),
+            error!(target: "mod/spec", "load mod-spec {} fail!", name_copy)
+        );
         let mut targets = HashMap::new();
         for sub in subs {
             let node = ModTargetSpec::load_from(&sub).with(&sub)?;
             targets.insert(node.target().clone(), node);
         }
+        flag.flag_suc();
         Ok(Self {
             name,
             targets,

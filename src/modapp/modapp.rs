@@ -4,7 +4,7 @@ use crate::{
     action::prj::GxlProject,
     addr::{AddrType, GitAddr, LocalAddr},
     const_vars::VALUE_FILE,
-    error::SpecResult,
+    error::{SpecError, SpecResult},
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
         refs::{DependItem, ModuleSpecRef},
@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use derive_getters::Getters;
 use derive_more::{Deref, DerefMut};
 use log::{error, info};
-use orion_error::ErrorOwe;
+use orion_error::{ErrorOwe, UvsLogicFrom};
 use serde_derive::{Deserialize, Serialize};
 
 use super::init::{MOD_APP_GAL_WORK, mod_app_gitignore};
@@ -27,7 +27,8 @@ use super::init::{MOD_APP_GAL_WORK, mod_app_gitignore};
 pub struct ModAppConf {
     mod_list: ModulesList,
     local_res: LocalRes,
-    root_local: PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    root_local: Option<PathBuf>,
 }
 
 #[derive(Getters, Clone, Debug)]
@@ -42,7 +43,7 @@ impl ModAppConf {
         Self {
             mod_list,
             local_res,
-            root_local,
+            root_local: Some(root_local),
         }
     }
 }
@@ -71,11 +72,12 @@ impl ModAppProject {
 
         let conf_file = root.join("mod_loca_prj.yml");
         let mut conf = ModAppConf::from_conf(&conf_file)?;
+        conf.root_local = Some(root.clone());
         let project = GxlProject::load_from(root)?;
         let val_root = root.join("value");
         let val_file = val_root.join(VALUE_FILE);
         let val_dict = ValueDict::from_valconf(&val_file)?;
-        conf.mod_list.set_mods_local(conf.root_local.clone());
+        conf.mod_list.set_mods_local(root.clone());
         flag.flag_suc();
         Ok(Self {
             conf,
@@ -107,6 +109,10 @@ impl ModAppProject {
         flag.flag_suc();
         Ok(())
     }
+
+    pub fn modules(&self) -> &ModulesList {
+        self.conf.mod_list()
+    }
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Deref, DerefMut, Default)]
@@ -116,15 +122,18 @@ pub struct LocalRes {
 
 impl ModAppConf {
     pub async fn update(&self) -> SpecResult<()> {
-        let path = &self.root_local;
-        let options = &UpdateOptions::default();
-        self.mod_list.update(path, options).await?;
-        for res in self.local_res.iter() {
-            if res.is_enable() {
-                res.update(options).await?;
+        if let Some(path) = &self.root_local {
+            let options = &UpdateOptions::default();
+            self.mod_list.update(path, options).await?;
+            for res in self.local_res.iter() {
+                if res.is_enable() {
+                    res.update(options).await?;
+                }
             }
+            Ok(())
+        } else {
+            Err(SpecError::from_logic("local paths not setting ".into()))
         }
-        Ok(())
     }
 }
 
@@ -137,9 +146,13 @@ impl ModAppProject {
 #[async_trait]
 impl Localizable for ModAppConf {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        let local_path = LocalizePath::from_root(self.root_local());
-        self.mod_list().localize(Some(local_path)).await?;
-        Ok(())
+        if let Some(path) = &self.root_local {
+            let local_path = LocalizePath::from_root(path);
+            self.mod_list().localize(Some(local_path)).await?;
+            Ok(())
+        } else {
+            Err(SpecError::from_logic("local paths not setting ".into()))
+        }
     }
 }
 
