@@ -1,8 +1,8 @@
 use orion_error::ErrorConv;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
-use orion_syspec::modapp::example::make_mod_cust_example;
-use orion_syspec::modapp::modapp::ModAppProject;
+use orion_syspec::m_app::example::make_mod_cust_example;
+use orion_syspec::m_app::mod_app::ModAppProject;
 use orion_syspec::module::spec::{ModuleSpec, make_mod_spec_example, make_mod_spec_new};
 use orion_syspec::types::{AsyncUpdateable, Localizable, Persistable, UpdateOptions};
 use std::path::PathBuf;
@@ -12,8 +12,8 @@ use crate::args::{self};
 pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
     let _current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
-        args::GxModCmd::Def(subcmd) => return do_spec_cmd(subcmd).await,
-        args::GxModCmd::App(subcmd) => return do_cust_cmd(subcmd).await,
+        args::GxModCmd::Def(subcmd) => do_spec_cmd(subcmd).await,
+        args::GxModCmd::App(subcmd) => do_cust_cmd(subcmd).await,
     }
 }
 

@@ -218,7 +218,7 @@ where
         T::from_yml(path)
     }
     fn save_valconf(&self, path: &Path) -> SpecResult<()> {
-        T::save_yml(&self, path)
+        T::save_yml(self, path)
     }
 }
 
