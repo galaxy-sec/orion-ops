@@ -74,8 +74,8 @@ mod main   {
   flow test : build : {
     gx.cmd ( "cargo test --all ${ENV_BUILD_FLAG}", log : "1" , out:"true"  );
   }
-  flow sys_test : main.build : {
-    gx.cmd ( "cargo test --test sys_tests  --all-features  ${ENV_BUILD_FLAG}", log : "1" , out:"true"  );
+  flow test : main.build : {
+    gx.cmd ( "cargo test --all -- --test-threads=1"  );
   }
 
   flow pub_local   {

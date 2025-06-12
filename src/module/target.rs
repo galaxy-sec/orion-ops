@@ -9,10 +9,8 @@ use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 
 use crate::{
-    workflow::act::ModWorkflows,
     addr::path_file_name,
     artifact::ArtifactPackage,
-    //conf::ConfSpec,
     const_vars::{
         ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML,
         SPEC_DIR, VARS_YML,
@@ -24,7 +22,8 @@ use crate::{
         AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
         UpdateOptions, ValueConfable,
     },
-    vars::{ValueDict, VarCollection},
+    vars::{OriginDict, ValueDict, VarCollection},
+    workflow::act::ModWorkflows,
 };
 
 use super::{
@@ -248,15 +247,16 @@ impl Localizable for ModTargetSpec {
         }
         debug!(target : "/mod/target/loc", "value export");
         if let Some(global) = localize_path.global() {
-            let mut used = ValueDict::from_valconf(global)?;
+            let mut used = OriginDict::from(ValueDict::from_valconf(global)?);
             used.set_source("global");
-            let mut cur_mod = ValueDict::from_valconf(&value_path)?;
+            let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
             cur_mod.set_source("mod");
             used.merge(&cur_mod);
             used.export_origin().save_valconf(&used_readable)?;
             used.export_value().save_json(&used_json_path)?;
         } else {
-            let used = ValueDict::from_valconf(&value_path)?;
+            //let used = ValueDict::from_valconf(&value_path)?;
+            let used = OriginDict::from(ValueDict::from_valconf(&value_path)?);
 
             used.export_origin().save_valconf(&used_readable)?;
             used.export_value().save_json(&used_json_path)?;
