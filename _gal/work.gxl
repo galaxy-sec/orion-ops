@@ -104,16 +104,16 @@ mod main   {
     gx.echo (  "pub ${UP_TARGET} to dysec " );
     gx.upload (
         url : "https://dy-sec-generic.pkg.coding.net/galaxy-open/${DIST_REPO}/${UP_TARGET}?version=${VERSION}",
-        username : "${SEC_GFLOW_LOGIN}",
+        username : "${SEC_AFT_SVR_LOGIN}",
+        password : "${SEC_AFT_SVR_PASSWORD}",
         method : "PUT",
-        password : "${SEC_GFLOW_PASSWORD}",
         local_file : "./${MAIN_RLS_BINS}/${UP_TARGET}"
     );
     gx.upload (
         url : "https://dy-sec-generic.pkg.coding.net/galaxy-open/${DIST_REPO}/${UP_TARGET}_latest_version.txt?version=latest",
-        username : "${SEC_GFLOW_LOGIN}",
+        username : "${SEC_AFT_SVR_LOGIN}",
+        password : "${SEC_AFT_SVR_PASSWORD}",
         method : "PUT",
-        password : "${SEC_GFLOW_PASSWORD}",
         local_file : "./version.txt"
     );
   }
