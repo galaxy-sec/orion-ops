@@ -12,8 +12,7 @@ pub enum OsType {
 }
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
 pub struct Artifact {
-    cpe: String,
-    meta: OsType,
+    name: String,
     addr: AddrType,
     local: String,
 }
@@ -38,14 +37,12 @@ impl DerefMut for ArtifactPackage {
 
 impl Artifact {
     pub fn new<S: Into<String>, A: Into<AddrType>>(
-        cep: S,
-        meta: OsType,
+        name: S,
         addr: A,
         local: S,
     ) -> Self {
         Self {
-            meta,
-            cpe: cep.into(),
+            name: name.into(),
             addr: addr.into(),
             local: local.into(),
         }

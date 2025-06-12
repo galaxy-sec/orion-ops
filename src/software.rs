@@ -86,7 +86,6 @@ mod tests {
 
     use crate::{
         addr::LocalAddr,
-        artifact::OsType,
         conf::{ConfFile, ConfSpec},
         const_vars::CONFS_DIR,
         error::SpecResult,
@@ -137,7 +136,6 @@ mod tests {
 
         let artifact = Artifact::new(
             "redis-7.0.1",
-            OsType::MacOs,
             LocalAddr::from("redis-linux-7.tar.gz"),
             "redis-linux-7.tar.gz",
         );

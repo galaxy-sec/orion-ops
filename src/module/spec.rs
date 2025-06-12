@@ -16,7 +16,7 @@ use orion_error::{ErrorOwe, ErrorWith};
 use crate::{
     workflow::act::ModWorkflows,
     addr::{HttpAddr, path_file_name},
-    artifact::{Artifact, ArtifactPackage, OsType},
+    artifact::{Artifact, ArtifactPackage, },
     conf::{ConfFile, ConfSpec},
     error::SpecResult,
     resource::CaculateResSpec,
@@ -145,21 +145,18 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         "https://mirrors.aliyun.com/postgresql/README",
     )));
 
-    let cpe = name;
     let k8s = ModTargetSpec::init(
         TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         ArtifactPackage::from(vec![
             Artifact::new(
-                cpe,
-                OsType::MacOs,
+                name,
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
                 "postgresql-17.4.tar.gz.md5",
             ),
             Artifact::new(
-                cpe,
-                OsType::MacOs,
+                name,
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.3.tar.gz.md5",
                 ),
@@ -176,8 +173,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
     let host = ModTargetSpec::init(
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ArtifactPackage::from(vec![Artifact::new(
-            cpe,
-            OsType::MacOs,
+            name,
             HttpAddr::from(
                 "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
             ),
@@ -189,7 +185,7 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
         None,
     );
-    Ok(ModuleSpec::init(cpe, vec![k8s, host]))
+    Ok(ModuleSpec::init(name, vec![k8s, host]))
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
@@ -200,12 +196,11 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     )));
 
     */
-    let cpe = "postgresql";
+    let name = "postgresql";
     let k8s = ModTargetSpec::init(
         TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         ArtifactPackage::from(vec![Artifact::new(
-            cpe,
-            OsType::MacOs,
+            name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
@@ -220,8 +215,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
     let host = ModTargetSpec::init(
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ArtifactPackage::from(vec![Artifact::new(
-            cpe,
-            OsType::MacOs,
+            name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
@@ -242,12 +236,11 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
     )));
 
     */
-    let cpe = "postgresql";
+    let name = "postgresql";
     let k8s = ModTargetSpec::init(
         TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         ArtifactPackage::from(vec![Artifact::new(
-            cpe,
-            OsType::MacOs,
+            name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
@@ -262,8 +255,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
     let host = ModTargetSpec::init(
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ArtifactPackage::from(vec![Artifact::new(
-            cpe,
-            OsType::MacOs,
+            name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),

@@ -28,7 +28,8 @@ use super::init::{MOD_APP_GAL_WORK, mod_app_gitignore};
 pub struct ModAppConf {
     module_list: ModulesList,
     local_envs: DependencySet,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    //#[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip)]
     root_local: Option<PathBuf>,
 }
 
