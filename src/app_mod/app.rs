@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    workflow::prj::GxlProject,
     addr::{AddrType, GitAddr, LocalAddr},
     const_vars::VALUE_FILE,
     error::{SpecError, SpecResult},
@@ -13,6 +12,7 @@ use crate::{
     system::ModulesList,
     types::{Configable, Localizable, LocalizePath, Persistable, UpdateOptions, ValueConfable},
     vars::{ValueDict, ValueType},
+    workflow::prj::GxlProject,
 };
 
 use async_trait::async_trait;
@@ -123,9 +123,9 @@ pub struct LocalRes {
 }
 
 impl ModAppConf {
-    pub async fn update(&self) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
         if let Some(path) = &self.root_local {
-            let options = &UpdateOptions::default();
+            //let options = &UpdateOptions::default();
             self.module_list.update(path, options).await?;
             self.local_envs.update().await?;
             Ok(())
@@ -136,8 +136,8 @@ impl ModAppConf {
 }
 
 impl ModAppProject {
-    pub async fn update(&self) -> SpecResult<()> {
-        self.conf.update().await
+    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+        self.conf.update(options).await
     }
 }
 
@@ -191,11 +191,11 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
+        app_mod::app::{ModAppProject, make_mod_cust_testins},
         const_vars::MODULES_INS_ROOT,
         error::SpecResult,
-        app_mod::app::{ModAppProject, make_mod_cust_testins},
         tools::test_init,
-        types::Localizable,
+        types::{Localizable, UpdateOptions},
     };
 
     #[tokio::test]
@@ -209,7 +209,10 @@ pub mod tests {
         std::fs::create_dir_all(&prj_path).assert("yes");
         project.save(&prj_path).assert("save dss_prj");
         let project = ModAppProject::load(&prj_path).assert("dss-project");
-        project.update().await.assert("spec.update_local");
+        project
+            .update(&UpdateOptions::default())
+            .await
+            .assert("spec.update_local");
         project.localize(None).await.assert("spec.localize");
         Ok(())
     }

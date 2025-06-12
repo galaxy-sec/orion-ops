@@ -10,7 +10,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     addr::AddrType,
     error::SpecResult,
-    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateOptions},
+    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateLevel, UpdateOptions},
 };
 
 use super::{TargetNode, spec::ModuleSpec};
@@ -65,7 +65,9 @@ impl ModuleSpecRef {
                     error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
-                let _spec_path = self.addr.update_local(local, options).await?;
+                if options.level() != UpdateLevel::Elm {
+                    let _spec_path = self.addr.update_local(local, options).await?;
+                }
                 debug!(target: "mod/ref",  "update target success!" );
                 let mod_path = local.join(self.name.as_str());
                 let mut spec = ModuleSpec::load_from(&mod_path).with(&mod_path)?;

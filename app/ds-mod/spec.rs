@@ -1,10 +1,10 @@
 use orion_error::ErrorConv;
+use orion_syspec::app_mod::app::ModAppProject;
+use orion_syspec::app_mod::example::make_mod_cust_example;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
-use orion_syspec::app_mod::example::make_mod_cust_example;
-use orion_syspec::app_mod::app::ModAppProject;
 use orion_syspec::module::spec::{ModuleSpec, make_mod_spec_example, make_mod_spec_new};
-use orion_syspec::types::{AsyncUpdateable, Localizable, Persistable, UpdateOptions};
+use orion_syspec::types::{AsyncUpdateable, Localizable, Persistable, UpdateLevel, UpdateOptions};
 use std::path::PathBuf;
 
 use crate::args::{self};
@@ -32,33 +32,37 @@ pub async fn do_spec_cmd(cmd: args::SpecCmd) -> SpecResult<()> {
         args::SpecCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModuleSpec::load_from(&current_dir).err_conv()?;
-            spec.update_local(&current_dir, &UpdateOptions::default())
-                .await
-                .err_conv()?;
+            spec.update_local(
+                &current_dir,
+                &UpdateOptions::new(true, UpdateLevel::from(dfx.level)),
+            )
+            .await
+            .err_conv()?;
         }
     }
     Ok(())
 }
-pub async fn do_cust_cmd(cmd: args::CustCmd) -> SpecResult<()> {
+pub async fn do_cust_cmd(cmd: args::AppCmd) -> SpecResult<()> {
     let current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
-        args::CustCmd::Example => {
+        args::AppCmd::Example => {
             let spec = make_mod_cust_example(&current_dir).err_conv()?;
             spec.save(&current_dir).err_conv()?;
         }
-        args::CustCmd::New(spec_args) => {
+        args::AppCmd::New(spec_args) => {
             configure_dfx_logging(&spec_args);
             todo!();
         }
-        args::CustCmd::Localize(dfx) => {
+        args::AppCmd::Localize(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModAppProject::load(&current_dir).err_conv()?;
             spec.localize(None).await.err_conv()?;
         }
-        args::CustCmd::Update(dfx) => {
+        args::AppCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModAppProject::load(&current_dir).err_conv()?;
-            spec.update().await.err_conv()?;
+            let options = &UpdateOptions::new(true, UpdateLevel::from(dfx.level));
+            spec.update(&options).await.err_conv()?;
         }
     }
     Ok(())

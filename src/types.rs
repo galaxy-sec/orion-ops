@@ -5,6 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use derive_getters::Getters;
+use derive_more::From;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -19,24 +20,48 @@ pub trait Persistable<T> {
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Debug, From, Clone, Default, PartialEq)]
+pub enum UpdateLevel {
+    #[default]
+    All,
+    Mod,
+    Elm,
+}
+
+#[derive(Clone, Debug)]
 pub struct UpdateOptions {
     force: bool,
+    level: UpdateLevel,
 }
 impl Default for UpdateOptions {
     fn default() -> Self {
-        Self { force: true }
+        Self {
+            force: true,
+            level: UpdateLevel::All,
+        }
     }
 }
 impl UpdateOptions {
+    pub fn new(force: bool, level: UpdateLevel) -> Self {
+        Self { force, level }
+    }
     pub fn force(&self) -> bool {
         self.force
     }
+    pub fn level(&self) -> UpdateLevel {
+        self.level.clone()
+    }
     pub fn for_test() -> Self {
-        Self { force: true }
+        Self {
+            force: true,
+            level: UpdateLevel::All,
+        }
     }
     pub fn for_depend() -> Self {
-        Self { force: false }
+        Self {
+            force: false,
+            level: UpdateLevel::All,
+        }
     }
 }
 #[async_trait]
