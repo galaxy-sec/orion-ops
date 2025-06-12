@@ -5,7 +5,7 @@ use crate::{
     error::SpecResult,
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
-        depend::{Dependency, DependVec},
+        depend::{Dependency, DependencySet},
         refs::ModuleSpecRef,
     },
     system::ModulesList,
@@ -34,7 +34,7 @@ pub fn make_mod_cust_example(prj_path: &Path) -> SpecResult<ModAppProject> {
         .with_enable(true),
     );
 
-    let mut res = DependVec::default();
+    let mut res = DependencySet::default();
     res.push(
         Dependency::new(
             AddrType::from(GitAddr::from(

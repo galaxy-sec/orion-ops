@@ -29,7 +29,7 @@ use crate::{
 
 use super::{
     TargetNode,
-    depend::DependVec,
+    depend::DependencySet,
     locaize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
 };
@@ -45,11 +45,11 @@ pub struct ModTargetSpec {
     vars: VarCollection,
     local: Option<PathBuf>,
     setting: Option<Setting>,
-    depends: DependVec,
+    depends: DependencySet,
 }
 
 impl ModTargetSpec {
-    pub fn with_depends(mut self, depends: DependVec) -> Self {
+    pub fn with_depends(mut self, depends: DependencySet) -> Self {
         self.depends = depends;
         self
     }
@@ -161,7 +161,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let logs_spec = LogsSpec::from_conf(paths.logs_path()).with(&ctx)?;
 
         ctx.with_path("depends", paths.depends_path());
-        let depends = DependVec::from_conf(paths.depends_path()).with(&ctx)?;
+        let depends = DependencySet::from_conf(paths.depends_path()).with(&ctx)?;
         ctx.with_path("res_spec", paths.res_path());
         let res_spec = CaculateResSpec::from_conf(paths.res_path()).with(&ctx)?;
         ctx.with_path("vars", paths.vars_path());
@@ -202,7 +202,7 @@ impl ModTargetSpec {
             local: None,
             vars,
             setting,
-            depends: DependVec::default(),
+            depends: DependencySet::default(),
         }
     }
 }

@@ -21,12 +21,12 @@ pub struct Dependency {
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Default)]
-pub struct DependVec {
-    local_root: PathBuf,
-    depends: Vec<Dependency>,
+pub struct DependencySet {
+    dep_root: PathBuf,
+    deps: Vec<Dependency>,
 }
 
-impl DependVec {
+impl DependencySet {
     pub fn example() -> Self {
         let depends = vec![
             Dependency {
@@ -43,9 +43,9 @@ impl DependVec {
             },
         ];
 
-        DependVec {
-            depends,
-            local_root: PathBuf::from("./depends"),
+        DependencySet {
+            deps: depends,
+            dep_root: PathBuf::from("./depends"),
         }
     }
     pub fn for_test() -> Self {
@@ -56,26 +56,26 @@ impl DependVec {
             enable: Some(true),
         }];
 
-        DependVec {
-            depends,
-            local_root: PathBuf::from("./depends"),
+        DependencySet {
+            deps: depends,
+            dep_root: PathBuf::from("./depends"),
         }
     }
     pub async fn update(&self) -> SpecResult<()> {
         let options = UpdateOptions::for_depend();
-        for dep in self.depends().iter() {
+        for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.update(self.local_root(), &options).await?;
+                dep.update(self.dep_root(), &options).await?;
             }
         }
         Ok(())
     }
     pub fn push(&mut self, item: Dependency) {
-        self.depends.push(item);
+        self.deps.push(item);
     }
     pub fn check_exists(&self) -> Result<(), PathBuf> {
-        for x in &self.depends {
-            let path = self.local_root().join(x.local());
+        for x in &self.deps {
+            let path = self.dep_root().join(x.local());
             if !path.exists() {
                 return Err(path.clone());
             }
@@ -129,7 +129,7 @@ pub mod tests {
 
     use crate::{
         addr::{AddrType, LocalAddr},
-        module::depend::{Dependency, DependVec},
+        module::depend::{Dependency, DependencySet},
         types::UpdateOptions,
     };
 
@@ -160,9 +160,9 @@ pub mod tests {
             enable: Some(true),
         };
 
-        let vec = DependVec {
-            depends: vec![item.clone(), item],
-            local_root: PathBuf::from("./"),
+        let vec = DependencySet {
+            deps: vec![item.clone(), item],
+            dep_root: PathBuf::from("./"),
         };
         let yaml_vec = serde_yaml::to_string(&vec).unwrap();
         println!("{:#}", yaml_vec);

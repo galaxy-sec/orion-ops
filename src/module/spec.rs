@@ -26,7 +26,7 @@ use crate::{
 
 use super::{
     CpuArch, OsCPE, RunSPC, TargetNode,
-    depend::DependVec,
+    depend::DependencySet,
     init::{ModIniter, mod_init_gitignore},
     setting::Setting,
     target::ModTargetSpec,
@@ -215,7 +215,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
-    .with_depends(DependVec::example());
+    .with_depends(DependencySet::example());
 
     let host = ModTargetSpec::init(
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
@@ -231,7 +231,7 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
-    .with_depends(DependVec::example());
+    .with_depends(DependencySet::example());
     Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
 }
 pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
@@ -257,7 +257,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
-    .with_depends(DependVec::for_test());
+    .with_depends(DependencySet::for_test());
 
     let host = ModTargetSpec::init(
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
@@ -273,7 +273,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
-    .with_depends(DependVec::for_test());
+    .with_depends(DependencySet::for_test());
     Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
 }
 

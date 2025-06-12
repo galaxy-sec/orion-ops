@@ -7,7 +7,7 @@ use crate::{
     error::{SpecError, SpecResult},
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
-        depend::{Dependency, DependVec},
+        depend::{Dependency, DependencySet},
         refs::ModuleSpecRef,
     },
     system::ModulesList,
@@ -26,8 +26,8 @@ use super::init::{MOD_APP_GAL_WORK, mod_app_gitignore};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModAppConf {
-    mod_list: ModulesList,
-    local_res: DependVec,
+    module_list: ModulesList,
+    local_envs: DependencySet,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     root_local: Option<PathBuf>,
 }
@@ -39,17 +39,17 @@ pub struct ModAppProject {
     val_dict: ValueDict,
 }
 impl ModAppConf {
-    pub fn new(mut mod_list: ModulesList, local_res: DependVec, root_local: PathBuf) -> Self {
+    pub fn new(mut mod_list: ModulesList, local_res: DependencySet, root_local: PathBuf) -> Self {
         mod_list.set_mods_local(root_local.clone());
         Self {
-            mod_list,
-            local_res,
+            module_list: mod_list,
+            local_envs: local_res,
             root_local: Some(root_local),
         }
     }
 }
 impl ModAppProject {
-    pub fn new(mod_list: ModulesList, local_res: DependVec, root_local: PathBuf) -> Self {
+    pub fn new(mod_list: ModulesList, local_res: DependencySet, root_local: PathBuf) -> Self {
         let conf = ModAppConf::new(mod_list, local_res, root_local);
         let mut val_dict = ValueDict::default();
         val_dict.insert("KEY1", ValueType::from("VALUE1"));
@@ -78,7 +78,7 @@ impl ModAppProject {
         let val_root = root.join("value");
         let val_file = val_root.join(VALUE_FILE);
         let val_dict = ValueDict::from_valconf(&val_file)?;
-        conf.mod_list.set_mods_local(root.to_path_buf());
+        conf.module_list.set_mods_local(root.to_path_buf());
         flag.flag_suc();
         Ok(Self {
             conf,
@@ -112,7 +112,7 @@ impl ModAppProject {
     }
 
     pub fn modules(&self) -> &ModulesList {
-        self.conf.mod_list()
+        self.conf.module_list()
     }
 }
 
@@ -125,8 +125,8 @@ impl ModAppConf {
     pub async fn update(&self) -> SpecResult<()> {
         if let Some(path) = &self.root_local {
             let options = &UpdateOptions::default();
-            self.mod_list.update(path, options).await?;
-            self.local_res.update().await?;
+            self.module_list.update(path, options).await?;
+            self.local_envs.update().await?;
             Ok(())
         } else {
             Err(SpecError::from_logic("local paths not setting ".into()))
@@ -145,7 +145,7 @@ impl Localizable for ModAppConf {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
         if let Some(path) = &self.root_local {
             let local_path = LocalizePath::from_root(path);
-            self.mod_list().localize(Some(local_path)).await?;
+            self.module_list().localize(Some(local_path)).await?;
             Ok(())
         } else {
             Err(SpecError::from_logic("local paths not setting ".into()))
@@ -170,7 +170,7 @@ pub fn make_mod_cust_testins(prj_path: &Path) -> SpecResult<ModAppProject> {
         TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
     ));
 
-    let mut res = DependVec::default();
+    let mut res = DependencySet::default();
     res.push(
         Dependency::new(
             AddrType::from(GitAddr::from(
