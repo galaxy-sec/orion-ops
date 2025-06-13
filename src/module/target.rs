@@ -29,7 +29,7 @@ use crate::{
 use super::{
     TargetNode,
     depend::DependencySet,
-    locaize::LocalizeTemplate,
+    localize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
 };
 
