@@ -15,7 +15,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
     let _current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
         args::GxModCmd::Def(subcmd) => do_spec_cmd(subcmd).await,
-        args::GxModCmd::App(subcmd) => do_cust_cmd(subcmd).await,
+        args::GxModCmd::App(subcmd) => do_app_cmd(subcmd).await,
     }
 }
 
@@ -45,7 +45,7 @@ pub async fn do_spec_cmd(cmd: args::SpecCmd) -> SpecResult<()> {
     }
     Ok(())
 }
-pub async fn do_cust_cmd(cmd: args::AppCmd) -> SpecResult<()> {
+pub async fn do_app_cmd(cmd: args::AppCmd) -> SpecResult<()> {
     let current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
         args::AppCmd::Example => {

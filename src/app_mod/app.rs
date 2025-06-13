@@ -191,16 +191,21 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
-        app_mod::app::{ModAppProject, make_mod_cust_testins},
-        const_vars::MODULES_INS_ROOT,
+        app_mod::app::{make_mod_cust_testins, ModAppProject},
+        const_vars::{MODULES_INS_ROOT, MODULES_SPC_ROOT},
         error::SpecResult,
+        module::spec::make_mod_spec_4test,
         tools::test_init,
-        types::{Localizable, UpdateOptions},
+        types::{Localizable, Persistable, UpdateOptions},
     };
 
     #[tokio::test]
     async fn test_mod_cust_prj_running() -> SpecResult<()> {
         test_init();
+        let spec = make_mod_spec_4test().assert("make spec ");
+        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)
+            .assert("save spec");
+
         let prj_path = PathBuf::from(MODULES_INS_ROOT).join("mod_cust-prj");
         let project = make_mod_cust_testins(&prj_path).assert("make cust");
         if prj_path.exists() {

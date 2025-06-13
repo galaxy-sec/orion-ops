@@ -145,8 +145,8 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         "https://mirrors.aliyun.com/postgresql/README",
     )));
 
-    let k8s = ModTargetSpec::init(
-        TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+    let x86_ubu22_k8s = ModTargetSpec::init(
+        TargetNode::x86_ubt22_k8s(),
         ArtifactPackage::from(vec![
             Artifact::new(
                 name,
@@ -170,8 +170,8 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         None,
     );
 
-    let host = ModTargetSpec::init(
-        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+    let arm_mac_host = ModTargetSpec::init(
+        TargetNode::arm_mac14_host(),
         ArtifactPackage::from(vec![Artifact::new(
             name,
             HttpAddr::from(
@@ -185,7 +185,26 @@ pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
         VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
         None,
     );
-    Ok(ModuleSpec::init(name, vec![k8s, host]))
+    let x86_ubt22_host = ModTargetSpec::init(
+        TargetNode::arm_mac14_host(),
+        ArtifactPackage::from(vec![Artifact::new(
+            name,
+            HttpAddr::from(
+                "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
+            ),
+            "postgresql-17.4.tar.gz.md5",
+        )]),
+        ModWorkflows::mod_host_tpl_init(),
+        //conf.clone(),
+        CaculateResSpec::new(2, 4),
+        VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+        None,
+    );
+
+    Ok(ModuleSpec::init(
+        name,
+        vec![x86_ubu22_k8s, x86_ubt22_host, arm_mac_host],
+    ))
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {

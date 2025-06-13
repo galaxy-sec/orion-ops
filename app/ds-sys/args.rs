@@ -3,7 +3,7 @@ use derive_getters::Getters;
 use orion_syspec::infra::DfxArgsGetter;
 
 #[derive(Debug, Parser)] // requires `derive` feature
-#[command(name = "gm")]
+#[command(name = "ds-sys")]
 #[command(version, about)]
 pub enum GSysCmd {
     Example,
