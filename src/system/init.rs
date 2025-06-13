@@ -3,13 +3,13 @@ use std::path::Path;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
+    error::SpecResult,
+    task::OperationType,
     workflow::{
         act::{Workflow, Workflows},
         gxl::GxlAction,
         prj::GxlProject,
     },
-    error::SpecResult,
-    task::OperationType,
 };
 
 const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");

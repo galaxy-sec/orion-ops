@@ -2,8 +2,9 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
+use git2::{build::CheckoutBuilder, BranchType, FetchOptions, RemoteCallbacks, Repository};
 use home::home_dir;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
@@ -204,6 +205,80 @@ impl GitAddr {
             Err(StructError::from_res("需要手动合并变更".into()).with(&ctx))
         }
     }
+    /// 获取远程更新
+    fn fetch_updates(&self, repo: &Repository) -> Result<(), git2::Error> {
+        // 查找 origin 远程
+        let mut remote = repo.find_remote("origin")?;
+
+        // 准备认证回调
+        let mut callbacks = RemoteCallbacks::new();
+        callbacks.credentials(|_url, username, _allowed| {
+            git2::Cred::userpass_plaintext(username.unwrap_or("git"), "")
+        });
+
+        // 配置获取选项
+        let mut fetch_options = FetchOptions::new();
+        fetch_options.remote_callbacks(callbacks);
+
+        // 执行获取操作
+        remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
+
+        // 更新远程引用
+        remote.update_tips(None, true, git2::AutotagOption::All, None)?;
+
+        Ok(())
+    }
+    /// 检出指定提交
+    fn checkout_revision(&self, repo: &Repository, rev: &str) -> Result<(), git2::Error> {
+        let obj = repo.revparse_single(rev)?;
+        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
+        repo.set_head_detached(obj.id())?;
+        Ok(())
+    }
+
+    /// 检出指定标签
+    fn checkout_tag(&self, repo: &Repository, tag: &str) -> Result<(), git2::Error> {
+        let refname = format!("refs/tags/{}", tag);
+        let obj = repo.revparse_single(&refname)?;
+        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
+        repo.set_head_detached(obj.id())?;
+        Ok(())
+    }
+
+    /// 检出指定分支（包括远程分支）
+    fn checkout_branch(&self, repo: &Repository, branch: &str) -> Result<(), git2::Error> {
+        // 尝试查找本地分支
+        if let Ok(b) = repo.find_branch(branch, BranchType::Local) {
+            // 切换到本地分支
+            let refname = b
+                .get()
+                .name()
+                .ok_or(git2::Error::from_str("Invalid branch name"))?;
+            repo.set_head(refname)?;
+            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
+            return Ok(());
+        }
+
+        // 尝试查找远程分支
+        let remote_branch_name = format!("origin/{}", branch);
+        if let Ok(b) = repo.find_branch(&remote_branch_name, BranchType::Remote) {
+            // 创建本地分支并设置跟踪
+            let commit = b.get().peel_to_commit()?;
+            let mut new_branch = repo.branch(branch, &commit, false)?;
+            new_branch.set_upstream(Some(&format!("origin/{}", branch)))?;
+
+            // 切换到新分支
+            let refname = format!("refs/heads/{}", branch);
+            repo.set_head(&refname)?;
+            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
+            return Ok(());
+        }
+
+        Err(git2::Error::from_str(&format!(
+            "Branch '{}' not found",
+            branch
+        )))
+    }
 
     fn clone_repository(&self, path: &Path, mut ctx: WithContext) -> SpecResult<()> {
         ctx.with("workflow", "clone code");
@@ -216,22 +291,13 @@ impl GitAddr {
         builder.fetch_options(fetch_options);
         let repo = builder.clone(&self.repo, path).owe_res().with(&ctx)?;
 
-        // 处理分支/标签
-        if let Some(branch_or_tag) = self.branch.as_ref().or(self.tag.as_ref()) {
-            let (_object, reference) = repo.revparse_ext(branch_or_tag).owe_res().with(&ctx)?;
-
-            if let Some(reference) = reference {
-                repo.set_head(reference.name().unwrap())
-                    .owe_res()
-                    .with(&ctx)?;
-            }
-        }
-
-        // 处理特定 revision
+        // 处理检出目标（按优先级：rev > tag > branch）
         if let Some(rev) = &self.rev {
-            let obj = repo.revparse_single(rev).owe_res().with(&ctx)?;
-            repo.checkout_tree(&obj, None).owe_res().with(&ctx)?;
-            repo.set_head_detached(obj.id()).owe_res().with(&ctx)?;
+            self.checkout_revision(&repo, rev).owe_sys().with(&ctx)?;
+        } else if let Some(tag) = &self.tag {
+            self.checkout_tag(&repo, tag).owe_sys().with(&ctx)?;
+        } else if let Some(branch) = &self.branch {
+            self.checkout_branch(&repo, branch).owe_sys().with(&ctx)?;
         }
 
         Ok(())
@@ -247,7 +313,7 @@ fn find_default_ssh_key() -> Option<PathBuf> {
     // 尝试的密钥文件列表（按优先级排序）
     let key_files = [
         "id_ed25519", // 首选ed25519
-        "id_rsa",     // 其次是RSA
+        "id_rsa",     //  THEN 是RSA
         "id_ecdsa",   // 然后是ECDSA
         "identity",   // 通用名称
     ];
@@ -281,7 +347,8 @@ mod tests {
         let dest_path = temp_dir.path().to_path_buf();
 
         // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
-        let git_addr = GitAddr::from("https://github.com/octocat/Hello-World.git").branch("master"); // 或使用 .tag("v1.0") 测试标签
+        let git_addr =
+            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("master"); // 替换为实际测试分支
 
         // 执行克隆
         let cloned_path = git_addr
@@ -345,6 +412,27 @@ mod tests {
             .await
             .assert();
         assert_eq!(real_path, dest_path.join("modspec.git"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_checkout_specific_branch() -> SpecResult<()> {
+        test_init();
+        let dest_path = PathBuf::from("./test/temp/git_branch_test");
+        if dest_path.exists() {
+            std::fs::remove_dir_all(&dest_path).unwrap();
+        }
+
+        // 测试切换到非默认分支
+        let git_addr =
+            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("develop"); // 替换为实际测试分支
+
+        let real_path = git_addr
+            .update_local(&dest_path, &UpdateOptions::default())
+            .await?;
+        let repo = git2::Repository::open(real_path).assert();
+        let head = repo.head().assert();
+        assert!(head.shorthand().unwrap_or("").contains("develop"));
         Ok(())
     }
 }

@@ -36,11 +36,7 @@ impl DerefMut for ArtifactPackage {
 }
 
 impl Artifact {
-    pub fn new<S: Into<String>, A: Into<AddrType>>(
-        name: S,
-        addr: A,
-        local: S,
-    ) -> Self {
+    pub fn new<S: Into<String>, A: Into<AddrType>>(name: S, addr: A, local: S) -> Self {
         Self {
             name: name.into(),
             addr: addr.into(),
