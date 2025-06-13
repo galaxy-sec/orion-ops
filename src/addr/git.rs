@@ -2,9 +2,12 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
-use git2::{build::CheckoutBuilder, BranchType, FetchOptions, RemoteCallbacks, Repository};
+use git2::{
+    BranchType, FetchOptions, RemoteUpdateFlags, Repository,
+    build::{CheckoutBuilder, RepoBuilder},
+};
 use home::home_dir;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
 use serde_derive::{Deserialize, Serialize};
 
@@ -121,11 +124,11 @@ impl AsyncUpdateable for GitAddr {
         let git_local_copy = git_local.clone();
         let mut flag = log_guard!(
             info!(
-                target : "spec/addr/git",
+                target : "addr/git",
                 "update {} to {} success!", self.repo,git_local_copy.display()
             ),
             error!(
-                target : "spec/addr/local",
+                target : "addr/local",
                 "update {} to {} failed", self.repo,git_local_copy.display()
             )
         );
@@ -133,11 +136,11 @@ impl AsyncUpdateable for GitAddr {
         match git2::Repository::open(&git_local) {
             Ok(re) => {
                 debug!(target :"spec", "pull repo : {}", git_local.display());
-                self.pull_repository(&re, ctx.clone())?;
+                self.update_repo(&re).owe_data().with(&ctx)?;
             }
             Err(_) => {
                 debug!(target :"spec", "clone repo : {}", git_local.display());
-                self.clone_repository(&git_local, ctx.clone())?;
+                self.clone_repo(&git_local).owe_data().with(&ctx)?;
             }
         }
         let mut real_path = path.to_path_buf();
@@ -168,12 +171,146 @@ impl AsyncUpdateable for GitAddr {
 }
 
 impl GitAddr {
+    pub fn sync_repo(&self, target_dir: &Path) -> Result<(), git2::Error> {
+        // 尝试打开现有仓库
+        match Repository::open(target_dir) {
+            Ok(repo) => self.update_repo(&repo),
+            Err(_) => self.clone_repo(target_dir),
+        }
+    }
+
+    /// 克隆新仓库
+    fn clone_repo(&self, target_dir: &Path) -> Result<(), git2::Error> {
+        // 准备回调以支持认证
+        //
+        let callbacks = self.build_remote_callbacks(); // 使用构建的回调
+
+        // 配置获取选项
+        let mut fetch_options = FetchOptions::new();
+        fetch_options.remote_callbacks(callbacks);
+
+        // 准备克隆选项
+        let mut builder = RepoBuilder::new();
+        builder.fetch_options(fetch_options);
+
+        // 执行克隆
+        let repo = builder.clone(&self.repo, target_dir)?;
+
+        // 处理检出目标
+        self.checkout_target(&repo)
+    }
+
+    /// 更新现有仓库
+    fn update_repo(&self, repo: &Repository) -> Result<(), git2::Error> {
+        // 1. 获取远程更新
+        self.fetch_updates(repo)?;
+
+        // 2. 处理检出目标
+        self.checkout_target(repo)
+    }
+
+    /// 获取远程更新
+    fn fetch_updates(&self, repo: &Repository) -> Result<(), git2::Error> {
+        // 查找 origin 远程
+        let mut remote = repo.find_remote("origin")?;
+
+        // 准备认证回调
+        let callbacks = self.build_remote_callbacks(); // 使用构建的回调
+        // 配置获取选项
+        let mut fetch_options = FetchOptions::new();
+        fetch_options.remote_callbacks(callbacks);
+
+        // 执行获取操作
+        remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
+
+        // 更新远程引用
+        remote.update_tips(
+            None,
+            RemoteUpdateFlags::UPDATE_FETCHHEAD,
+            git2::AutotagOption::All,
+            None,
+        )?;
+
+        Ok(())
+    }
+
+    /// 处理检出目标（按优先级：rev > tag > branch）
+    fn checkout_target(&self, repo: &Repository) -> Result<(), git2::Error> {
+        if let Some(rev) = &self.rev {
+            self.checkout_revision(repo, rev)
+        } else if let Some(tag) = &self.tag {
+            self.checkout_tag(repo, tag)
+        } else if let Some(branch) = &self.branch {
+            self.checkout_branch(repo, branch)
+        } else {
+            // 默认检出默认分支
+            let head = repo.head()?;
+            let _name = head
+                .name()
+                .ok_or_else(|| git2::Error::from_str("无法获取 HEAD 名称"))?;
+            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
+            Ok(())
+        }
+    }
+
+    /// 检出指定提交
+    fn checkout_revision(&self, repo: &Repository, rev: &str) -> Result<(), git2::Error> {
+        let obj = repo.revparse_single(rev)?;
+        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
+        repo.set_head_detached(obj.id())?;
+        Ok(())
+    }
+
+    /// 检出指定标签
+    fn checkout_tag(&self, repo: &Repository, tag: &str) -> Result<(), git2::Error> {
+        let refname = format!("refs/tags/{}", tag);
+        let obj = repo.revparse_single(&refname)?;
+        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
+        repo.set_head_detached(obj.id())?;
+        Ok(())
+    }
+
+    /// 检出指定分支（包括远程分支）
+    fn checkout_branch(&self, repo: &Repository, branch: &str) -> Result<(), git2::Error> {
+        // 尝试查找本地分支
+        if let Ok(b) = repo.find_branch(branch, BranchType::Local) {
+            // 切换到本地分支
+            let refname = b
+                .get()
+                .name()
+                .ok_or_else(|| git2::Error::from_str("无效的分支名称"))?;
+            repo.set_head(refname)?;
+            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
+            return Ok(());
+        }
+
+        // 尝试查找远程分支
+        let remote_branch_name = format!("origin/{}", branch);
+        if let Ok(b) = repo.find_branch(&remote_branch_name, BranchType::Remote) {
+            // 创建本地分支并设置跟踪
+            let commit = b.get().peel_to_commit()?;
+            let mut new_branch = repo.branch(branch, &commit, false)?;
+            new_branch.set_upstream(Some(&format!("origin/{}", branch)))?;
+
+            // 切换到新分支
+            let refname = format!("refs/heads/{}", branch);
+            repo.set_head(&refname)?;
+            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
+            return Ok(());
+        }
+
+        Err(git2::Error::from_str(&format!("分支 '{}' 不存在", branch)))
+    }
+}
+
+/*
+impl GitAddr {
     fn pull_repository(&self, repo: &git2::Repository, mut ctx: WithContext) -> SpecResult<()> {
         ctx.with("workflow", "pull code");
         let mut remote = repo.find_remote("origin").owe_res().with(&ctx)?;
-        let cb = self.build_remote_callbacks(); // 使用构建的回调
 
         let mut fetch_options = git2::FetchOptions::new();
+        let cb = self.build_remote_callbacks(); // 使用构建的回调
         fetch_options.remote_callbacks(cb); // 应用SSH回调
         let refspecs: &[&str] = &[]; //
         remote
@@ -305,6 +442,8 @@ impl GitAddr {
 }
 
 /// 查找常见的默认SSH密钥路径
+    */
+
 fn find_default_ssh_key() -> Option<PathBuf> {
     // 获取用户主目录
     let home = home_dir()?;
@@ -328,7 +467,6 @@ fn find_default_ssh_key() -> Option<PathBuf> {
 
     None
 }
-
 #[cfg(test)]
 mod tests {
     use crate::{error::SpecResult, tools::test_init};
