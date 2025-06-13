@@ -66,7 +66,7 @@ pub async fn do_cust_cmd(cmd: args::AppCmd) -> SpecResult<()> {
             let spec = ModAppProject::load(&current_dir).err_conv()?;
             let redo_level = RedoLevel::from(dfx.force);
             let options = &UpdateOptions::new(redo_level, UpdateLevel::from(dfx.level));
-            spec.update(&options).await.err_conv()?;
+            spec.update(options).await.err_conv()?;
         }
     }
     Ok(())
