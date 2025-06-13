@@ -191,7 +191,7 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
-        app_mod::app::{make_mod_cust_testins, ModAppProject},
+        app_mod::app::{ModAppProject, make_mod_cust_testins},
         const_vars::{MODULES_INS_ROOT, MODULES_SPC_ROOT},
         error::SpecResult,
         module::spec::make_mod_spec_4test,
