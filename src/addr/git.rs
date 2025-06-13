@@ -121,11 +121,16 @@ impl AsyncUpdateable for GitAddr {
         {
             name = format!("{}_{}", name, postfix);
         }
-
-        let mut git_local = home_dir()
+        let cache_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
-            .join(".galaxy/cache")
-            .join(name.clone());
+            .join(".cache/galaxy");
+        if !cache_local.exists() {
+            std::fs::create_dir_all(&cache_local)
+                .owe_res()
+                .with(&cache_local)?;
+        }
+
+        let mut git_local = cache_local.join(name.clone());
         let mut ctx = WithContext::want("update repository");
 
         ctx.with("repo", &self.repo);
