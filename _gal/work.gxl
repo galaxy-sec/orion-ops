@@ -71,9 +71,6 @@ mod main   {
   }
   #[usage(desp="lint code")]
   flow lint : rust_flow.lint {} ;
-  flow test : build : {
-    gx.cmd ( "cargo test --all ${ENV_BUILD_FLAG}", log : "1" , out:"true"  );
-  }
   flow test : main.build : {
     gx.cmd ( "cargo test --all -- --test-threads=1"  );
   }

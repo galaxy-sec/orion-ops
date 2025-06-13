@@ -10,7 +10,7 @@ use url::Url;
 
 use crate::{
     error::SpecResult,
-    types::{AsyncUpdateable, UpdateOptions},
+    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -110,7 +110,7 @@ impl HttpAddr {
     pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
-        if dest_path.exists() && !options.force() {
+        if dest_path.exists() && options.redo_level() == RedoLevel::ReChange {
             info!(target :"spec/addr", "{} exists , ignore!! ",dest_path.display());
             return Ok(dest_path.to_path_buf());
         }

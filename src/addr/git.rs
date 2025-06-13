@@ -15,7 +15,7 @@ use crate::{
     error::SpecResult,
     log_guard,
     tools::get_repo_name,
-    types::{AsyncUpdateable, UpdateOptions},
+    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -111,8 +111,17 @@ impl GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &Path, _options: &UpdateOptions) -> SpecResult<PathBuf> {
-        let name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+        let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
+        if let Some(postfix) = self
+            .rev
+            .as_ref()
+            .or(self.tag.as_ref())
+            .or(self.branch.as_ref())
+        {
+            name = format!("{}_{}", name, postfix);
+        }
+
         let mut git_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".galaxy/cache")
@@ -128,10 +137,18 @@ impl AsyncUpdateable for GitAddr {
                 "update {} to {} success!", self.repo,git_local_copy.display()
             ),
             error!(
-                target : "addr/local",
+                target : "addr/git",
                 "update {} to {} failed", self.repo,git_local_copy.display()
             )
         );
+        if git_local.exists() && options.redo_level() == RedoLevel::ReAll {
+            std::fs::remove_dir_all(&git_local).owe_logic().with(&ctx)?;
+            std::fs::create_dir_all(&git_local).owe_logic().with(&ctx)?;
+            info!(
+                target : "addr/git",
+                "remove cache {} from {} ", self.repo,git_local.display()
+            )
+        }
 
         match git2::Repository::open(&git_local) {
             Ok(re) => {
@@ -303,147 +320,6 @@ impl GitAddr {
     }
 }
 
-/*
-impl GitAddr {
-    fn pull_repository(&self, repo: &git2::Repository, mut ctx: WithContext) -> SpecResult<()> {
-        ctx.with("workflow", "pull code");
-        let mut remote = repo.find_remote("origin").owe_res().with(&ctx)?;
-
-        let mut fetch_options = git2::FetchOptions::new();
-        let cb = self.build_remote_callbacks(); // 使用构建的回调
-        fetch_options.remote_callbacks(cb); // 应用SSH回调
-        let refspecs: &[&str] = &[]; //
-        remote
-            .fetch(refspecs, Some(&mut fetch_options), None)
-            .owe_res()
-            .with(&ctx)?;
-        let fetch_head = repo.find_reference("FETCH_HEAD").owe_res().with(&ctx)?;
-        let fetch_commit = repo
-            .reference_to_annotated_commit(&fetch_head)
-            .owe_res()
-            .with(&ctx)?;
-        let analysis = repo.merge_analysis(&[&fetch_commit]).owe_res().with(&ctx)?;
-
-        if analysis.0.is_up_to_date() {
-            Ok(())
-        } else if analysis.0.is_fast_forward() {
-            let refname = format!("refs/heads/{}", self.branch.as_deref().unwrap_or("master"));
-            let mut reference = repo.find_reference(&refname).owe_res().with(&ctx)?;
-            reference
-                .set_target(fetch_commit.id(), "Fast-forward")
-                .owe_res()
-                .with(&ctx)?;
-            repo.set_head(&refname).owe_res().with(&ctx)?;
-            repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))
-                .owe_res()
-                .with(&ctx)?;
-            Ok(())
-        } else {
-            Err(StructError::from_res("需要手动合并变更".into()).with(&ctx))
-        }
-    }
-    /// 获取远程更新
-    fn fetch_updates(&self, repo: &Repository) -> Result<(), git2::Error> {
-        // 查找 origin 远程
-        let mut remote = repo.find_remote("origin")?;
-
-        // 准备认证回调
-        let mut callbacks = RemoteCallbacks::new();
-        callbacks.credentials(|_url, username, _allowed| {
-            git2::Cred::userpass_plaintext(username.unwrap_or("git"), "")
-        });
-
-        // 配置获取选项
-        let mut fetch_options = FetchOptions::new();
-        fetch_options.remote_callbacks(callbacks);
-
-        // 执行获取操作
-        remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
-
-        // 更新远程引用
-        remote.update_tips(None, true, git2::AutotagOption::All, None)?;
-
-        Ok(())
-    }
-    /// 检出指定提交
-    fn checkout_revision(&self, repo: &Repository, rev: &str) -> Result<(), git2::Error> {
-        let obj = repo.revparse_single(rev)?;
-        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
-        repo.set_head_detached(obj.id())?;
-        Ok(())
-    }
-
-    /// 检出指定标签
-    fn checkout_tag(&self, repo: &Repository, tag: &str) -> Result<(), git2::Error> {
-        let refname = format!("refs/tags/{}", tag);
-        let obj = repo.revparse_single(&refname)?;
-        repo.checkout_tree(&obj, Some(&mut CheckoutBuilder::new().force()))?;
-        repo.set_head_detached(obj.id())?;
-        Ok(())
-    }
-
-    /// 检出指定分支（包括远程分支）
-    fn checkout_branch(&self, repo: &Repository, branch: &str) -> Result<(), git2::Error> {
-        // 尝试查找本地分支
-        if let Ok(b) = repo.find_branch(branch, BranchType::Local) {
-            // 切换到本地分支
-            let refname = b
-                .get()
-                .name()
-                .ok_or(git2::Error::from_str("Invalid branch name"))?;
-            repo.set_head(refname)?;
-            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
-            return Ok(());
-        }
-
-        // 尝试查找远程分支
-        let remote_branch_name = format!("origin/{}", branch);
-        if let Ok(b) = repo.find_branch(&remote_branch_name, BranchType::Remote) {
-            // 创建本地分支并设置跟踪
-            let commit = b.get().peel_to_commit()?;
-            let mut new_branch = repo.branch(branch, &commit, false)?;
-            new_branch.set_upstream(Some(&format!("origin/{}", branch)))?;
-
-            // 切换到新分支
-            let refname = format!("refs/heads/{}", branch);
-            repo.set_head(&refname)?;
-            repo.checkout_head(Some(&mut CheckoutBuilder::new().force()))?;
-            return Ok(());
-        }
-
-        Err(git2::Error::from_str(&format!(
-            "Branch '{}' not found",
-            branch
-        )))
-    }
-
-    fn clone_repository(&self, path: &Path, mut ctx: WithContext) -> SpecResult<()> {
-        ctx.with("workflow", "clone code");
-
-        let mut fetch_options = git2::FetchOptions::new();
-        let callbacks = self.build_remote_callbacks(); // 构建回调
-        fetch_options.remote_callbacks(callbacks); // 应用SSH回调
-
-        let mut builder = git2::build::RepoBuilder::new();
-        builder.fetch_options(fetch_options);
-        let repo = builder.clone(&self.repo, path).owe_res().with(&ctx)?;
-
-        // 处理检出目标（按优先级：rev > tag > branch）
-        if let Some(rev) = &self.rev {
-            self.checkout_revision(&repo, rev).owe_sys().with(&ctx)?;
-        } else if let Some(tag) = &self.tag {
-            self.checkout_tag(&repo, tag).owe_sys().with(&ctx)?;
-        } else if let Some(branch) = &self.branch {
-            self.checkout_branch(&repo, branch).owe_sys().with(&ctx)?;
-        }
-
-        Ok(())
-    }
-}
-
-/// 查找常见的默认SSH密钥路径
-    */
-
 fn find_default_ssh_key() -> Option<PathBuf> {
     // 获取用户主目录
     let home = home_dir()?;
@@ -549,7 +425,7 @@ mod tests {
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(real_path, dest_path.join("modspec.git"));
+        assert_eq!(real_path, dest_path.join("modspec.git_master"));
         Ok(())
     }
 

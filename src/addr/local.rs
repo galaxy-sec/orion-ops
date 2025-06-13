@@ -11,7 +11,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     error::SpecResult,
     log_guard,
-    types::{AsyncUpdateable, UpdateOptions},
+    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -46,7 +46,7 @@ impl AsyncUpdateable for LocalAddr {
 
         if src.is_file() {
             std::fs::copy(&src, &dst).owe_res()?;
-        } else if dst.exists() && !up_options.force() {
+        } else if dst.exists() && up_options.redo_level() == RedoLevel::ReChange {
             info!(
                 target : "spec/addr/local",
                 "ignore update {} to {} !", src.display(),dst_copy.display()

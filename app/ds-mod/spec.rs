@@ -4,7 +4,9 @@ use orion_syspec::app_mod::example::make_mod_cust_example;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::spec::{ModuleSpec, make_mod_spec_example, make_mod_spec_new};
-use orion_syspec::types::{AsyncUpdateable, Localizable, Persistable, UpdateLevel, UpdateOptions};
+use orion_syspec::types::{
+    AsyncUpdateable, Localizable, Persistable, RedoLevel, UpdateLevel, UpdateOptions,
+};
 use std::path::PathBuf;
 
 use crate::args::{self};
@@ -32,9 +34,10 @@ pub async fn do_spec_cmd(cmd: args::SpecCmd) -> SpecResult<()> {
         args::SpecCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModuleSpec::load_from(&current_dir).err_conv()?;
+            let redo_level = RedoLevel::from(dfx.force);
             spec.update_local(
                 &current_dir,
-                &UpdateOptions::new(true, UpdateLevel::from(dfx.level)),
+                &UpdateOptions::new(redo_level, UpdateLevel::from(dfx.level)),
             )
             .await
             .err_conv()?;
@@ -61,7 +64,8 @@ pub async fn do_cust_cmd(cmd: args::AppCmd) -> SpecResult<()> {
         args::AppCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModAppProject::load(&current_dir).err_conv()?;
-            let options = &UpdateOptions::new(true, UpdateLevel::from(dfx.level));
+            let redo_level = RedoLevel::from(dfx.force);
+            let options = &UpdateOptions::new(redo_level, UpdateLevel::from(dfx.level));
             spec.update(&options).await.err_conv()?;
         }
     }

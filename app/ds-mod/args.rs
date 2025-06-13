@@ -44,6 +44,9 @@ pub struct UpdateArgs {
     /// config log ; eg: --log  cmd=debug,parse=info
     #[arg(long = "log")]
     pub log: Option<String>,
+
+    #[arg(short = 'f', long = "force", default_value = "0")]
+    pub force: usize,
     #[clap(value_enum, default_value_t)]
     pub level: UpLevelArg,
 }
