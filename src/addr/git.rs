@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
-    BranchType, FetchOptions, RemoteUpdateFlags, Repository,
+    BranchType, FetchOptions, MergeOptions, RemoteUpdateFlags, Repository, ResetType,
     build::{CheckoutBuilder, RepoBuilder},
 };
 use home::home_dir;
@@ -106,6 +106,132 @@ impl GitAddr {
             }
         });
         callbacks
+    }
+
+    /// 更新现有仓库
+    fn update_repo(&self, repo: &Repository) -> Result<(), git2::Error> {
+        if !self.is_workdir_clean(repo)? {
+            return Err(git2::Error::from_str("工作区有未提交的更改"));
+        }
+        // 1. 获取远程更新
+        self.fetch_updates(repo)?;
+
+        // 2. 处理检出目标（这会切换到指定分支）
+        self.checkout_target(repo)?;
+
+        // 3. 执行 pull 操作（合并远程变更）
+        self.pull_updates(repo)
+    }
+
+    /// 执行 pull 操作：合并远程变更
+    fn pull_updates(&self, repo: &Repository) -> Result<(), git2::Error> {
+        // 获取当前分支信息
+        let head = repo.head()?;
+        let branch_name = match head.shorthand() {
+            Some(name) => name,
+            None => return Ok(()), // 分离头状态不需要 pull
+        };
+
+        // 获取上游分支信息
+        let upstream_branch = format!("origin/{}", branch_name);
+        let upstream_ref = match repo.find_reference(&upstream_branch) {
+            Ok(r) => r,
+            Err(_) => return Ok(()), // 没有上游分支
+        };
+
+        // 获取当前提交和上游提交
+        let current_commit = head.peel_to_commit()?;
+        let upstream_commit = upstream_ref.peel_to_commit()?;
+
+        // 如果已经在最新状态，无需操作
+        if current_commit.id() == upstream_commit.id() {
+            return Ok(());
+        }
+
+        // 分析合并可能性
+        let annotated_commit = repo.find_annotated_commit(upstream_commit.id())?;
+        let analysis = repo.merge_analysis(&[&annotated_commit])?;
+        //let analysis = repo.merge_analysis(&[&upstream_commit])?;
+
+        if analysis.0.is_up_to_date() {
+            // 已经是最新状态
+            Ok(())
+        } else if analysis.0.is_fast_forward() {
+            // 执行快进合并
+            self.fast_forward_merge(repo, &upstream_commit)
+        } else {
+            // 需要手动合并
+            self.merge_upstream(repo, &upstream_commit)
+        }
+    }
+
+    /// 执行快进合并
+    fn fast_forward_merge(
+        &self,
+        repo: &Repository,
+        upstream_commit: &git2::Commit,
+    ) -> Result<(), git2::Error> {
+        // 获取当前分支名称
+        let refname = match repo.head()?.name() {
+            Some(name) => name.to_string(),
+            None => return Err(git2::Error::from_str("无法获取分支名称")),
+        };
+
+        // 更新引用到上游提交
+        repo.reference(&refname, upstream_commit.id(), true, "Fast-forward")?;
+
+        // 重置工作区到新提交
+        repo.reset(upstream_commit.as_object(), ResetType::Hard, None)?;
+
+        Ok(())
+    }
+
+    /// 执行非快进合并 (修复类型错误)
+    fn merge_upstream(
+        &self,
+        repo: &Repository,
+        upstream_commit: &git2::Commit,
+    ) -> Result<(), git2::Error> {
+        // 创建带注释的提交 (修复类型不匹配)
+        let annotated_commit = repo.find_annotated_commit(upstream_commit.id())?;
+
+        // 执行合并
+        repo.merge(&[&annotated_commit], Some(&mut MergeOptions::new()), None)?;
+
+        // 检查合并状态
+        if repo.index()?.has_conflicts() {
+            return Err(git2::Error::from_str("合并冲突：需要手动解决"));
+        }
+
+        // 创建合并提交
+        let head_commit = repo.head()?.peel_to_commit()?;
+        let mut index = repo.index()?;
+        let tree_oid = index.write_tree()?;
+        let tree = repo.find_tree(tree_oid)?;
+
+        repo.commit(
+            Some("HEAD"),
+            &head_commit.author(),
+            &head_commit.committer(),
+            "合并远程变更",
+            &tree,
+            &[&head_commit, upstream_commit],
+        )?;
+
+        // 清理合并状态
+        repo.cleanup_state()?;
+
+        Ok(())
+    }
+
+    /// 检查工作区是否干净
+    fn is_workdir_clean(&self, repo: &Repository) -> Result<bool, git2::Error> {
+        let mut options = git2::StatusOptions::new();
+        options.include_untracked(true);
+        options.include_ignored(false);
+
+        let statuses = repo.statuses(Some(&mut options))?;
+        Ok(statuses.is_empty())
     }
 }
 
@@ -220,15 +346,6 @@ impl GitAddr {
 
         // 处理检出目标
         self.checkout_target(&repo)
-    }
-
-    /// 更新现有仓库
-    fn update_repo(&self, repo: &Repository) -> Result<(), git2::Error> {
-        // 1. 获取远程更新
-        self.fetch_updates(repo)?;
-
-        // 2. 处理检出目标
-        self.checkout_target(repo)
     }
 
     /// 获取远程更新
