@@ -1,10 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
+use derive_getters::Getters;
+use derive_more::From;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     error::SpecResult,
+    tools::expand_env_vars,
     types::{AsyncUpdateable, UpdateOptions},
 };
 
@@ -60,5 +63,49 @@ impl From<HttpAddr> for AddrType {
 impl From<LocalAddr> for AddrType {
     fn from(value: LocalAddr) -> Self {
         Self::Local(value)
+    }
+}
+
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, From, Default)]
+#[serde(transparent)]
+pub struct EnvVarPath {
+    origin: String,
+}
+impl EnvVarPath {
+    pub fn path(&self) -> PathBuf {
+        let real = expand_env_vars(self.origin.as_str());
+        PathBuf::from(real)
+    }
+}
+
+impl From<&str> for EnvVarPath {
+    fn from(value: &str) -> Self {
+        Self {
+            origin: value.to_string(),
+        }
+    }
+}
+
+impl From<PathBuf> for EnvVarPath {
+    fn from(value: PathBuf) -> Self {
+        Self {
+            origin: format!("{}", value.display()),
+        }
+    }
+}
+
+impl From<&PathBuf> for EnvVarPath {
+    fn from(value: &PathBuf) -> Self {
+        Self {
+            origin: format!("{}", value.display()),
+        }
+    }
+}
+
+impl From<&Path> for EnvVarPath {
+    fn from(value: &Path) -> Self {
+        Self {
+            origin: format!("{}", value.display()),
+        }
     }
 }

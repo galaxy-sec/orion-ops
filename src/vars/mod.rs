@@ -2,12 +2,13 @@ mod collection;
 mod constraint;
 mod definition;
 mod dict;
+mod global;
 mod origin;
 mod types;
-
 pub use collection::VarCollection;
 pub use constraint::{ValueConstraint, ValueScope};
 pub use definition::{VarDefinition, VarValue};
 pub use dict::ValueDict;
+pub use global::setup_start_env_vars;
 pub use origin::OriginDict;
 pub use types::{ValueType, VarType};

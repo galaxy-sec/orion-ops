@@ -1,27 +1,54 @@
-use std::path::Path;
+use std::{default, path::Path};
 
 use derive_getters::Getters;
 use derive_more::From;
 use orion_error::{ErrorOwe, ErrorWith};
 
-use crate::{error::SpecResult, types::Persistable};
+use crate::{const_vars::ADM_GXL, error::SpecResult, types::Persistable};
 
-#[derive(Getters, Clone, Debug, From)]
+#[derive(Getters, Clone, Debug)]
 pub struct GxlProject {
-    main: String,
+    work: String,
+    adm: Option<String>,
+}
+impl From<&str> for GxlProject {
+    fn from(value: &str) -> Self {
+        Self {
+            work: value.to_string(),
+            adm: None,
+        }
+    }
+}
+
+impl From<(&str, &str)> for GxlProject {
+    fn from(value: (&str, &str)) -> Self {
+        Self {
+            work: value.0.to_string(),
+            adm: Some(value.1.to_string()),
+        }
+    }
 }
 
 impl Persistable<GxlProject> for GxlProject {
     fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
         let path = path.join("_gal");
         std::fs::create_dir_all(&path).owe_res().with(&path)?;
-        std::fs::write(path.join(crate::const_vars::WORK_GXL), self.main.as_str()).owe_res()?;
+        std::fs::write(path.join(crate::const_vars::WORK_GXL), self.work.as_str()).owe_res()?;
+        if let Some(adm) = &self.adm {
+            std::fs::write(path.join(ADM_GXL), adm.as_str()).owe_res()?;
+        }
         Ok(())
     }
 
     fn load_from(path: &Path) -> SpecResult<GxlProject> {
-        let path = path.join("_gal/work.gxl");
-        let main = std::fs::read_to_string(path).owe_res()?;
-        Ok(Self { main })
+        let work_path = path.join("_gal/work.gxl");
+        let adm_path = path.join("_gal/adm.gxl");
+        let work = std::fs::read_to_string(work_path).owe_res()?;
+        let adm = if adm_path.exists() {
+            Some(std::fs::read_to_string(adm_path).owe_res()?)
+        } else {
+            None
+        };
+        Ok(Self { work, adm })
     }
 }

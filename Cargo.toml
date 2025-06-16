@@ -1,6 +1,6 @@
 [package]
 name = "orion-syspec"
-version = "0.6.5"
+version = "0.7.0"
 edition = "2024"
 
 [[bin]]
@@ -12,13 +12,8 @@ name = "ds-mod"
 path = "app/ds-mod/main.rs"
 
 
-
 [workspace]
-members = [
-    ".",
-    "crates/orion_common",
-    "crates/orion_infra"
-]
+members = [".", "crates/orion_common", "crates/orion_infra"]
 
 [workspace.package]
 name = "orion-syspec"
@@ -50,6 +45,7 @@ strfmt = "~0.2"
 tokio = { version = "1.45", features = ["full"] }
 tracing = "0.1"
 thiserror = "~2.0"
+os_info = "3"
 toml = "~0.8"
 walkdir = "~2.5"
 delegate = "0.13.3"

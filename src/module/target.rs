@@ -290,3 +290,93 @@ impl Localizable for ModTargetSpec {
         Ok(())
     }
 }
+
+#[cfg(test)]
+pub mod test {
+
+    use orion_error::TestAssert;
+
+    use crate::{
+        addr::HttpAddr,
+        artifact::Artifact,
+        const_vars::TARGET_SPC_ROOT,
+        error::SpecResult,
+        module::{CpuArch, OsCPE, RunSPC, init::ModIniter},
+        tools::{make_clean_path, test_init},
+        vars::VarType,
+    };
+
+    use super::*;
+
+    pub fn make_mod_k8s_4test() -> SpecResult<ModTargetSpec> {
+        let name = "postgresql";
+        let k8s = ModTargetSpec::init(
+            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+            ArtifactPackage::from(vec![Artifact::new(
+                name,
+                HttpAddr::from(
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
+                ),
+                "postgresql-17.4.tar.gz",
+            )]),
+            ModWorkflows::mod_k8s_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            Some(Setting::example()),
+        )
+        .with_depends(DependencySet::for_test());
+        Ok(k8s)
+    }
+
+    pub fn make_mod_host_4test() -> SpecResult<ModTargetSpec> {
+        let name = "postgresql";
+        let host = ModTargetSpec::init(
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+            ArtifactPackage::from(vec![Artifact::new(
+                name,
+                HttpAddr::from(
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
+                ),
+                "postgresql-17.4.tar.gz",
+            )]),
+            ModWorkflows::mod_host_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            Some(Setting::example()),
+        )
+        .with_depends(DependencySet::for_test());
+        Ok(host)
+    }
+
+    #[tokio::test]
+    async fn build_target_k8s() -> SpecResult<()> {
+        test_init();
+        let spec = make_mod_k8s_4test().assert();
+        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string());
+        make_clean_path(&spec_path)?;
+        spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
+        let loaded = ModTargetSpec::load_from(
+            &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
+        )
+        .assert();
+        loaded.localize(None).await.assert();
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn build_target_host() -> SpecResult<()> {
+        test_init();
+        let spec = make_mod_host_4test().assert();
+        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string());
+        make_clean_path(&spec_path)?;
+        spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
+        let loaded = ModTargetSpec::load_from(
+            &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
+        )
+        .assert();
+        loaded.localize(None).await.assert();
+        Ok(())
+    }
+}

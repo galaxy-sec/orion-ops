@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    addr::{AddrType, GitAddr, LocalAddr},
+    addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     error::SpecResult,
     module::{
         CpuArch, OsCPE, RunSPC, TargetNode,
@@ -40,7 +40,7 @@ pub fn make_mod_cust_example(prj_path: &Path) -> SpecResult<ModAppProject> {
             AddrType::from(GitAddr::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
-            prj_path.join("env_res"),
+            EnvVarPath::from(prj_path.join("env_res")),
         )
         .with_rename("bit-common"),
     );

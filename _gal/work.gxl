@@ -75,6 +75,10 @@ mod main   {
     gx.cmd ( "cargo test --all -- --test-threads=1"  );
   }
 
+  flow debug_ut {
+    gx.cmd ( "RUST_LOG=debug cargo test ${GXL_CMD_ARG} -- --nocapture" );
+  }
+
   flow pub_local   {
 
     AP = "${ENV_AFT_PREFIX}";

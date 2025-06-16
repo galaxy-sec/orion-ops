@@ -6,14 +6,14 @@ use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    addr::{AddrType, GitAddr, LocalAddr},
+    addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     error::SpecResult,
     types::{AsyncUpdateable, UpdateOptions},
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
     addr: AddrType,
-    local: PathBuf,
+    local: EnvVarPath,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     rename: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -22,7 +22,7 @@ pub struct Dependency {
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Default)]
 pub struct DependencySet {
-    dep_root: PathBuf,
+    dep_root: EnvVarPath,
     deps: Vec<Dependency>,
 }
 
@@ -31,13 +31,13 @@ impl DependencySet {
         let depends = vec![
             Dependency {
                 addr: AddrType::from(LocalAddr::from("./example/data")),
-                local: PathBuf::from("env_res"),
+                local: EnvVarPath::from("env_res".to_string()),
                 rename: Some("mysql2".to_string()),
                 enable: Some(false),
             },
             Dependency {
                 addr: AddrType::from(GitAddr::from("https://github.com/xxx")),
-                local: PathBuf::from("env_res"),
+                local: EnvVarPath::from("env_res".to_string()),
                 rename: Some("mylib".to_string()),
                 enable: Some(false),
             },
@@ -45,27 +45,27 @@ impl DependencySet {
 
         DependencySet {
             deps: depends,
-            dep_root: PathBuf::from("./depends"),
+            dep_root: EnvVarPath::from("./depends".to_string()),
         }
     }
     pub fn for_test() -> Self {
         let depends = vec![Dependency {
             addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-            local: PathBuf::from("env_res"),
+            local: EnvVarPath::from("env_res".to_string()),
             rename: Some("mysql_x86".to_string()),
             enable: Some(true),
         }];
 
         DependencySet {
             deps: depends,
-            dep_root: PathBuf::from("./depends"),
+            dep_root: EnvVarPath::from("./depends".to_string()),
         }
     }
     pub async fn update(&self) -> SpecResult<()> {
         let options = UpdateOptions::for_depend();
         for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.update(self.dep_root(), &options).await?;
+                dep.update(&self.dep_root().path(), &options).await?;
             }
         }
         Ok(())
@@ -75,7 +75,7 @@ impl DependencySet {
     }
     pub fn check_exists(&self) -> Result<(), PathBuf> {
         for x in &self.deps {
-            let path = self.dep_root().join(x.local());
+            let path = self.dep_root().path().join(x.local().path());
             if !path.exists() {
                 return Err(path.clone());
             }
@@ -85,7 +85,7 @@ impl DependencySet {
 }
 
 impl Dependency {
-    pub fn new(addr: AddrType, local: PathBuf) -> Self {
+    pub fn new(addr: AddrType, local: EnvVarPath) -> Self {
         Self {
             addr,
             local,
@@ -109,7 +109,7 @@ impl AsyncUpdateable for Dependency {
 impl Dependency {
     pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         //let item_path = path.join(self.local());
-        let path = root.join(self.local());
+        let path = root.join(self.local().path());
         if let Some(rename) = self.rename() {
             self.update_rename(&path, rename, options).await
         } else {
@@ -129,7 +129,7 @@ pub mod tests {
 
     use crate::{
         addr::{AddrType, LocalAddr},
-        module::depend::{Dependency, DependencySet},
+        module::depend::{Dependency, DependencySet, EnvVarPath},
         types::UpdateOptions,
     };
 
@@ -142,7 +142,7 @@ pub mod tests {
         std::fs::create_dir_all(&prj_path).assert("create prj_path");
         let item = Dependency::new(
             AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-            "env_res".into(),
+            EnvVarPath::from("env_res".to_string()),
         )
         .with_rename("mysql2");
         item.update(&prj_path, &UpdateOptions::for_test())
@@ -155,14 +155,14 @@ pub mod tests {
     fn test_serialize_to_yaml() {
         let item = Dependency {
             addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
-            local: PathBuf::from("env_res"),
+            local: EnvVarPath::from("env_res".to_string()),
             rename: Some("mysql2".to_string()),
             enable: Some(true),
         };
 
         let vec = DependencySet {
             deps: vec![item.clone(), item],
-            dep_root: PathBuf::from("./"),
+            dep_root: EnvVarPath::from("./".to_string()),
         };
         let yaml_vec = serde_yaml::to_string(&vec).unwrap();
         println!("{:#}", yaml_vec);

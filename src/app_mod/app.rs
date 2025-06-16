@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    addr::{AddrType, GitAddr, LocalAddr},
+    addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     const_vars::VALUE_FILE,
     error::{SpecError, SpecResult},
     module::{
@@ -56,7 +56,7 @@ impl ModAppProject {
         val_dict.insert("KEY1", ValueType::from("VALUE1"));
         Self {
             conf,
-            project: GxlProject::from(MOD_APP_GAL_WORK.to_string()),
+            project: GxlProject::from(MOD_APP_GAL_WORK),
             val_dict,
         }
     }
@@ -177,7 +177,7 @@ pub fn make_mod_cust_testins(prj_path: &Path) -> SpecResult<ModAppProject> {
             AddrType::from(GitAddr::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
-            prj_path.join("env_res"),
+            EnvVarPath::from(prj_path.join("env_res")),
         )
         .with_rename("bit-common"),
     );
@@ -194,17 +194,18 @@ pub mod tests {
         app_mod::app::{ModAppProject, make_mod_cust_testins},
         const_vars::{MODULES_INS_ROOT, MODULES_SPC_ROOT},
         error::SpecResult,
-        module::spec::make_mod_spec_4test,
-        tools::test_init,
-        types::{Localizable, Persistable, UpdateOptions},
+        module::proj::make_mod_prj_testins,
+        tools::{make_clean_path, test_init},
+        types::{Localizable, UpdateOptions},
     };
 
     #[tokio::test]
-    async fn test_mod_cust_prj_running() -> SpecResult<()> {
+    async fn test_mod_app_prj_running() -> SpecResult<()> {
         test_init();
-        let spec = make_mod_spec_4test().assert("make spec ");
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)
-            .assert("save spec");
+        let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("mod-y");
+        make_clean_path(&prj_path)?;
+        let spec = make_mod_prj_testins(&prj_path).assert("make spec ");
+        spec.save().assert("save spec");
 
         let prj_path = PathBuf::from(MODULES_INS_ROOT).join("mod_cust-prj");
         let project = make_mod_cust_testins(&prj_path).assert("make cust");

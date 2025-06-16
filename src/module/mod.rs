@@ -2,6 +2,7 @@ pub mod depend;
 pub mod init;
 pub mod localize;
 pub mod metrc;
+pub mod proj;
 pub mod refs;
 pub mod setting;
 pub mod spec;

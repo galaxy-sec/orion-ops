@@ -14,6 +14,8 @@ use crate::{
 
 const HOST_SETUP_GXL: &str = include_str!("init/host/workflows/setup.gxl");
 const HOST_UPDATE_GXL: &str = include_str!("init/host/workflows/update.gxl");
+pub const MOD_PRJ_WORK_GXL: &str = include_str!("init/_gal/work.gxl");
+pub const MOD_PRJ_ADM_GXL: &str = include_str!("init/_gal/adm.gxl");
 const MOD_HOST_PRJ: &str = include_str!("init/host/_gal/work.gxl");
 const MOD_GITIGNORE: &str = include_str!("init/.gitignore");
 
@@ -63,10 +65,10 @@ impl ModActIniter for GxlAction {
 }
 impl ModPrjIniter for GxlProject {
     fn spec_host_tpl() -> Self {
-        Self::from(MOD_HOST_PRJ.to_string())
+        Self::from(MOD_HOST_PRJ)
     }
     fn spec_k8s_tpl() -> Self {
-        Self::from(MOD_K8S_PRJ.to_string())
+        Self::from(MOD_K8S_PRJ)
     }
 }
 

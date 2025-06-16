@@ -6,33 +6,11 @@ use orion_syspec::{infra::DfxArgsGetter, types::UpdateLevel};
 #[command(name = "ds-mod")]
 #[command(version, about)]
 pub enum GxModCmd {
-    ///define module spec
-    #[command(subcommand)]
-    Def(SpecCmd),
-    /// app module spec
-    #[command(subcommand)]
-    App(AppCmd),
-}
-
-#[derive(Debug, Subcommand)] // requires `derive` feature
-pub enum SpecCmd {
-    /// define module spec example
     Example,
     /// define new module spec
     /// eg: ds-mod def new --name mod_name
     New(SpecArgs),
     /// module spec update ref,depends
-    Update(UpdateArgs),
-}
-
-#[derive(Debug, Subcommand)] // requires `derive` feature
-pub enum AppCmd {
-    /// app module spec example
-    Example,
-    /// app new module spec
-    /// eg: ds-mod app new --name mod_name
-    New(SpecArgs),
-    /// apps  update  module,depends
     Update(UpdateArgs),
     ///localize modules spec
     Localize(LocalArgs),

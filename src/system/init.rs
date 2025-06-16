@@ -43,7 +43,7 @@ impl SysActIniter for GxlAction {
 }
 impl SysPrjIniter for GxlProject {
     fn spec_tpl() -> Self {
-        Self::from(SYS_SPC_PRJ.to_string())
+        Self::from(SYS_SPC_PRJ)
     }
 }
 

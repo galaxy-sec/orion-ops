@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    const_vars::CONFS_DIR,
+    const_vars::{CONFS_DIR, MOD_DIR},
     types::{Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
 };
@@ -52,7 +52,8 @@ impl ModuleSpec {
     }
     pub fn clean_other(&mut self, node: &TargetNode) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            let subs = get_sub_dirs(local)?;
+            let src_path = local.join(MOD_DIR);
+            let subs = get_sub_dirs(&src_path)?;
             for sub in subs {
                 if !sub.ends_with(node.to_string().as_str()) {
                     Self::clean_path(&sub)?;
@@ -94,13 +95,14 @@ impl AsyncUpdateable for ModuleSpec {
 impl Persistable<ModuleSpec> for ModuleSpec {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
         let mod_path = path.join(name.unwrap_or(self.name().clone()));
+        let src_path = mod_path.join(MOD_DIR);
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
 
         mod_init_gitignore(&mod_path)?;
         for node in self.targets.values() {
-            node.save_to(&mod_path, None)?;
+            node.save_to(&src_path, None)?;
         }
 
         Ok(())
@@ -108,7 +110,8 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
-        let subs = get_sub_dirs(path)?;
+        let src_path = path.join(MOD_DIR);
+        let subs = get_sub_dirs(&src_path)?;
 
         let name_copy = name.clone();
         let mut flag = log_guard!(
@@ -133,128 +136,118 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 impl Localizable for ModuleSpec {
     async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
         for target in self.targets.values() {
-            target.localize(dst_path.clone()).await?;
+            let target_dst_path = dst_path
+                .as_ref()
+                .map(|x| x.join_all(PathBuf::from(target.target().to_string())));
+            target.localize(target_dst_path).await?;
         }
         Ok(())
     }
 }
 
-pub fn make_mod_spec_new(name: &str) -> SpecResult<ModuleSpec> {
-    let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
-    conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
-        "https://mirrors.aliyun.com/postgresql/README",
-    )));
+impl ModuleSpec {
+    pub fn for_example() -> Self {
+        let name = "postgresql";
+        let k8s = ModTargetSpec::init(
+            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+            ArtifactPackage::from(vec![Artifact::new(
+                name,
+                HttpAddr::from(
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
+                ),
+                "postgresql-17.4.tar.gz",
+            )]),
+            ModWorkflows::mod_k8s_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            Some(Setting::example()),
+        )
+        .with_depends(DependencySet::example());
 
-    let x86_ubu22_k8s = ModTargetSpec::init(
-        TargetNode::x86_ubt22_k8s(),
-        ArtifactPackage::from(vec![
-            Artifact::new(
+        let host = ModTargetSpec::init(
+            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+            ArtifactPackage::from(vec![Artifact::new(
+                name,
+                HttpAddr::from(
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
+                ),
+                "postgresql-17.4.tar.gz",
+            )]),
+            ModWorkflows::mod_host_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            Some(Setting::example()),
+        )
+        .with_depends(DependencySet::example());
+        ModuleSpec::init("postgresql", vec![k8s, host])
+    }
+
+    pub fn make_new(name: &str) -> SpecResult<ModuleSpec> {
+        let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
+        conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
+            "https://mirrors.aliyun.com/postgresql/README",
+        )));
+
+        let x86_ubu22_k8s = ModTargetSpec::init(
+            TargetNode::x86_ubt22_k8s(),
+            ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
                 "postgresql-17.4.tar.gz.md5",
-            ),
-            Artifact::new(
+            )]),
+            ModWorkflows::mod_k8s_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            None,
+        );
+
+        let arm_mac_host = ModTargetSpec::init(
+            TargetNode::arm_mac14_host(),
+            ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
-                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.3.tar.gz.md5",
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
-                "postgresql-17.3.tar.gz.md5",
-            ),
-        ]),
-        ModWorkflows::mod_k8s_tpl_init(),
-        //conf.clone(),
-        CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
-        None,
-    );
+                "postgresql-17.4.tar.gz.md5",
+            )]),
+            ModWorkflows::mod_host_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            None,
+        );
+        let x86_ubt22_host = ModTargetSpec::init(
+            TargetNode::arm_mac14_host(),
+            ArtifactPackage::from(vec![Artifact::new(
+                name,
+                HttpAddr::from(
+                    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
+                ),
+                "postgresql-17.4.tar.gz.md5",
+            )]),
+            ModWorkflows::mod_host_tpl_init(),
+            //conf.clone(),
+            CaculateResSpec::new(2, 4),
+            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            None,
+        );
 
-    let arm_mac_host = ModTargetSpec::init(
-        TargetNode::arm_mac14_host(),
-        ArtifactPackage::from(vec![Artifact::new(
+        Ok(ModuleSpec::init(
             name,
-            HttpAddr::from(
-                "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
-            ),
-            "postgresql-17.4.tar.gz.md5",
-        )]),
-        ModWorkflows::mod_host_tpl_init(),
-        //conf.clone(),
-        CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
-        None,
-    );
-    let x86_ubt22_host = ModTargetSpec::init(
-        TargetNode::arm_mac14_host(),
-        ArtifactPackage::from(vec![Artifact::new(
-            name,
-            HttpAddr::from(
-                "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
-            ),
-            "postgresql-17.4.tar.gz.md5",
-        )]),
-        ModWorkflows::mod_host_tpl_init(),
-        //conf.clone(),
-        CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
-        None,
-    );
-
-    Ok(ModuleSpec::init(
-        name,
-        vec![x86_ubu22_k8s, x86_ubt22_host, arm_mac_host],
-    ))
+            vec![x86_ubu22_k8s, x86_ubt22_host, arm_mac_host],
+        ))
+    }
 }
 
 pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
-    /*
-    let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
-    conf.add(ConfFile::new("postgresql.conf").with_addr(HttpAddr::from(
-        "https://mirrors.aliyun.com/postgresql/README",
-    )));
-
-    */
-    let name = "postgresql";
-    let k8s = ModTargetSpec::init(
-        TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
-        ArtifactPackage::from(vec![Artifact::new(
-            name,
-            HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
-            "postgresql-17.4.tar.gz",
-        )]),
-        ModWorkflows::mod_k8s_tpl_init(),
-        //conf.clone(),
-        CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
-        Some(Setting::example()),
-    )
-    .with_depends(DependencySet::example());
-
-    let host = ModTargetSpec::init(
-        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
-        ArtifactPackage::from(vec![Artifact::new(
-            name,
-            HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
-            "postgresql-17.4.tar.gz",
-        )]),
-        ModWorkflows::mod_host_tpl_init(),
-        //conf.clone(),
-        CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
-        Some(Setting::example()),
-    )
-    .with_depends(DependencySet::example());
-    Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
+    Ok(ModuleSpec::for_example())
 }
 pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
-    /*
-    let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
-    conf.add(ConfFile::new("postgresql.conf").with_addr(HttpAddr::from(
-        "https://mirrors.aliyun.com/postgresql/README",
-    )));
-
-    */
     let name = "postgresql";
     let k8s = ModTargetSpec::init(
         TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
@@ -286,37 +279,4 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
     )
     .with_depends(DependencySet::for_test());
     Ok(ModuleSpec::init("postgresql", vec![k8s, host]))
-}
-
-#[cfg(test)]
-pub mod test {
-
-    use orion_error::TestAssert;
-
-    use crate::{const_vars::MODULES_SPC_ROOT, error::SpecResult, tools::test_init};
-
-    use super::*;
-
-    pub fn make_mod_spec_mod1() -> SpecResult<ModuleSpec> {
-        make_mod_spec_new("example_mod1")
-    }
-
-    #[tokio::test]
-    async fn build_mod_example() -> SpecResult<()> {
-        test_init();
-        let spec = make_mod_spec_4test().assert();
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)
-            .assert();
-        let loaded =
-            ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name())).assert();
-        loaded.localize(None).await.assert();
-        let mod_target = loaded.targets().get(&TargetNode::arm_mac14_host()).unwrap();
-        assert!(mod_target.depends().check_exists().is_ok());
-        let spec = make_mod_spec_mod1().assert();
-        spec.save_to(&PathBuf::from(MODULES_SPC_ROOT), None)?;
-        let loaded =
-            ModuleSpec::load_from(&PathBuf::from(MODULES_SPC_ROOT).join(spec.name())).assert();
-        loaded.localize(None).await.assert();
-        Ok(())
-    }
 }

@@ -8,7 +8,10 @@ extern crate clap;
 
 use crate::args::GxModCmd;
 use clap::Parser;
-use orion_syspec::error::{SpecResult, report_error};
+use orion_syspec::{
+    error::{SpecResult, report_error},
+    vars::setup_start_env_vars,
+};
 use spec::do_mod_cmd;
 
 #[tokio::main]
@@ -26,6 +29,7 @@ async fn main() {
 pub struct GxMod {}
 impl GxMod {
     pub async fn run() -> SpecResult<()> {
+        setup_start_env_vars()?;
         let cmd = GxModCmd::parse();
         do_mod_cmd(cmd).await?;
         Ok(())
