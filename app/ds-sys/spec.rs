@@ -1,14 +1,9 @@
-use std::path::PathBuf;
-
 use orion_error::ErrorConv;
-use orion_syspec::addr::GitAddr;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::system::proj::SysProject;
-use orion_syspec::system::refs::SysModelSpecRef;
-use orion_syspec::system::spec::SysModelSpec;
-use orion_syspec::tools::{make_clean_path, make_new_path};
-use orion_syspec::types::{AsyncUpdateable, Localizable, UpdateOptions};
+use orion_syspec::tools::make_new_path;
+use orion_syspec::types::{Localizable, UpdateOptions};
 
 use crate::args::GSysCmd;
 
@@ -29,7 +24,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
         GSysCmd::Localize(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = SysProject::load(&current_dir).err_conv()?;
-            spec.localize(None).await.err_conv()?;
+            spec.localize(None, None).await.err_conv()?;
         }
     }
     Ok(())

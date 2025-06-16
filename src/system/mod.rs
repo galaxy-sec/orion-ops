@@ -64,11 +64,15 @@ impl ModulesList {
 }
 #[async_trait]
 impl Localizable for ModulesList {
-    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         let root = dst_path.map(|x| x.join_all("mods"));
         for m in &self.mods {
             if m.is_enable() {
-                m.localize(root.clone()).await?;
+                m.localize(root.clone(), global_value.clone()).await?;
             }
         }
         Ok(())

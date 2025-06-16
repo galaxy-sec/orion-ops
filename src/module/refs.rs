@@ -96,7 +96,11 @@ impl ModuleSpecRef {
 
 #[async_trait]
 impl Localizable for ModuleSpecRef {
-    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 let mut flag = log_guard!(
@@ -112,7 +116,7 @@ impl Localizable for ModuleSpecRef {
                 let value = PathBuf::from(self.name());
                 let local = PathBuf::from(self.name()).join("local");
                 let cur_dst_path = dst_path.map(|x| x.join(local, value));
-                spec.localize(cur_dst_path).await?;
+                spec.localize(cur_dst_path, global_value).await?;
                 flag.flag_suc();
             }
             Ok(())

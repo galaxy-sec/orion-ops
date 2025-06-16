@@ -102,7 +102,7 @@ pub fn expand_env_vars(input: &str) -> String {
             let mut var_name = String::new();
             let mut found_closing_brace = false;
 
-            while let Some(c) = chars.next() {
+            for c in chars.by_ref() {
                 if c == '}' {
                     found_closing_brace = true;
                     break;

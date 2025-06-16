@@ -109,7 +109,7 @@ impl ModProject {
     pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
         self.conf.update(options).await?;
         self.mod_spec()
-            .update_local(&self.root_local(), options)
+            .update_local(self.root_local(), options)
             .await?;
         Ok(())
     }
@@ -117,17 +117,27 @@ impl ModProject {
 
 #[async_trait]
 impl Localizable for ModConf {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        _dst_path: Option<LocalizePath>,
+        _global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         Ok(())
     }
 }
 
 #[async_trait]
 impl Localizable for ModProject {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         //let local_path = LocalizePath::from_root(self.root_local());
-        self.conf.localize(None).await?;
-        self.mod_spec().localize(None).await?;
+        self.conf
+            .localize(dst_path.clone(), global_value.clone())
+            .await?;
+        self.mod_spec().localize(dst_path, global_value).await?;
         Ok(())
     }
 }
@@ -200,7 +210,7 @@ pub mod tests {
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");
-        project.localize(None).await.assert("spec.localize");
+        project.localize(None, None).await.assert("spec.localize");
         Ok(())
     }
 }

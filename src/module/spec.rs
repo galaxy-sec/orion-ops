@@ -133,12 +133,18 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 
 #[async_trait]
 impl Localizable for ModuleSpec {
-    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         for target in self.targets.values() {
             let target_dst_path = dst_path
                 .as_ref()
                 .map(|x| x.join_all(PathBuf::from(target.target().to_string())));
-            target.localize(target_dst_path).await?;
+            target
+                .localize(target_dst_path, global_value.clone())
+                .await?;
         }
         Ok(())
     }

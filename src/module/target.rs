@@ -74,7 +74,7 @@ impl ModTargetSpec {
     }
 
     pub fn clean_other(root: &Path, node: &TargetNode) -> SpecResult<()> {
-        let subs = get_sub_dirs(&root)?;
+        let subs = get_sub_dirs(root)?;
         for sub in subs {
             if !sub.ends_with(node.to_string().as_str()) {
                 Self::clean_path(&sub)?;
@@ -158,7 +158,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             error!(target: "spec/mod/target", "load target failed!:{}", target_root.display())
         );
         let paths = ModTargetPaths::from(&target_root.to_path_buf());
-        ctx.with_path("root", &target_root);
+        ctx.with_path("root", target_root);
         let target = TargetNode::from_str(path_file_name(target_root)?.as_str())
             .owe_res()
             .with(&ctx)?;
@@ -226,7 +226,11 @@ impl ModTargetSpec {
 
 #[async_trait]
 impl Localizable for ModTargetSpec {
-    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         let mut flag = log_guard!(
             info!(target : "/mod/target", "mod-target localize {} success!", self.target()),
             error!(target: "/mod/target", "mod-target localize {} fail!",
@@ -257,15 +261,14 @@ impl Localizable for ModTargetSpec {
         std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
-        //self.update_local(&tpl, &UpdateOptions::default()).await?;
         if !value_path.exists() {
             value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
             vars_dict.save_valconf(&value_path)?;
         }
         debug!(target : "/mod/target/loc", "value export");
-        if let Some(global) = localize_path.global() {
-            let mut used = OriginDict::from(ValueDict::from_valconf(global)?);
+        if let Some(global) = global_value {
+            let mut used = OriginDict::from(ValueDict::from_valconf(&global)?);
             used.set_source("global");
             let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
             cur_mod.set_source("mod");
@@ -379,7 +382,7 @@ pub mod test {
             &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
         )
         .assert();
-        loaded.localize(None).await.assert();
+        loaded.localize(None, None).await.assert();
         Ok(())
     }
 
@@ -394,7 +397,7 @@ pub mod test {
             &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
         )
         .assert();
-        loaded.localize(None).await.assert();
+        loaded.localize(None, None).await.assert();
         Ok(())
     }
 }

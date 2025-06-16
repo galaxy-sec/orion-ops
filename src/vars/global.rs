@@ -4,7 +4,7 @@ use std::{
 };
 
 use log::info;
-use orion_error::{ErrorConv, ErrorOwe, ErrorWith};
+use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::error::SpecResult;
 
@@ -63,6 +63,7 @@ pub struct WorkDir {
 }
 
 impl WorkDir {
+    #[allow(dead_code)]
     pub fn change<S: Into<PathBuf>>(target_dir: S) -> std::io::Result<Self> {
         let original_dir = env::current_dir()?;
         let target = target_dir.into();

@@ -143,10 +143,16 @@ impl ModAppProject {
 
 #[async_trait]
 impl Localizable for ModAppConf {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        _dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         if let Some(path) = &self.root_local {
             let local_path = LocalizePath::from_root(path);
-            self.module_list().localize(Some(local_path)).await?;
+            self.module_list()
+                .localize(Some(local_path), global_value)
+                .await?;
             Ok(())
         } else {
             Err(SpecError::from_logic("local paths not setting ".into()))
@@ -156,8 +162,12 @@ impl Localizable for ModAppConf {
 
 #[async_trait]
 impl Localizable for ModAppProject {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        self.conf.localize(_dst_path).await?;
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
+        self.conf.localize(dst_path, global_value).await?;
         Ok(())
     }
 }
@@ -219,7 +229,7 @@ pub mod tests {
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");
-        project.localize(None).await.assert("spec.localize");
+        project.localize(None, None).await.assert("spec.localize");
         Ok(())
     }
 }

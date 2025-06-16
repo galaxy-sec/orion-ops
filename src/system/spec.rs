@@ -1,15 +1,11 @@
-use std::{
-    net::Ipv4Addr,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::{
     addr::LocalAddr,
-    const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VALUE_FILE, VARS_YML},
+    const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
     types::{Localizable, LocalizePath, UpdateOptions},
-    vars::{VarCollection, VarType},
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
@@ -21,12 +17,11 @@ use crate::{
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
-    resource::{CaculateResSpec, Vps},
     types::{Configable, Persistable},
 };
 
 use super::{
-    ModelResource, ModulesList, NetAllocator, NetResSpace,
+    ModulesList,
     init::{SysIniter, sys_init_gitignore},
 };
 #[derive(Getters, Clone, Debug)]
@@ -137,8 +132,12 @@ impl SysModelSpec {
 
 #[async_trait]
 impl Localizable for SysModelSpec {
-    async fn localize(&self, dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        if let Some(local) = &self.local {
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
+        if let Some(_local) = &self.local {
             /*
             let base_path = dst_path.unwrap_or(LocalizePath::from_root(local));
             let value_path = base_path.value().join(VALUE_FILE);
@@ -149,7 +148,7 @@ impl Localizable for SysModelSpec {
             }
             self.mod_list.localize(Some(base_path)).await?;
             */
-            self.mod_list.localize(dst_path).await?;
+            self.mod_list.localize(dst_path, global_value).await?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()
@@ -164,23 +163,6 @@ impl SysModelSpec {
     }
 
     pub fn make_new(name: &str, repo: &str) -> SpecResult<SysModelSpec> {
-        let net = NetResSpace::new(
-            Ipv4Addr::new(10, 0, 0, 1),
-            (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
-        );
-
-        let mut allocator = NetAllocator::new(net.clone());
-
-        let res = ModelResource::from(vec![Vps::new(
-            CaculateResSpec::new(4, 8),
-            vec![allocator.alloc_master()],
-        )]);
-        let vars = VarCollection::define(vec![
-            VarType::from(("IP", "10.0.0.1")),
-            VarType::from(("pass", false)),
-            VarType::from(("SPEED_LIMIT", 1000)),
-        ]);
-
         let actions = SysWorkflows::sys_tpl_init();
         let mut modul_spec = SysModelSpec::new(name, actions);
         let mod_name = "you_mod1";
@@ -214,23 +196,6 @@ impl SysModelSpec {
 }
 
 pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysModelSpec> {
-    let net = NetResSpace::new(
-        Ipv4Addr::new(10, 0, 0, 1),
-        (Ipv4Addr::new(10, 0, 0, 1), Ipv4Addr::new(10, 0, 0, 10)),
-    );
-
-    let mut allocator = NetAllocator::new(net.clone());
-
-    let res = ModelResource::from(vec![Vps::new(
-        CaculateResSpec::new(4, 8),
-        vec![allocator.alloc_master()],
-    )]);
-    let vars = VarCollection::define(vec![
-        VarType::from(("IP", "10.0.0.1")),
-        VarType::from(("pass", false)),
-        VarType::from(("SPEED_LIMIT", 1000)),
-    ]);
-
     let actions = SysWorkflows::sys_tpl_init();
     let mut modul_spec = SysModelSpec::new(name, actions);
     for mod_name in mod_names {
@@ -263,7 +228,7 @@ pub mod tests {
         test_init();
         let sys_name = "example_sys";
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT).join(sys_name);
-        make_clean_path(&spec_root);
+        make_clean_path(&spec_root)?;
         ModProject::make_test_prj("redis_mock")?;
         ModProject::make_test_prj("mysql_mock")?;
         let spec =
@@ -276,7 +241,7 @@ pub mod tests {
         spec.update_local(&UpdateOptions::for_test())
             .await
             .assert("update");
-        spec.localize(None).await.assert("localize");
+        spec.localize(None, None).await.assert("localize");
         Ok(())
     }
 }

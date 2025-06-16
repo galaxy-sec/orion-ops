@@ -1,10 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    addr::{AddrType, GitAddr, types::EnvVarPath},
     const_vars::SYS_MODEL_SPC_ROOT,
     error::SpecResult,
-    module::depend::{Dependency, DependencySet},
+    module::depend::DependencySet,
     tools::make_clean_path,
     types::{Configable, Localizable, LocalizePath, Persistable, UpdateOptions},
     vars::{ValueDict, ValueType},
@@ -119,22 +118,34 @@ impl SysProject {
 
 #[async_trait]
 impl Localizable for SysConf {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
+    async fn localize(
+        &self,
+        _dst_path: Option<LocalizePath>,
+        _global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
         Ok(())
     }
 }
 
 #[async_trait]
 impl Localizable for SysProject {
-    async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        //let local_path = LocalizePath::from_root(self.root_local());
-        self.conf.localize(None).await?;
-        self.sys_spec().localize(None).await?;
+    async fn localize(
+        &self,
+        dst_path: Option<LocalizePath>,
+        _global_value: Option<PathBuf>,
+    ) -> SpecResult<()> {
+        let value_file = self.root_local().join("value.yml");
+        let global_value = Some(value_file);
+
+        self.conf
+            .localize(dst_path.clone(), global_value.clone())
+            .await?;
+        self.sys_spec().localize(dst_path, global_value).await?;
         Ok(())
     }
 }
 impl SysProject {
-    pub fn make_new(prj_path: &PathBuf, name: &str, repo: &str) -> SpecResult<Self> {
+    pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> SpecResult<Self> {
         let mod_spec = SysModelSpec::make_new(name, repo)?;
         let res = DependencySet::default();
         Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
@@ -148,31 +159,18 @@ impl SysProject {
     }
 }
 
-fn make_sys_prj_testins(prj_path: &Path) -> SpecResult<SysProject> {
-    let mod_spec = SysModelSpec::for_example("exmaple_sys2")?;
-    let mut res = DependencySet::default();
-    res.push(
-        Dependency::new(
-            AddrType::from(GitAddr::from(
-                "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
-            )),
-            EnvVarPath::from(prj_path.join("test_res")),
-        )
-        .with_rename("bit-common"),
-    );
-    Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
-}
-
 #[cfg(test)]
 pub mod tests {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     use orion_error::TestAssertWithMsg;
 
     use crate::{
+        addr::{AddrType, GitAddr, types::EnvVarPath},
         const_vars::SYS_MODEL_PRJ_ROOT,
         error::SpecResult,
-        system::proj::{SysProject, make_sys_prj_testins},
+        module::depend::{Dependency, DependencySet},
+        system::{proj::SysProject, spec::SysModelSpec},
         tools::{make_clean_path, test_init},
         types::{Localizable, UpdateOptions},
     };
@@ -203,7 +201,22 @@ pub mod tests {
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");
-        project.localize(None).await.assert("spec.localize");
+        project.localize(None, None).await.assert("spec.localize");
         Ok(())
+    }
+
+    fn make_sys_prj_testins(prj_path: &Path) -> SpecResult<SysProject> {
+        let mod_spec = SysModelSpec::for_example("exmaple_sys2")?;
+        let mut res = DependencySet::default();
+        res.push(
+            Dependency::new(
+                AddrType::from(GitAddr::from(
+                    "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
+                )),
+                EnvVarPath::from(prj_path.join("test_res")),
+            )
+            .with_rename("bit-common"),
+        );
+        Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }
 }
