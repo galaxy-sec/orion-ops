@@ -1,6 +1,6 @@
 mod setup {
     flow stage1 {
-        gx.read_file ( file : "./mods/mod_list.yml" , entity: "mod_list", name : "MODS" ) ;
+        gx.read_file ( file : "./sys/mod_list.yml" , entity: "mod_list", name : "MODS" ) ;
         for ${CUR} in ${MODS} {
             gx.echo ( value : "${CUR}" ) ;
         }

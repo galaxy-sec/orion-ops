@@ -13,7 +13,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
         GSysCmd::New(args) => {
             let new_prj = current_dir.join(args.name());
             make_new_path(&new_prj)?;
-            let spec = SysProject::make_new(&current_dir, args.name(), "https://").err_conv()?;
+            let spec = SysProject::make_new(&new_prj, args.name(), "https://").err_conv()?;
             spec.save().err_conv()?;
         }
         GSysCmd::Update(dfx) => {

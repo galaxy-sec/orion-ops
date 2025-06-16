@@ -12,6 +12,7 @@ use crate::{
     const_vars::MOD_DIR,
     error::SpecResult,
     module::target::ModTargetSpec,
+    tools::make_clean_path,
     types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateLevel, UpdateOptions},
 };
 
@@ -73,6 +74,7 @@ impl ModuleSpecRef {
                     let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
                     let mod_path = prj_path.join(MOD_DIR);
                     let tmp_path = local.join(tmp_name);
+                    make_clean_path(&target_root)?;
 
                     std::fs::rename(&mod_path, &target_root)
                         .owe_logic()
