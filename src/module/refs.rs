@@ -9,11 +9,13 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     addr::AddrType,
+    const_vars::MOD_DIR,
     error::SpecResult,
+    module::target::ModTargetSpec,
     types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateLevel, UpdateOptions},
 };
 
-use super::{TargetNode, spec::ModuleSpec};
+use super::TargetNode;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
@@ -65,14 +67,26 @@ impl ModuleSpecRef {
                     error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
+                let target_root = local.join(self.name());
                 if options.level() != UpdateLevel::Elm {
-                    let _spec_path = self.addr.update_local(local, options).await?;
+                    let tmp_name = "__mod";
+                    let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
+                    let mod_path = prj_path.join(MOD_DIR);
+                    let tmp_path = local.join(tmp_name);
+
+                    std::fs::rename(&mod_path, &target_root)
+                        .owe_logic()
+                        .with(("from", &mod_path))
+                        .with(("to", &target_root))?;
+                    if tmp_path.exists() {
+                        std::fs::remove_dir_all(tmp_path).owe_sys()?;
+                    }
                 }
                 debug!(target: "mod/ref",  "update target success!" );
-                let mod_path = local.join(self.name.as_str());
-                let mut spec = ModuleSpec::load_from(&mod_path).with(&mod_path)?;
-                let _x = spec.update_local(&mod_path, options).await?;
-                spec.clean_other(self.node())?;
+                let target_path = target_root.join(self.node().to_string());
+                let spec = ModTargetSpec::load_from(&target_path).with(&target_root)?;
+                let _x = spec.update_local(&target_path, options).await?;
+                ModTargetSpec::clean_other(&target_root, self.node())?;
                 flag.flag_suc();
             }
         }
@@ -90,7 +104,8 @@ impl Localizable for ModuleSpecRef {
                     error!(target: "spec/mod/", "localize mod {} fail!", self.name )
                 );
                 let mod_path = local.join(self.name.as_str());
-                let spec = ModuleSpec::load_from(&mod_path)?;
+                let target_path = mod_path.join(self.node().to_string());
+                let spec = ModTargetSpec::load_from(&target_path)?;
                 if let Some(dst) = &dst_path {
                     spec.save_main(dst.local(), None)?;
                 }

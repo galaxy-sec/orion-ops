@@ -6,9 +6,7 @@ use orion_syspec::infra::DfxArgsGetter;
 #[command(name = "ds-sys")]
 #[command(version, about)]
 pub enum GSysCmd {
-    Example,
     New(NewArgs),
-    Load(LoadArgs),
     Update(DfxArgs),
     Localize(DfxArgs),
 }

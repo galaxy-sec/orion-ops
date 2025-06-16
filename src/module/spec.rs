@@ -110,14 +110,13 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
-        let src_path = path.join(MOD_DIR);
-        let subs = get_sub_dirs(&src_path)?;
-
         let name_copy = name.clone();
         let mut flag = log_guard!(
             info!(target: "mod/spec", "load mod-spec {} success!", name_copy ),
             error!(target: "mod/spec", "load mod-spec {} fail!", name_copy)
         );
+        let src_path = path.join(MOD_DIR);
+        let subs = get_sub_dirs(&src_path)?;
         let mut targets = HashMap::new();
         for sub in subs {
             let node = ModTargetSpec::load_from(&sub).with(&sub)?;

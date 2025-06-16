@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use orion_error::{ErrorOwe, ErrorWith};
+use orion_error::{ErrorOwe, ErrorWith, UvsReason, UvsResFrom};
 use url::Url;
 
-use crate::error::SpecResult;
+use crate::error::{SpecReason, SpecResult, ToErr};
 
 #[derive(Default, Clone, Debug)]
 pub struct GitRepo {}
@@ -63,6 +63,13 @@ pub fn test_init() {
 pub fn make_clean_path(path: &Path) -> SpecResult<()> {
     if path.exists() {
         std::fs::remove_dir_all(path).owe_sys()?;
+    }
+    std::fs::create_dir_all(path).owe_sys()?;
+    Ok(())
+}
+pub fn make_new_path(path: &Path) -> SpecResult<()> {
+    if path.exists() {
+        return SpecReason::Uvs(UvsReason::from_res("path exists".into())).err_result();
     }
     std::fs::create_dir_all(path).owe_sys()?;
     Ok(())

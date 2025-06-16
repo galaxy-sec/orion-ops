@@ -2,14 +2,11 @@ use std::path::{Path, PathBuf};
 
 use crate::{
     addr::{AddrType, GitAddr, types::EnvVarPath},
-    const_vars::MODULES_SPC_ROOT,
+    const_vars::SYS_MODEL_SPC_ROOT,
     error::SpecResult,
-    module::{
-        depend::{Dependency, DependencySet},
-        spec::ModuleSpec,
-    },
+    module::depend::{Dependency, DependencySet},
     tools::make_clean_path,
-    types::{AsyncUpdateable, Configable, Localizable, LocalizePath, Persistable, UpdateOptions},
+    types::{Configable, Localizable, LocalizePath, Persistable, UpdateOptions},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
@@ -19,135 +16,140 @@ use derive_getters::Getters;
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
-use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
+use super::{init::SYS_SPC_PRJ, spec::SysModelSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
-pub struct ModConf {
+struct SysConf {
     test_envs: DependencySet,
 }
 
 #[derive(Getters, Clone, Debug)]
-pub struct ModProject {
-    conf: ModConf,
-    mod_spec: ModuleSpec,
+pub struct SysProject {
+    conf: SysConf,
+    sys_spec: SysModelSpec,
     project: GxlProject,
     root_local: PathBuf,
+    val_dict: ValueDict,
 }
-impl ModConf {
+impl SysConf {
     pub fn new(local_res: DependencySet) -> Self {
         Self {
             test_envs: local_res,
         }
     }
 }
-impl ModProject {
-    pub fn new(spec: ModuleSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
-        let conf = ModConf::new(local_res);
+impl SysProject {
+    pub fn new(spec: SysModelSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
+        let conf = SysConf::new(local_res);
         let mut val_dict = ValueDict::default();
         val_dict.insert("KEY1", ValueType::from("VALUE1"));
         Self {
             conf,
-            mod_spec: spec,
-            project: GxlProject::from((MOD_PRJ_WORK_GXL, MOD_PRJ_ADM_GXL)),
+            sys_spec: spec,
+            project: GxlProject::from(SYS_SPC_PRJ),
             root_local,
+            val_dict,
         }
     }
     pub fn load(root_local: &Path) -> SpecResult<Self> {
         let mut flag = log_guard!(
             info!(
-                target : "/mod_prj",
-                "load modprj  to {} success!", root_local.display()
+                target : "/sys_prj",
+                "load project from {} success!", root_local.display()
             ),
             error!(
-                target : "/mod_prj",
-                "load modprj  to {} fail!", root_local.display()
+                target : "/sys_prj",
+                "load project  from {} fail!", root_local.display()
             )
         );
 
-        let conf_file = root_local.join("mod_prj.yml");
-        let conf = ModConf::from_conf(&conf_file)?;
+        let conf_file = root_local.join("sys_prj.yml");
+        let conf = SysConf::from_conf(&conf_file)?;
         let root_local = root_local.to_path_buf();
-        let mod_spec = ModuleSpec::load_from(&root_local)?;
+        let sys_local = root_local.join("sys");
+        let sys_spec = SysModelSpec::load_from(&sys_local)?;
         let project = GxlProject::load_from(&root_local)?;
+        let value_file = root_local.join("value.yml");
+        let val_dict = ValueDict::from_conf(&value_file)?;
         flag.flag_suc();
         Ok(Self {
             conf,
-            mod_spec,
+            sys_spec,
             project,
             root_local,
+            val_dict,
         })
     }
     pub fn save(&self) -> SpecResult<()> {
         let mut flag = log_guard!(
             info!(
-                target : "spec/local/modprj",
-                "save modprj  to {} success!", self.root_local().display()
+                target : "sysprj",
+                "save project to {} success!", self.root_local().display()
             ),
             error!(
-                target : "spec/local/modprj",
-                "save modprj  to {} fail!", self.root_local().display()
+                target : "sysprj",
+                "save project  to {} fail!", self.root_local().display()
             )
         );
-        let conf_file = self.root_local().join("mod_prj.yml");
+        let conf_file = self.root_local().join("sys_prj.yml");
         self.conf.save_conf(&conf_file)?;
-        self.mod_spec
-            .save_to(self.root_local(), Some("./".into()))?;
+        self.sys_spec.save_local(self.root_local(), "sys")?;
         self.project.save_to(self.root_local(), None)?;
-        mod_init_gitignore(&self.root_local())?;
+        let value_file = self.root_local().join("value.yml");
+        self.val_dict.save_conf(&value_file)?;
+        //sys_init_gitignore(&self.root_local())?;
         flag.flag_suc();
         Ok(())
     }
 }
 
-impl ModConf {
+impl SysConf {
     pub async fn update(&self, _options: &UpdateOptions) -> SpecResult<()> {
         self.test_envs.update().await
     }
 }
 
-impl ModProject {
+impl SysProject {
     pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
         self.conf.update(options).await?;
-        self.mod_spec()
-            .update_local(&self.root_local(), options)
-            .await?;
+        self.sys_spec().update_local(options).await?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl Localizable for ModConf {
+impl Localizable for SysConf {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
         Ok(())
     }
 }
 
 #[async_trait]
-impl Localizable for ModProject {
+impl Localizable for SysProject {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
         //let local_path = LocalizePath::from_root(self.root_local());
         self.conf.localize(None).await?;
-        self.mod_spec().localize(None).await?;
+        self.sys_spec().localize(None).await?;
         Ok(())
     }
 }
-impl ModProject {
-    pub fn make_new(prj_path: &PathBuf, name: &str) -> SpecResult<Self> {
-        let mod_spec = ModuleSpec::make_new(name)?;
+impl SysProject {
+    pub fn make_new(prj_path: &PathBuf, name: &str, repo: &str) -> SpecResult<Self> {
+        let mod_spec = SysModelSpec::make_new(name, repo)?;
         let res = DependencySet::default();
-        Ok(ModProject::new(mod_spec, res, prj_path.to_path_buf()))
+        Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }
-    pub fn make_test_prj(name: &str) -> SpecResult<Self> {
-        let prj_path = PathBuf::from(MODULES_SPC_ROOT).join(name);
+    pub fn make_test_prj(name: &str, repo: &str) -> SpecResult<Self> {
+        let prj_path = PathBuf::from(SYS_MODEL_SPC_ROOT).join(name);
         make_clean_path(&prj_path)?;
-        let proj = ModProject::make_new(&prj_path, name)?;
+        let proj = SysProject::make_new(&prj_path, name, repo)?;
         proj.save()?;
         Ok(proj)
     }
 }
 
-pub fn make_mod_prj_testins(prj_path: &Path) -> SpecResult<ModProject> {
-    let mod_spec = ModuleSpec::for_example();
+fn make_sys_prj_testins(prj_path: &Path) -> SpecResult<SysProject> {
+    let mod_spec = SysModelSpec::for_example("exmaple_sys2")?;
     let mut res = DependencySet::default();
     res.push(
         Dependency::new(
@@ -158,7 +160,7 @@ pub fn make_mod_prj_testins(prj_path: &Path) -> SpecResult<ModProject> {
         )
         .with_rename("bit-common"),
     );
-    Ok(ModProject::new(mod_spec, res, prj_path.to_path_buf()))
+    Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
 }
 
 #[cfg(test)]
@@ -168,34 +170,35 @@ pub mod tests {
     use orion_error::TestAssertWithMsg;
 
     use crate::{
-        const_vars::MODULES_SPC_ROOT,
+        const_vars::SYS_MODEL_PRJ_ROOT,
         error::SpecResult,
-        module::proj::{ModProject, make_mod_prj_testins},
+        system::proj::{SysProject, make_sys_prj_testins},
         tools::{make_clean_path, test_init},
         types::{Localizable, UpdateOptions},
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> SpecResult<()> {
         test_init();
-        let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("mod-new");
+        let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("sys_new");
         make_clean_path(&prj_path)?;
-        let proj = ModProject::make_new(&prj_path, "mod_new")?;
+        let proj = SysProject::make_new(&prj_path, "sys_new", "https://github.com")?;
         proj.save()?;
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_mod_prj_example() -> SpecResult<()> {
+    async fn test_sys_prj_example() -> SpecResult<()> {
         test_init();
 
-        let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("postgresql");
-        let project = make_mod_prj_testins(&prj_path).assert("make cust");
+        let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("example_sys2");
+        make_clean_path(&prj_path)?;
+        let project = make_sys_prj_testins(&prj_path).assert("make cust");
         if prj_path.exists() {
             std::fs::remove_dir_all(&prj_path).assert("ok");
         }
         std::fs::create_dir_all(&prj_path).assert("yes");
         project.save().assert("save dss_prj");
-        let project = ModProject::load(&prj_path).assert("dss-project");
+        let project = SysProject::load(&prj_path).assert("dss-project");
         project
             .update(&UpdateOptions::default())
             .await

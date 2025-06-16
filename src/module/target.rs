@@ -18,6 +18,7 @@ use crate::{
     error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
+    tools::get_sub_dirs,
     types::{
         AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
         UpdateOptions, ValueConfable,
@@ -69,6 +70,22 @@ impl ModTargetSpec {
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
         self.workflow.save_to(&target_path, None)?;
+        Ok(())
+    }
+
+    pub fn clean_other(root: &Path, node: &TargetNode) -> SpecResult<()> {
+        let subs = get_sub_dirs(&root)?;
+        for sub in subs {
+            if !sub.ends_with(node.to_string().as_str()) {
+                Self::clean_path(&sub)?;
+            }
+        }
+        Ok(())
+    }
+    fn clean_path(path: &Path) -> SpecResult<()> {
+        if path.exists() {
+            std::fs::remove_dir_all(path).owe_res().with(path)?;
+        }
         Ok(())
     }
 }
@@ -141,6 +158,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             error!(target: "spec/mod/target", "load target failed!:{}", target_root.display())
         );
         let paths = ModTargetPaths::from(&target_root.to_path_buf());
+        ctx.with_path("root", &target_root);
         let target = TargetNode::from_str(path_file_name(target_root)?.as_str())
             .owe_res()
             .with(&ctx)?;
@@ -239,7 +257,7 @@ impl Localizable for ModTargetSpec {
         std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
-        self.update_local(&tpl, &UpdateOptions::default()).await?;
+        //self.update_local(&tpl, &UpdateOptions::default()).await?;
         if !value_path.exists() {
             value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();

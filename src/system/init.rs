@@ -14,7 +14,7 @@ use crate::{
 
 const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");
 const SYS_UPDATE_GXL: &str = include_str!("init/workflows/update.gxl");
-const SYS_SPC_PRJ: &str = include_str!("init/_gal/work.gxl");
+pub const SYS_SPC_PRJ: &str = include_str!("init/_gal/work.gxl");
 const SYS_GITIGNORE: &str = include_str!("init/.gitignore");
 
 pub trait SysActIniter {

@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use derive_getters::Getters;
-use derive_more::From;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{const_vars::ADM_GXL, error::SpecResult, types::Persistable};
