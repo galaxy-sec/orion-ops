@@ -1,56 +1,31 @@
-use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use super::gxl::GxlAction;
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
 
+use crate::const_vars::WORKFLOWS_DIR;
 use crate::{error::SpecResult, types::Persistable};
 
 #[derive(Getters, Clone, Debug)]
-pub struct Workflows<T> {
+pub struct Workflows {
     //project: GxlProject,
     actions: Vec<Workflow>,
-    _phantom: PhantomData<T>,
 }
 
-pub trait FlowPaths {
-    fn workflow() -> PathBuf;
-}
-#[derive(Clone, Debug)]
-pub struct ModLabel;
-impl FlowPaths for ModLabel {
-    fn workflow() -> PathBuf {
-        PathBuf::from(crate::const_vars::WORKFLOWS_DIR)
-    }
-}
-#[derive(Clone, Debug)]
-pub struct SysLabel;
+pub type ModWorkflows = Workflows;
+pub type SysWorkflows = Workflows;
 
-impl FlowPaths for SysLabel {
-    fn workflow() -> PathBuf {
-        PathBuf::from(crate::const_vars::WORKFLOWS_DIR)
-    }
-}
-pub type ModWorkflows = Workflows<ModLabel>;
-pub type SysWorkflows = Workflows<SysLabel>;
-
-impl<T> Workflows<T> {
+impl Workflows {
     pub fn new(actions: Vec<Workflow>) -> Self {
-        Self {
-            actions,
-            _phantom: PhantomData,
-        }
+        Self { actions }
     }
 }
 
-impl<T> Persistable<Workflows<T>> for Workflows<T>
-where
-    T: FlowPaths,
-{
+impl Persistable<Workflows> for Workflows {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
-        let action_path = path.join(T::workflow());
+        let action_path = path.join(WORKFLOWS_DIR);
         std::fs::create_dir_all(&action_path)
             .owe_res()
             .with(&action_path)?;
@@ -63,7 +38,7 @@ where
     //加载 path 目录的文件
     fn load_from(path: &Path) -> SpecResult<Self> {
         let mut actions = Vec::new();
-        let actions_path = path.join(T::workflow());
+        let actions_path = path.join(WORKFLOWS_DIR);
         for entry in std::fs::read_dir(&actions_path)
             .owe_res()
             .with(&actions_path)
@@ -85,10 +60,7 @@ where
                 }
             }
         }
-        Ok(Workflows {
-            actions,
-            _phantom: PhantomData,
-        })
+        Ok(Workflows { actions })
     }
 }
 

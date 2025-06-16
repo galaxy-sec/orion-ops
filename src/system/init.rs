@@ -52,7 +52,7 @@ pub trait SysIniter {
     fn sys_tpl_init() -> Self;
 }
 
-impl<T> SysIniter for Workflows<T> {
+impl SysIniter for Workflows {
     fn sys_tpl_init() -> Self {
         let actions = vec![
             Workflow::Gxl(GxlAction::sys_setup_tpl()),
