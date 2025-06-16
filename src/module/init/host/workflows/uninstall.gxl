@@ -1,0 +1,6 @@
+mod uninstall {
+    flow do {
+      gx.echo ( value : "this is  host uninstall" );
+
+    }
+}

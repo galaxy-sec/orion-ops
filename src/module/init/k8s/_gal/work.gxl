@@ -2,7 +2,16 @@ extern mod setup,update { path = "./workflows"; }
 
 
 mod main   {
-    env default  {}
+    #[usage(color="blue")]
+    env local {
+        SPEC_DIR = "local";
+    }
+    #[usage(desp="for dev",color="red")]
+    env spec {
+        SPEC_DIR = "spec";
+    }
+    #[usage(desp="use pub")]
+    env default  : local;
 
     flow setup  : setup.do ;
     flow update : update.do ;

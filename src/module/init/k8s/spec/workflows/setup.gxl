@@ -2,5 +2,6 @@ mod setup {
 
     flow do {
       gx.echo ( value : "this is k8s setup" );
+
     }
 }
