@@ -14,7 +14,8 @@ use crate::{
 
 const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");
 const SYS_UPDATE_GXL: &str = include_str!("init/workflows/update.gxl");
-pub const SYS_SPC_PRJ: &str = include_str!("init/_gal/work.gxl");
+pub const SYS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
+pub const SYS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const SYS_GITIGNORE: &str = include_str!("init/.gitignore");
 
 pub trait SysActIniter {
@@ -43,7 +44,7 @@ impl SysActIniter for GxlAction {
 }
 impl SysPrjIniter for GxlProject {
     fn spec_tpl() -> Self {
-        Self::from(SYS_SPC_PRJ)
+        Self::from(SYS_PRJ_WORK)
     }
 }
 
@@ -53,12 +54,11 @@ pub trait SysIniter {
 
 impl<T> SysIniter for Workflows<T> {
     fn sys_tpl_init() -> Self {
-        let project = GxlProject::spec_tpl();
         let actions = vec![
             Workflow::Gxl(GxlAction::sys_setup_tpl()),
             Workflow::Gxl(GxlAction::sys_update_tpl()),
         ];
-        Self::new(project, actions)
+        Self::new(actions)
     }
 }
 

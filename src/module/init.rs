@@ -79,21 +79,19 @@ pub trait ModIniter {
 
 impl ModIniter for ModWorkflows {
     fn mod_host_tpl_init() -> Self {
-        let project = GxlProject::spec_host_tpl();
         let actions = vec![
             Workflow::Gxl(GxlAction::host_setup_tpl()),
             Workflow::Gxl(GxlAction::host_update_tpl()),
         ];
-        Self::new(project, actions)
+        Self::new(actions)
     }
 
     fn mod_k8s_tpl_init() -> ModWorkflows {
-        let project = GxlProject::spec_k8s_tpl();
         let actions = vec![
             Workflow::Gxl(GxlAction::k8s_setup_tpl()),
             Workflow::Gxl(GxlAction::k8s_update_tpl()),
         ];
-        Self::new(project, actions)
+        Self::new(actions)
     }
 }
 

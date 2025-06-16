@@ -30,11 +30,23 @@ impl From<(&str, &str)> for GxlProject {
 
 impl Persistable<GxlProject> for GxlProject {
     fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
-        let path = path.join("_gal");
-        std::fs::create_dir_all(&path).owe_res().with(&path)?;
-        std::fs::write(path.join(crate::const_vars::WORK_GXL), self.work.as_str()).owe_res()?;
+        let gal_path = path.join("_gal");
+        std::fs::create_dir_all(&gal_path)
+            .owe_res()
+            .with(&gal_path)?;
+        std::fs::write(
+            gal_path.join(crate::const_vars::WORK_GXL),
+            self.work.as_str(),
+        )
+        .owe_res()?;
         if let Some(adm) = &self.adm {
-            std::fs::write(path.join(ADM_GXL), adm.as_str()).owe_res()?;
+            std::fs::write(gal_path.join(ADM_GXL), adm.as_str()).owe_res()?;
+            let version_path = path.join("version.txt");
+            if !version_path.exists() {
+                std::fs::write(version_path, "0.1.0")
+                    .owe_res()
+                    .want("crate version.txt")?;
+            }
         }
         Ok(())
     }

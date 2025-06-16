@@ -24,7 +24,7 @@ use crate::{
         UpdateOptions, ValueConfable,
     },
     vars::{OriginDict, ValueDict, VarCollection},
-    workflow::act::ModWorkflows,
+    workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
 use super::{
@@ -39,7 +39,7 @@ pub struct ModTargetSpec {
     target: TargetNode,
     artifact: ArtifactPackage,
     workflow: ModWorkflows,
-    //conf_spec: ConfSpec,
+    gxl_prj: GxlProject,
     logs_spec: LogsSpec,
     res_spec: CaculateResSpec,
     vars: VarCollection,
@@ -146,6 +146,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
 
         self.res_spec.save_conf(paths.res_path())?;
         self.vars.save_conf(paths.vars_path())?;
+        self.gxl_prj.save_to(&paths.target_root, None)?;
         flag.flag_suc();
         Ok(())
     }
@@ -184,6 +185,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         ctx.with_path("vars", paths.vars_path());
         let vars = VarCollection::from_conf(paths.vars_path()).with(&ctx)?;
 
+        let gxl_prj = GxlProject::load_from(paths.target_root()).with(&ctx)?;
         flag.flag_suc();
         Ok(Self {
             target,
@@ -196,6 +198,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
             vars,
             setting,
             depends,
+            gxl_prj,
         })
     }
 }
@@ -203,7 +206,8 @@ impl ModTargetSpec {
     pub fn init(
         target: TargetNode,
         artifact: ArtifactPackage,
-        actions: ModWorkflows,
+        workflow: ModWorkflows,
+        gxl_prj: GxlProject,
         //conf_spec: ConfSpec,
         res_spec: CaculateResSpec,
         vars: VarCollection,
@@ -211,7 +215,8 @@ impl ModTargetSpec {
     ) -> Self {
         Self {
             target,
-            workflow: actions,
+            workflow,
+            gxl_prj,
             artifact,
             //conf_spec,
             logs_spec: LogsSpec::tpl_init(),
@@ -322,7 +327,10 @@ pub mod test {
         artifact::Artifact,
         const_vars::TARGET_SPC_ROOT,
         error::SpecResult,
-        module::{CpuArch, OsCPE, RunSPC, init::ModIniter},
+        module::{
+            CpuArch, OsCPE, RunSPC,
+            init::{ModIniter, ModPrjIniter},
+        },
         tools::{make_clean_path, test_init},
         vars::VarType,
     };
@@ -341,6 +349,7 @@ pub mod test {
                 "postgresql-17.4.tar.gz",
             )]),
             ModWorkflows::mod_k8s_tpl_init(),
+            GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -362,6 +371,7 @@ pub mod test {
                 "postgresql-17.4.tar.gz",
             )]),
             ModWorkflows::mod_host_tpl_init(),
+            GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),

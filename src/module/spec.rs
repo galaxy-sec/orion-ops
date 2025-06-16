@@ -7,6 +7,7 @@ use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
     types::{Localizable, LocalizePath, UpdateOptions},
     vars::{VarCollection, VarType},
+    workflow::prj::GxlProject,
 };
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -27,7 +28,7 @@ use crate::{
 use super::{
     CpuArch, OsCPE, RunSPC, TargetNode,
     depend::DependencySet,
-    init::{ModIniter, mod_init_gitignore},
+    init::{ModIniter, ModPrjIniter, mod_init_gitignore},
     setting::Setting,
     target::ModTargetSpec,
 };
@@ -163,6 +164,7 @@ impl ModuleSpec {
                 "postgresql-17.4.tar.gz",
             )]),
             ModWorkflows::mod_k8s_tpl_init(),
+            GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -180,6 +182,7 @@ impl ModuleSpec {
                 "postgresql-17.4.tar.gz",
             )]),
             ModWorkflows::mod_host_tpl_init(),
+            GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -205,6 +208,7 @@ impl ModuleSpec {
                 "postgresql-17.4.tar.gz.md5",
             )]),
             ModWorkflows::mod_k8s_tpl_init(),
+            GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -221,6 +225,7 @@ impl ModuleSpec {
                 "postgresql-17.4.tar.gz.md5",
             )]),
             ModWorkflows::mod_host_tpl_init(),
+            GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -236,6 +241,7 @@ impl ModuleSpec {
                 "postgresql-17.4.tar.gz.md5",
             )]),
             ModWorkflows::mod_host_tpl_init(),
+            GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
@@ -262,6 +268,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
             "postgresql-17.4.tar.gz",
         )]),
         ModWorkflows::mod_k8s_tpl_init(),
+        GxlProject::spec_k8s_tpl(),
         //conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
@@ -277,6 +284,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
             "postgresql-17.4.tar.gz",
         )]),
         ModWorkflows::mod_host_tpl_init(),
+        GxlProject::spec_host_tpl(),
         //conf.clone(),
         CaculateResSpec::new(2, 4),
         VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),

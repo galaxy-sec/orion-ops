@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
 use super::gxl::GxlAction;
-use super::prj::GxlProject;
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
@@ -11,7 +10,7 @@ use crate::{error::SpecResult, types::Persistable};
 
 #[derive(Getters, Clone, Debug)]
 pub struct Workflows<T> {
-    project: GxlProject,
+    //project: GxlProject,
     actions: Vec<Workflow>,
     _phantom: PhantomData<T>,
 }
@@ -38,9 +37,8 @@ pub type ModWorkflows = Workflows<ModLabel>;
 pub type SysWorkflows = Workflows<SysLabel>;
 
 impl<T> Workflows<T> {
-    pub fn new(project: GxlProject, actions: Vec<Workflow>) -> Self {
+    pub fn new(actions: Vec<Workflow>) -> Self {
         Self {
-            project,
             actions,
             _phantom: PhantomData,
         }
@@ -59,7 +57,6 @@ where
         for item in &self.actions {
             item.save_to(&action_path, name.clone())?;
         }
-        self.project.save_to(path, name)?;
         Ok(())
     }
 
@@ -88,9 +85,7 @@ where
                 }
             }
         }
-        let project = GxlProject::load_from(path).with(path)?;
         Ok(Workflows {
-            project,
             actions,
             _phantom: PhantomData,
         })

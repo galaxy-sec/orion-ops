@@ -1,2 +1,4 @@
 local
 spec/mods
+.report
+.run.gxl

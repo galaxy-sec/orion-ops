@@ -15,7 +15,10 @@ use derive_getters::Getters;
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
-use super::{init::SYS_SPC_PRJ, spec::SysModelSpec};
+use super::{
+    init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
+    spec::SysModelSpec,
+};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 struct SysConf {
@@ -45,7 +48,7 @@ impl SysProject {
         Self {
             conf,
             sys_spec: spec,
-            project: GxlProject::from(SYS_SPC_PRJ),
+            project: GxlProject::from((SYS_PRJ_WORK, SYS_PRJ_ADM)),
             root_local,
             val_dict,
         }
@@ -96,7 +99,7 @@ impl SysProject {
         self.project.save_to(self.root_local(), None)?;
         let value_file = self.root_local().join("value.yml");
         self.val_dict.save_conf(&value_file)?;
-        //sys_init_gitignore(&self.root_local())?;
+        sys_init_gitignore(&self.root_local())?;
         flag.flag_suc();
         Ok(())
     }
