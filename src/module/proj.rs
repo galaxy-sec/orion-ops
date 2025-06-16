@@ -93,7 +93,7 @@ impl ModProject {
         self.mod_spec
             .save_to(self.root_local(), Some("./".into()))?;
         self.project.save_to(self.root_local(), None)?;
-        mod_init_gitignore(&self.root_local())?;
+        mod_init_gitignore(self.root_local())?;
         flag.flag_suc();
         Ok(())
     }
@@ -142,7 +142,7 @@ impl Localizable for ModProject {
     }
 }
 impl ModProject {
-    pub fn make_new(prj_path: &PathBuf, name: &str) -> SpecResult<Self> {
+    pub fn make_new(prj_path: &Path, name: &str) -> SpecResult<Self> {
         let mod_spec = ModuleSpec::make_new(name)?;
         let res = DependencySet::default();
         Ok(ModProject::new(mod_spec, res, prj_path.to_path_buf()))
