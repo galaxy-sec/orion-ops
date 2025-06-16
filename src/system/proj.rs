@@ -99,7 +99,7 @@ impl SysProject {
         self.project.save_to(self.root_local(), None)?;
         let value_file = self.root_local().join("value.yml");
         self.val_dict.save_conf(&value_file)?;
-        sys_init_gitignore(&self.root_local())?;
+        sys_init_gitignore(self.root_local())?;
         flag.flag_suc();
         Ok(())
     }
