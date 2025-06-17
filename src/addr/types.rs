@@ -24,6 +24,16 @@ pub enum AddrType {
     Local(LocalAddr),
 }
 
+impl EnvEvalable<AddrType> for AddrType {
+    fn env_eval(self) -> AddrType {
+        match self {
+            AddrType::Git(v) => AddrType::Git(v.env_eval()),
+            AddrType::Http(v) => AddrType::Http(v.env_eval()),
+            AddrType::Local(v) => AddrType::Local(v.env_eval()),
+        }
+    }
+}
+
 #[async_trait]
 impl AsyncUpdateable for AddrType {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {

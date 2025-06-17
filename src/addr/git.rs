@@ -14,8 +14,9 @@ use serde_derive::{Deserialize, Serialize};
 use crate::{
     error::SpecResult,
     log_guard,
-    tools::get_repo_name,
+    tools::{ensure_path, get_repo_name},
     types::{AsyncUpdateable, RedoLevel, UpdateOptions},
+    vars::EnvEvalable,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -38,6 +39,20 @@ pub struct GitAddr {
     // 新增：SSH密钥密码
     #[serde(skip_serializing_if = "Option::is_none")]
     ssh_passphrase: Option<String>,
+}
+impl EnvEvalable<GitAddr> for GitAddr {
+    fn env_eval(self) -> GitAddr {
+        Self {
+            repo: self.repo.env_eval(),
+            res: self.res.env_eval(),
+            tag: self.tag.env_eval(),
+            branch: self.branch.env_eval(),
+            rev: self.rev.env_eval(),
+            path: self.path.env_eval(),
+            ssh_key: self.ssh_key.env_eval(),
+            ssh_passphrase: self.ssh_passphrase.env_eval(),
+        }
+    }
 }
 
 impl GitAddr {
@@ -250,12 +265,7 @@ impl AsyncUpdateable for GitAddr {
         let cache_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".cache/galaxy");
-        if !cache_local.exists() {
-            std::fs::create_dir_all(&cache_local)
-                .owe_res()
-                .with(&cache_local)?;
-        }
-
+        ensure_path(&cache_local)?;
         let mut git_local = cache_local.join(name.clone());
         let mut ctx = WithContext::want("update repository");
 
@@ -272,6 +282,7 @@ impl AsyncUpdateable for GitAddr {
                 "update {} to {} failed", self.repo,git_local_copy.display()
             )
         );
+        debug!( target : "addr/git", "update options {:?} where :{} ", options, git_local.display() );
         if git_local.exists() && options.redo_level() == RedoLevel::ReAll {
             std::fs::remove_dir_all(&git_local).owe_logic().with(&ctx)?;
             std::fs::create_dir_all(&git_local).owe_logic().with(&ctx)?;
@@ -279,6 +290,8 @@ impl AsyncUpdateable for GitAddr {
                 target : "addr/git",
                 "remove cache {} from {} ", self.repo,git_local.display()
             )
+        } else {
+            debug!( target : "addr/git", "git_local:{} , redo: {:?} ",  git_local.exists(), options.redo_level() );
         }
 
         match git2::Repository::open(&git_local) {

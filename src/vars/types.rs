@@ -69,6 +69,12 @@ impl EnvEvalable<String> for String {
     }
 }
 
+impl EnvEvalable<Option<String>> for Option<String> {
+    fn env_eval(self) -> Option<String> {
+        self.map(|x| expand_env_vars(x.as_str()))
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, From, Display)]
 #[serde(untagged)]
 //#[derive(Clone, Debug, PartialEq, Display, From)]

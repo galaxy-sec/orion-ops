@@ -127,7 +127,7 @@ impl ModAppConf {
         if let Some(path) = &self.root_local {
             //let options = &UpdateOptions::default();
             self.module_list.update(path, options).await?;
-            self.local_envs.update().await?;
+            self.local_envs.update(options).await?;
             Ok(())
         } else {
             Err(SpecError::from_logic("local paths not setting ".into()))

@@ -11,6 +11,7 @@ use url::Url;
 use crate::{
     error::SpecResult,
     types::{AsyncUpdateable, RedoLevel, UpdateOptions},
+    vars::EnvEvalable,
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -21,6 +22,16 @@ pub struct HttpAddr {
     username: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     password: Option<String>,
+}
+
+impl EnvEvalable<HttpAddr> for HttpAddr {
+    fn env_eval(self) -> HttpAddr {
+        Self {
+            url: self.url.env_eval(),
+            username: self.username.env_eval(),
+            password: self.password.env_eval(),
+        }
+    }
 }
 
 impl HttpAddr {

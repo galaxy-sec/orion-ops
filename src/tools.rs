@@ -62,11 +62,18 @@ pub fn test_init() {
 }
 pub fn make_clean_path(path: &Path) -> SpecResult<()> {
     if path.exists() {
-        std::fs::remove_dir_all(path).owe_sys()?;
+        std::fs::remove_dir_all(path).owe_sys().with(path)?;
     }
-    std::fs::create_dir_all(path).owe_sys()?;
+    std::fs::create_dir_all(path).owe_sys().with(path)?;
     Ok(())
 }
+pub fn ensure_path(path: &Path) -> SpecResult<()> {
+    if !path.exists() {
+        std::fs::create_dir_all(path).owe_sys().with(path)?;
+    }
+    Ok(())
+}
+
 pub fn make_new_path(path: &Path) -> SpecResult<()> {
     if path.exists() {
         return SpecReason::Uvs(UvsReason::from_res("path exists".into())).err_result();

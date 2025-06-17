@@ -7,6 +7,7 @@ use crate::{
     addr::AddrType,
     error::SpecResult,
     types::{AsyncUpdateable, UpdateOptions},
+    vars::EnvEvalable,
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -27,7 +28,11 @@ impl SysModelSpecRef {
 #[async_trait]
 impl AsyncUpdateable for SysModelSpecRef {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.addr.update_local(path, options).await
+        self.addr
+            .clone()
+            .env_eval()
+            .update_local(path, options)
+            .await
     }
 
     async fn update_rename(

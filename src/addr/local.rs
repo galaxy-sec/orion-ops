@@ -12,12 +12,21 @@ use crate::{
     error::SpecResult,
     log_guard,
     types::{AsyncUpdateable, RedoLevel, UpdateOptions},
+    vars::EnvEvalable,
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
 pub struct LocalAddr {
     path: String,
+}
+
+impl EnvEvalable<LocalAddr> for LocalAddr {
+    fn env_eval(self) -> LocalAddr {
+        Self {
+            path: self.path.env_eval(),
+        }
+    }
 }
 #[async_trait]
 impl AsyncUpdateable for LocalAddr {

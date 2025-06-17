@@ -100,8 +100,8 @@ impl ModProject {
 }
 
 impl ModConf {
-    pub async fn update(&self, _options: &UpdateOptions) -> SpecResult<()> {
-        self.test_envs.update().await
+    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+        self.test_envs.update(options).await
     }
 }
 

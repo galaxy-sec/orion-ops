@@ -9,6 +9,7 @@ use crate::{
     addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     error::SpecResult,
     types::{AsyncUpdateable, UpdateOptions},
+    vars::EnvEvalable,
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
@@ -61,11 +62,12 @@ impl DependencySet {
             dep_root: EnvVarPath::from("./depends".to_string()),
         }
     }
-    pub async fn update(&self) -> SpecResult<()> {
-        let options = UpdateOptions::for_depend();
+    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+        //let options = UpdateOptions::for_depend();
+        //options.
         for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.update(&self.dep_root().path(), &options).await?;
+                dep.update(&self.dep_root().path(), options).await?;
             }
         }
         Ok(())
@@ -102,7 +104,11 @@ impl Dependency {
 #[async_trait]
 impl AsyncUpdateable for Dependency {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.addr.update_local(path, options).await
+        self.addr
+            .clone()
+            .env_eval()
+            .update_local(path, options)
+            .await
     }
 }
 
