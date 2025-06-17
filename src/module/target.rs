@@ -3,6 +3,7 @@ use std::{
     str::FromStr,
 };
 
+use crate::{const_vars::VALUE_DIR, vars::EnvEvalable};
 use async_trait::async_trait;
 use derive_getters::Getters;
 use log::{debug, error, info};
@@ -253,11 +254,10 @@ impl Localizable for ModTargetSpec {
             local.clone(),
         ));
 
-        let value_path = localize_path.value().join(crate::const_vars::VALUE_FILE);
-        let used_readable = localize_path
-            .value()
-            .join(crate::const_vars::USED_READABLE_FILE);
-        let used_json_path = localize_path.value().join(crate::const_vars::USED_JSON);
+        let value_root = localize_path.value().join(VALUE_DIR);
+        let value_path = value_root.join(crate::const_vars::VALUE_FILE);
+        let used_readable = value_root.join(crate::const_vars::USED_READABLE_FILE);
+        let used_json_path = value_root.join(crate::const_vars::USED_JSON);
         let local_path = localize_path.local();
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         if local_path.exists() {
@@ -278,14 +278,18 @@ impl Localizable for ModTargetSpec {
             let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
             cur_mod.set_source("mod");
             used.merge(&cur_mod);
-            used.export_origin().save_valconf(&used_readable)?;
-            used.export_value().save_json(&used_json_path)?;
+            used.export_origin()
+                .env_eval()
+                .save_valconf(&used_readable)?;
+            used.export_value().env_eval().save_json(&used_json_path)?;
         } else {
             //let used = ValueDict::from_valconf(&value_path)?;
             let used = OriginDict::from(ValueDict::from_valconf(&value_path)?);
 
-            used.export_origin().save_valconf(&used_readable)?;
-            used.export_value().save_json(&used_json_path)?;
+            used.export_origin()
+                .env_eval()
+                .save_valconf(&used_readable)?;
+            used.export_value().env_eval().save_json(&used_json_path)?;
         }
         debug!(target : "/mod/target/loc", "update_local suc");
         let tpl_path_opt = self

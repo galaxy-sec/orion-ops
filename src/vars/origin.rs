@@ -4,14 +4,34 @@ use derive_getters::Getters;
 use derive_more::Deref;
 use serde_derive::{Deserialize, Serialize};
 
-use super::{ValueDict, dict::ValueMap, types::ValueType};
+use super::{EnvEvalable, ValueDict, dict::ValueMap, types::ValueType};
 
 pub type OriginMap = HashMap<String, OriginValue>;
+
+impl EnvEvalable<OriginMap> for OriginMap {
+    fn env_eval(self) -> OriginMap {
+        let mut dict = HashMap::new();
+        for (k, v) in self {
+            let e_v = v.env_eval();
+            dict.insert(k, e_v);
+        }
+        dict
+    }
+}
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OriginValue {
     origin: Option<String>,
     value: ValueType,
+}
+
+impl EnvEvalable<OriginValue> for OriginValue {
+    fn env_eval(self) -> OriginValue {
+        Self {
+            origin: self.origin,
+            value: self.value.env_eval(),
+        }
+    }
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]

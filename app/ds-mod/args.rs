@@ -65,6 +65,10 @@ pub struct LocalArgs {
     /// config log ; eg: --log  cmd=debug,parse=info
     #[arg(long = "log")]
     pub log: Option<String>,
+
+    /// use vlaue file; eg: --value cicd_value.yml
+    #[arg(long = "value")]
+    pub value: Option<String>,
 }
 impl DfxArgsGetter for LocalArgs {
     fn debug_level(&self) -> usize {

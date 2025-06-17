@@ -1,4 +1,4 @@
-use super::{VarValue, definition::VarDefinition};
+use super::{VarValue, definition::VarDefinition, env_eval::expand_env_vars};
 use derive_more::{Display, From};
 use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -54,6 +54,21 @@ impl From<(&str, f64)> for VarType {
     }
 }
 
+pub trait EnvEvalable<T> {
+    fn env_eval(self) -> T;
+}
+
+impl EnvEvalable<VarValue<String>> for VarValue<String> {
+    fn env_eval(self) -> VarValue<String> {
+        VarValue::from(expand_env_vars(self.value()))
+    }
+}
+impl EnvEvalable<String> for String {
+    fn env_eval(self) -> String {
+        expand_env_vars(self.as_str())
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, From, Display)]
 #[serde(untagged)]
 //#[derive(Clone, Debug, PartialEq, Display, From)]
@@ -62,6 +77,14 @@ pub enum ValueType {
     Bool(VarValue<bool>),
     Int(VarValue<u64>),
     Float(VarValue<f64>),
+}
+impl EnvEvalable<ValueType> for ValueType {
+    fn env_eval(self) -> ValueType {
+        match self {
+            ValueType::String(v) => ValueType::String(v.env_eval()),
+            _ => self,
+        }
+    }
 }
 
 /*

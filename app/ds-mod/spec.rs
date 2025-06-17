@@ -36,7 +36,9 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
         args::GxModCmd::Localize(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            spec.localize(None, None).await.err_conv()?;
+            spec.localize(None, dfx.value.map(PathBuf::from))
+                .await
+                .err_conv()?;
         }
     }
     Ok(())

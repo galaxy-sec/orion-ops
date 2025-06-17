@@ -7,8 +7,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     error::SpecResult,
-    tools::expand_env_vars,
     types::{AsyncUpdateable, UpdateOptions},
+    vars::EnvEvalable,
 };
 
 use super::{GitAddr, HttpAddr, LocalAddr};
@@ -73,7 +73,7 @@ pub struct EnvVarPath {
 }
 impl EnvVarPath {
     pub fn path(&self) -> PathBuf {
-        let real = expand_env_vars(self.origin.as_str());
+        let real = self.origin.clone().env_eval();
         PathBuf::from(real)
     }
 }

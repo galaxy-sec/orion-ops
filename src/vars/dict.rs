@@ -4,9 +4,20 @@ use derive_getters::Getters;
 use derive_more::Deref;
 use serde_derive::{Deserialize, Serialize};
 
-use super::types::ValueType;
+use super::types::{EnvEvalable, ValueType};
 
 pub type ValueMap = HashMap<String, ValueType>;
+
+impl EnvEvalable<ValueMap> for ValueMap {
+    fn env_eval(self) -> ValueMap {
+        let mut dict = HashMap::new();
+        for (k, v) in self {
+            let e_v = v.env_eval();
+            dict.insert(k, e_v);
+        }
+        dict
+    }
+}
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]
 #[serde(transparent)]
@@ -29,6 +40,14 @@ impl ValueDict {
                 self.dict.insert(k.clone(), v.clone());
             }
         }
+    }
+    pub fn env_eval(self) -> Self {
+        let mut dict = HashMap::new();
+        for (k, v) in self.dict {
+            let e_v = v.env_eval();
+            dict.insert(k, e_v);
+        }
+        Self { dict }
     }
 }
 
