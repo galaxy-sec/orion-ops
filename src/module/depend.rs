@@ -1,14 +1,10 @@
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
 use async_trait::async_trait;
-use derive_getters::Getters;
-
-use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    error::SpecResult,
-    types::{AsyncUpdateable, UpdateOptions},
+    types::AsyncUpdateable,
     vars::EnvEvalable,
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -136,7 +132,7 @@ pub mod tests {
     use crate::{
         addr::{AddrType, LocalAddr},
         module::depend::{Dependency, DependencySet, EnvVarPath},
-        types::UpdateOptions,
+        update::UpdateOptions,
     };
 
     #[tokio::test]

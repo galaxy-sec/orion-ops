@@ -1,3 +1,4 @@
+use crate::{predule::*, update::RedoLevel};
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
@@ -8,11 +9,7 @@ use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
 
-use crate::{
-    error::SpecResult,
-    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
-    vars::EnvEvalable,
-};
+use crate::{types::AsyncUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "http")]

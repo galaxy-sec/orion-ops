@@ -1,3 +1,4 @@
+use crate::predule::*;
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -5,12 +6,10 @@ use crate::{
     const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
-    types::{Localizable, LocalizePath, UpdateOptions},
+    types::{Localizable, LocalizePath},
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
-use derive_getters::Getters;
-use log::{error, info};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 
 use crate::{

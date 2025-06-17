@@ -2,15 +2,13 @@ pub mod init;
 pub mod proj;
 pub mod refs;
 pub mod spec;
-use std::path::Path;
+use crate::predule::*;
 use std::{net::Ipv4Addr, path::PathBuf};
 
-use crate::types::{Localizable, LocalizePath, UpdateOptions};
+use crate::types::{Localizable, LocalizePath};
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
-use derive_getters::Getters;
 use derive_more::Deref;
-use serde_derive::{Deserialize, Serialize};
 
 use crate::module::refs::ModuleSpecRef;
 use crate::module::spec::ModuleSpec;

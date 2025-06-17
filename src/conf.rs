@@ -1,3 +1,4 @@
+use super::predule::*;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -8,13 +9,9 @@ use crate::{
     const_vars::CONFS_DIR,
     error::SpecResult,
     log_guard,
-    types::{AsyncUpdateable, Configable, UpdateOptions},
+    types::{AsyncUpdateable, Configable},
 };
 use async_trait::async_trait;
-use derive_getters::Getters;
-use log::{debug, error, info};
-use orion_error::{ErrorOwe, ErrorWith, WithContext};
-use serde_derive::{Deserialize, Serialize};
 // 由于 `crate::tools::log_flag` 未定义，移除该导入
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
 pub struct ConfSpec {

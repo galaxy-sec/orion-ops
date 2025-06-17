@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_getters::Getters;
-use orion_syspec::{infra::DfxArgsGetter, types::UpdateLevel};
+use orion_syspec::{infra::DfxArgsGetter, update::UpdateLevel};
 
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "ds-mod")]

@@ -1,15 +1,8 @@
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
-use async_trait::async_trait;
-use derive_getters::Getters;
 use derive_more::From;
-use serde_derive::{Deserialize, Serialize};
 
-use crate::{
-    error::SpecResult,
-    types::{AsyncUpdateable, UpdateOptions},
-    vars::EnvEvalable,
-};
+use crate::{types::AsyncUpdateable, vars::EnvEvalable};
 
 use super::{GitAddr, HttpAddr, LocalAddr};
 

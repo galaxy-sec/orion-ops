@@ -1,19 +1,16 @@
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
 use crate::{
     const_vars::SYS_MODEL_SPC_ROOT,
     error::SpecResult,
     module::depend::DependencySet,
     tools::make_clean_path,
-    types::{Configable, Localizable, LocalizePath, Persistable, UpdateOptions},
+    types::{Configable, Localizable, LocalizePath, Persistable},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
 
 use async_trait::async_trait;
-use derive_getters::Getters;
-use log::{error, info};
-use serde_derive::{Deserialize, Serialize};
 
 use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
@@ -175,7 +172,8 @@ pub mod tests {
         module::depend::{Dependency, DependencySet},
         system::{proj::SysProject, spec::SysModelSpec},
         tools::{make_clean_path, test_init},
-        types::{Localizable, UpdateOptions},
+        types::Localizable,
+        update::UpdateOptions,
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> SpecResult<()> {

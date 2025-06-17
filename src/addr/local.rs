@@ -1,19 +1,9 @@
-use std::path::{Path, PathBuf};
+use crate::{predule::*, update::RedoLevel};
 
-use async_trait::async_trait;
 use contracts::debug_requires;
-use derive_getters::Getters;
 use fs_extra::dir::CopyOptions;
-use log::{error, info};
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
-use serde_derive::{Deserialize, Serialize};
 
-use crate::{
-    error::SpecResult,
-    log_guard,
-    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
-    vars::EnvEvalable,
-};
+use crate::{log_guard, types::AsyncUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
@@ -130,8 +120,6 @@ impl LocalAddr {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::types::UpdateOptions;
 
     use super::*;
     use orion_error::TestAssert;

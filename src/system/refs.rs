@@ -1,15 +1,8 @@
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
 use async_trait::async_trait;
-use derive_getters::Getters;
 
-use crate::{
-    addr::AddrType,
-    error::SpecResult,
-    types::{AsyncUpdateable, UpdateOptions},
-    vars::EnvEvalable,
-};
-use serde_derive::{Deserialize, Serialize};
+use crate::{addr::AddrType, error::SpecResult, types::AsyncUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct SysModelSpecRef {

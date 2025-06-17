@@ -1,23 +1,17 @@
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
 use crate::{
     addr::{AddrType, GitAddr, types::EnvVarPath},
     const_vars::MODULES_SPC_ROOT,
-    error::SpecResult,
     module::{
         depend::{Dependency, DependencySet},
         spec::ModuleSpec,
     },
     tools::make_clean_path,
-    types::{AsyncUpdateable, Configable, Localizable, LocalizePath, Persistable, UpdateOptions},
+    types::{AsyncUpdateable, Configable, Localizable, LocalizePath, Persistable},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
-
-use async_trait::async_trait;
-use derive_getters::Getters;
-use log::{error, info};
-use serde_derive::{Deserialize, Serialize};
 
 use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
 
@@ -173,16 +167,16 @@ pub fn make_mod_prj_testins(prj_path: &Path) -> SpecResult<ModProject> {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::predule::*;
     use std::path::PathBuf;
 
     use orion_error::TestAssertWithMsg;
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,
-        error::SpecResult,
         module::proj::{ModProject, make_mod_prj_testins},
         tools::{make_clean_path, test_init},
-        types::{Localizable, UpdateOptions},
+        types::Localizable,
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> SpecResult<()> {

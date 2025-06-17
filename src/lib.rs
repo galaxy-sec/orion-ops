@@ -14,9 +14,10 @@ pub mod system;
 pub mod task;
 #[macro_use]
 pub mod tools;
-pub mod app_mod;
 mod app_sys;
 pub mod infra;
+pub mod predule;
 pub mod tpl;
 pub mod types;
+pub mod update;
 pub mod vars;

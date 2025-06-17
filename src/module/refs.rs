@@ -1,11 +1,6 @@
-use std::path::{Path, PathBuf};
+use crate::{predule::*, update::UpdateLevel};
 
 use async_trait::async_trait;
-use derive_getters::Getters;
-
-use log::{debug, error, info};
-use orion_error::{ErrorOwe, ErrorWith};
-use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     addr::AddrType,
@@ -13,7 +8,7 @@ use crate::{
     error::SpecResult,
     module::target::ModTargetSpec,
     tools::make_clean_path,
-    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable, UpdateLevel, UpdateOptions},
+    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
 };
 
 use super::TargetNode;

@@ -1,5 +1,4 @@
-use std::path::{Path, PathBuf};
-
+use crate::{predule::*, update::RedoLevel};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
@@ -7,15 +6,13 @@ use git2::{
     build::{CheckoutBuilder, RepoBuilder},
 };
 use home::home_dir;
-use log::{debug, error, info};
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
-use serde_derive::{Deserialize, Serialize};
+use orion_error::UvsResFrom;
 
 use crate::{
     error::SpecResult,
     log_guard,
     tools::{ensure_path, get_repo_name},
-    types::{AsyncUpdateable, RedoLevel, UpdateOptions},
+    types::AsyncUpdateable,
     vars::EnvEvalable,
 };
 

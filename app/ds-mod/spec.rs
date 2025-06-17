@@ -3,7 +3,8 @@ use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
-use orion_syspec::types::{Localizable, Persistable, RedoLevel, UpdateLevel, UpdateOptions};
+use orion_syspec::types::{Localizable, Persistable};
+use orion_syspec::update::{RedoLevel, UpdateLevel, UpdateOptions};
 use std::path::PathBuf;
 
 use crate::args::{self};
