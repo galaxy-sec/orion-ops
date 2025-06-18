@@ -5,7 +5,7 @@ pub mod spec;
 use crate::predule::*;
 use std::{net::Ipv4Addr, path::PathBuf};
 
-use crate::types::{Localizable, LocalizePath};
+use crate::types::{Localizable, LocalizeOptions, LocalizePath};
 use crate::vars::{ValueDict, ValueType};
 use async_trait::async_trait;
 use derive_more::Deref;
@@ -65,12 +65,12 @@ impl Localizable for ModulesList {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()> {
         let root = dst_path.map(|x| x.join_all("mods"));
         for m in &self.mods {
             if m.is_enable() {
-                m.localize(root.clone(), global_value.clone()).await?;
+                m.localize(root.clone(), options.clone()).await?;
             }
         }
         Ok(())

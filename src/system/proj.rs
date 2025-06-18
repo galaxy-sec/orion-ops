@@ -10,12 +10,12 @@ use crate::{
     workflow::prj::GxlProject,
 };
 
-use async_trait::async_trait;
-
 use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
 };
+use crate::types::LocalizeOptions;
+use async_trait::async_trait;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 struct SysConf {
@@ -121,7 +121,7 @@ impl Localizable for SysConf {
     async fn localize(
         &self,
         _dst_path: Option<LocalizePath>,
-        _global_value: Option<PathBuf>,
+        _options: LocalizeOptions,
     ) -> SpecResult<()> {
         Ok(())
     }
@@ -132,15 +132,15 @@ impl Localizable for SysProject {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        _global_value: Option<PathBuf>,
+        mut options: LocalizeOptions,
     ) -> SpecResult<()> {
         let value_file = self.root_local().join("value.yml");
-        let global_value = Some(value_file);
+        options.update_global(value_file);
 
         self.conf
-            .localize(dst_path.clone(), global_value.clone())
+            .localize(dst_path.clone(), options.clone())
             .await?;
-        self.sys_spec().localize(dst_path, global_value).await?;
+        self.sys_spec().localize(dst_path, options).await?;
         Ok(())
     }
 }
@@ -172,7 +172,7 @@ pub mod tests {
         module::depend::{Dependency, DependencySet},
         system::{proj::SysProject, spec::SysModelSpec},
         tools::{make_clean_path, test_init},
-        types::Localizable,
+        types::{Localizable, LocalizeOptions},
         update::UpdateOptions,
     };
     #[tokio::test]
@@ -202,7 +202,10 @@ pub mod tests {
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");
-        project.localize(None, None).await.assert("spec.localize");
+        project
+            .localize(None, LocalizeOptions::for_test())
+            .await
+            .assert("spec.localize");
         Ok(())
     }
 

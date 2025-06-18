@@ -19,7 +19,7 @@ use crate::{
     types::{AsyncUpdateable, Persistable},
     workflow::act::ModWorkflows,
 };
-
+use crate::types::LocalizeOptions;
 use super::{
     CpuArch, OsCPE, RunSPC, TargetNode,
     depend::DependencySet,
@@ -132,14 +132,14 @@ impl Localizable for ModuleSpec {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()> {
         for target in self.targets.values() {
             let target_dst_path = dst_path
                 .as_ref()
                 .map(|x| x.join_all(PathBuf::from(target.target().to_string())));
             target
-                .localize(target_dst_path, global_value.clone())
+                .localize(target_dst_path, options.clone())
                 .await?;
         }
         Ok(())

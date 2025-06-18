@@ -10,7 +10,7 @@ use crate::{
     tools::make_clean_path,
     types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
 };
-
+use crate::types::LocalizeOptions;
 use super::TargetNode;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -97,7 +97,7 @@ impl Localizable for ModuleSpecRef {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()> {
         if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
@@ -114,7 +114,7 @@ impl Localizable for ModuleSpecRef {
                 let value = PathBuf::from(self.name());
                 let local = PathBuf::from(self.name()).join("local");
                 let cur_dst_path = dst_path.map(|x| x.join(local, value));
-                spec.localize(cur_dst_path, global_value).await?;
+                spec.localize(cur_dst_path, options).await?;
                 flag.flag_suc();
             }
             Ok(())

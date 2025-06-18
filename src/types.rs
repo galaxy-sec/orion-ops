@@ -60,12 +60,42 @@ impl LocalizePath {
         }
     }
 }
+#[derive(Clone, Debug)]
+pub struct LocalizeOptions {
+    global_value_path: Option<PathBuf>,
+    mod_default: bool,
+}
+impl LocalizeOptions {
+    pub fn new(global_value_path: Option<PathBuf>, mod_default: bool) -> Self {
+        Self {
+            global_value_path,
+            mod_default,
+        }
+    }
+    pub fn global_value(&self) -> Option<&PathBuf> {
+        self.global_value_path.as_ref()
+    }
+    pub fn update_global(&mut self, value: PathBuf) {
+        self.global_value_path = Some(value);
+    }
+    pub fn use_mod_default(&self) -> bool {
+        self.mod_default
+    }
+
+    pub fn for_test() -> Self {
+        Self {
+            global_value_path: None,
+            mod_default: false,
+        }
+    }
+}
+
 #[async_trait]
 pub trait Localizable {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()>;
 }
 

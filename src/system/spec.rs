@@ -12,16 +12,16 @@ use crate::{
 use async_trait::async_trait;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 
+use super::{
+    ModulesList,
+    init::{SysIniter, sys_init_gitignore},
+};
+use crate::types::LocalizeOptions;
 use crate::{
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
     types::{Configable, Persistable},
-};
-
-use super::{
-    ModulesList,
-    init::{SysIniter, sys_init_gitignore},
 };
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
@@ -134,7 +134,7 @@ impl Localizable for SysModelSpec {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()> {
         if let Some(_local) = &self.local {
             /*
@@ -147,7 +147,7 @@ impl Localizable for SysModelSpec {
             }
             self.mod_list.localize(Some(base_path)).await?;
             */
-            self.mod_list.localize(dst_path, global_value).await?;
+            self.mod_list.localize(dst_path, options).await?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()
@@ -240,7 +240,9 @@ pub mod tests {
         spec.update_local(&UpdateOptions::for_test())
             .await
             .assert("update");
-        spec.localize(None, None).await.assert("localize");
+        spec.localize(None, LocalizeOptions::for_test())
+            .await
+            .assert("localize");
         Ok(())
     }
 }

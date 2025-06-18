@@ -3,7 +3,7 @@ use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
-use orion_syspec::types::{Localizable, Persistable};
+use orion_syspec::types::{Localizable, LocalizeOptions, Persistable};
 use orion_syspec::update::UpdateOptions;
 use std::path::PathBuf;
 
@@ -29,12 +29,15 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
             let options = UpdateOptions::from(dfx.force);
             spec.update(&options).await.err_conv()?;
         }
-        args::GxModCmd::Localize(dfx) => {
-            configure_dfx_logging(&dfx);
+        args::GxModCmd::Localize(args) => {
+            configure_dfx_logging(&args);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            spec.localize(None, dfx.value.map(PathBuf::from))
-                .await
-                .err_conv()?;
+            spec.localize(
+                None,
+                LocalizeOptions::new(args.value.map(PathBuf::from), args.mod_default),
+            )
+            .await
+            .err_conv()?;
         }
     }
     Ok(())

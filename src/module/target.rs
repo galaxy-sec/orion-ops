@@ -4,6 +4,13 @@ use std::str::FromStr;
 use crate::{const_vars::VALUE_DIR, vars::EnvEvalable};
 use async_trait::async_trait;
 
+use super::{
+    TargetNode,
+    depend::DependencySet,
+    localize::LocalizeTemplate,
+    setting::{Setting, TemplateConfig},
+};
+use crate::types::LocalizeOptions;
 use crate::{
     addr::path_file_name,
     artifact::ArtifactPackage,
@@ -21,13 +28,6 @@ use crate::{
     },
     vars::{OriginDict, ValueDict, VarCollection},
     workflow::{act::ModWorkflows, prj::GxlProject},
-};
-
-use super::{
-    TargetNode,
-    depend::DependencySet,
-    localize::LocalizeTemplate,
-    setting::{Setting, TemplateConfig},
 };
 
 #[derive(Getters, Clone, Debug)]
@@ -230,7 +230,7 @@ impl Localizable for ModTargetSpec {
     async fn localize(
         &self,
         dst_path: Option<LocalizePath>,
-        global_value: Option<PathBuf>,
+        options: LocalizeOptions,
     ) -> SpecResult<()> {
         let mut flag = log_guard!(
             info!(target : "/mod/target", "mod-target localize {} success!", self.target()),
@@ -267,7 +267,7 @@ impl Localizable for ModTargetSpec {
             vars_dict.save_valconf(&value_path)?;
         }
         debug!(target : "/mod/target/loc", "value export");
-        if let Some(global) = global_value {
+        if let Some(global) = options.global_value() {
             let mut used = OriginDict::from(ValueDict::from_valconf(&global)?);
             used.set_source("global");
             let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
@@ -391,7 +391,10 @@ pub mod test {
             &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
         )
         .assert();
-        loaded.localize(None, None).await.assert();
+        loaded
+            .localize(None, LocalizeOptions::for_test())
+            .await
+            .assert();
         Ok(())
     }
 
@@ -406,7 +409,10 @@ pub mod test {
             &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
         )
         .assert();
-        loaded.localize(None, None).await.assert();
+        loaded
+            .localize(None, LocalizeOptions::for_test())
+            .await
+            .assert();
         Ok(())
     }
 }

@@ -6,6 +6,7 @@ use git2::{
     build::{CheckoutBuilder, RepoBuilder},
 };
 use home::home_dir;
+use log::warn;
 use orion_error::UvsResFrom;
 
 use crate::{
@@ -283,7 +284,7 @@ impl AsyncUpdateable for GitAddr {
         if git_local.exists() && options.clean_git_cache() {
             std::fs::remove_dir_all(&git_local).owe_logic().with(&ctx)?;
             std::fs::create_dir_all(&git_local).owe_logic().with(&ctx)?;
-            info!(
+            warn!(
                 target : "addr/git",
                 "remove cache {} from {} ", self.repo,git_local.display()
             )

@@ -29,7 +29,7 @@ pub struct UpdateArgs {
 
     /// force update;
     /// eg : -f 2;
-    /// 1,  2: force update remote git
+    /// 1,2,3: force update remote git
     #[arg(short = 'f', long = "force", default_value = "0")]
     pub force: usize,
 }
@@ -54,6 +54,10 @@ pub struct LocalArgs {
     /// use vlaue file; eg: --value cicd_value.yml
     #[arg(long = "value")]
     pub value: Option<String>,
+
+    /// enable default module mode
+    #[arg(long = "mod_default")]
+    pub mod_default: bool,
 }
 impl DfxArgsGetter for LocalArgs {
     fn debug_level(&self) -> usize {
