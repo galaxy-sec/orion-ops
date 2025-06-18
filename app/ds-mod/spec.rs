@@ -4,7 +4,7 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
 use orion_syspec::types::{Localizable, Persistable};
-use orion_syspec::update::{RedoLevel, UpdateLevel, UpdateOptions};
+use orion_syspec::update::{DurationLevel, ScopeLevel, UpdateOptions};
 use std::path::PathBuf;
 
 use crate::args::{self};
@@ -26,13 +26,8 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
         args::GxModCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            let redo_level = RedoLevel::from(dfx.force);
-            spec.update(&UpdateOptions::new(
-                redo_level,
-                UpdateLevel::from(dfx.level),
-            ))
-            .await
-            .err_conv()?;
+            let options = UpdateOptions::from(dfx.force);
+            spec.update(&options).await.err_conv()?;
         }
         args::GxModCmd::Localize(dfx) => {
             configure_dfx_logging(&dfx);

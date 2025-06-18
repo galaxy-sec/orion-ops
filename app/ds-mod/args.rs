@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_getters::Getters;
-use orion_syspec::{infra::DfxArgsGetter, update::UpdateLevel};
+use orion_syspec::{infra::DfxArgsGetter, update::DurationLevel};
 
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "ds-mod")]
@@ -100,12 +100,12 @@ pub enum UpLevelArg {
     Elm,
 }
 
-impl From<UpLevelArg> for UpdateLevel {
+impl From<UpLevelArg> for DurationLevel {
     fn from(value: UpLevelArg) -> Self {
         match value {
-            UpLevelArg::All => Self::All,
-            UpLevelArg::Mod => Self::Mod,
-            UpLevelArg::Elm => Self::Elm,
+            UpLevelArg::All => Self::DurLong,
+            UpLevelArg::Mod => Self::DurProj,
+            UpLevelArg::Elm => Self::DurMod,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{predule::*, update::RedoLevel};
+use crate::{predule::*, update::ScopeLevel};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
@@ -280,7 +280,7 @@ impl AsyncUpdateable for GitAddr {
             )
         );
         debug!( target : "addr/git", "update options {:?} where :{} ", options, git_local.display() );
-        if git_local.exists() && options.redo_level() == RedoLevel::ReAll {
+        if git_local.exists() && options.redo_level() == ScopeLevel::InHost {
             std::fs::remove_dir_all(&git_local).owe_logic().with(&ctx)?;
             std::fs::create_dir_all(&git_local).owe_logic().with(&ctx)?;
             info!(

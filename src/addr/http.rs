@@ -1,10 +1,6 @@
-use crate::{predule::*, update::RedoLevel};
-use std::path::{Path, PathBuf};
+use crate::predule::*;
 
-use async_trait::async_trait;
-use derive_getters::Getters;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsResFrom, WithContext};
-use serde_derive::{Deserialize, Serialize};
+use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
@@ -118,7 +114,7 @@ impl HttpAddr {
     pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
-        if dest_path.exists() && options.redo_level() == RedoLevel::ReChange {
+        if dest_path.exists() && options.use_remote_file() {
             info!(target :"spec/addr", "{} exists , ignore!! ",dest_path.display());
             return Ok(dest_path.to_path_buf());
         }

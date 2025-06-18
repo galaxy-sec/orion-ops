@@ -1,4 +1,4 @@
-use crate::{predule::*, update::UpdateLevel};
+use crate::{predule::*, update::DurationLevel};
 
 use async_trait::async_trait;
 
@@ -64,7 +64,7 @@ impl ModuleSpecRef {
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let target_root = local.join(self.name());
-                if options.level() != UpdateLevel::Elm {
+                if options.level() != DurationLevel::DurMod {
                     let tmp_name = "__mod";
                     let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
                     let mod_path = prj_path.join(MOD_DIR);

@@ -1,4 +1,4 @@
-use crate::{predule::*, update::RedoLevel};
+use crate::{predule::*, update::ScopeLevel};
 
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
@@ -45,7 +45,7 @@ impl AsyncUpdateable for LocalAddr {
 
         if src.is_file() {
             std::fs::copy(&src, &dst).owe_res()?;
-        } else if dst.exists() && up_options.redo_level() == RedoLevel::ReChange {
+        } else if dst.exists() && up_options.reuse_exists_path() {
             info!(
                 target : "spec/addr/local",
                 "ignore update {} to {} !", src.display(),dst_copy.display()
