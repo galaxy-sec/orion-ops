@@ -261,14 +261,15 @@ impl Localizable for ModTargetSpec {
         std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
-        if !value_path.exists() {
+        if !value_path.exists() || options.use_default_value() {
             value_path.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
             vars_dict.save_valconf(&value_path)?;
+            info!( target:"mod/target", "crate  value.yml at : {}" ,value_path.display() );
         }
         debug!(target : "/mod/target/loc", "value export");
         if let Some(global) = options.global_value() {
-            let mut used = OriginDict::from(ValueDict::from_valconf(&global)?);
+            let mut used = OriginDict::from(ValueDict::from_valconf(global)?);
             used.set_source("global");
             let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
             cur_mod.set_source("mod");

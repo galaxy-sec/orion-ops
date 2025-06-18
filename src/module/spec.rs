@@ -9,6 +9,14 @@ use crate::{
 };
 use async_trait::async_trait;
 
+use super::{
+    CpuArch, OsCPE, RunSPC, TargetNode,
+    depend::DependencySet,
+    init::{ModIniter, ModPrjIniter, mod_init_gitignore},
+    setting::Setting,
+    target::ModTargetSpec,
+};
+use crate::types::LocalizeOptions;
 use crate::{
     addr::{HttpAddr, path_file_name},
     artifact::{Artifact, ArtifactPackage},
@@ -18,14 +26,6 @@ use crate::{
     tools::get_sub_dirs,
     types::{AsyncUpdateable, Persistable},
     workflow::act::ModWorkflows,
-};
-use crate::types::LocalizeOptions;
-use super::{
-    CpuArch, OsCPE, RunSPC, TargetNode,
-    depend::DependencySet,
-    init::{ModIniter, ModPrjIniter, mod_init_gitignore},
-    setting::Setting,
-    target::ModTargetSpec,
 };
 
 #[derive(Getters, Clone, Debug)]
@@ -138,9 +138,7 @@ impl Localizable for ModuleSpec {
             let target_dst_path = dst_path
                 .as_ref()
                 .map(|x| x.join_all(PathBuf::from(target.target().to_string())));
-            target
-                .localize(target_dst_path, options.clone())
-                .await?;
+            target.localize(target_dst_path, options.clone()).await?;
         }
         Ok(())
     }

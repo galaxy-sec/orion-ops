@@ -28,16 +28,9 @@ impl From<usize> for UpdateOptions {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct UpdateOptions {
     scope_level: UpdateScope,
-}
-impl Default for UpdateOptions {
-    fn default() -> Self {
-        Self {
-            scope_level: UpdateScope::default(),
-        }
-    }
 }
 impl UpdateOptions {
     pub fn new(re_level: UpdateScope) -> Self {

@@ -2,6 +2,8 @@ use crate::predule::*;
 
 use async_trait::async_trait;
 
+use super::TargetNode;
+use crate::types::LocalizeOptions;
 use crate::{
     addr::AddrType,
     const_vars::MOD_DIR,
@@ -10,8 +12,6 @@ use crate::{
     tools::make_clean_path,
     types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
 };
-use crate::types::LocalizeOptions;
-use super::TargetNode;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
@@ -65,7 +65,7 @@ impl ModuleSpecRef {
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let target_root = local.join(self.name());
                 let target_path = target_root.join(self.node().to_string());
-                if target_path.exists() && options.clean_exist_ref_mod() {
+                if !target_path.exists() || options.clean_exist_ref_mod() {
                     let tmp_name = "__mod";
                     let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
                     let mod_path = prj_path.join(MOD_DIR);
@@ -80,8 +80,9 @@ impl ModuleSpecRef {
                         std::fs::remove_dir_all(tmp_path).owe_sys()?;
                     }
                 }
+
                 debug!(target: "mod/ref",  "update target success!" );
-                let target_path = target_root.join(self.node().to_string());
+                //let target_path = target_root.join(self.node().to_string());
                 let spec = ModTargetSpec::load_from(&target_path).with(&target_root)?;
                 let _x = spec.update_local(&target_path, options).await?;
                 ModTargetSpec::clean_other(&target_root, self.node())?;

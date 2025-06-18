@@ -56,8 +56,8 @@ pub struct LocalArgs {
     pub value: Option<String>,
 
     /// enable default module mode
-    #[arg(long = "mod_default")]
-    pub mod_default: bool,
+    #[arg(long = "default_value")]
+    pub default_value: bool,
 }
 impl DfxArgsGetter for LocalArgs {
     fn debug_level(&self) -> usize {
