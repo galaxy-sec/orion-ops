@@ -5,7 +5,6 @@ use async_trait::async_trait;
 use crate::{
     addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     types::AsyncUpdateable,
-    vars::EnvEvalable,
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
@@ -100,11 +99,7 @@ impl Dependency {
 #[async_trait]
 impl AsyncUpdateable for Dependency {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.addr
-            .clone()
-            .env_eval()
-            .update_local(path, options)
-            .await
+        self.addr.update_local(path, options).await
     }
 }
 

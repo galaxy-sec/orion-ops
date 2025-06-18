@@ -1,5 +1,8 @@
 use std::env;
 
+use log::debug;
+use tracing::error;
+
 pub fn expand_env_vars(input: &str) -> String {
     let mut result = String::new();
     let mut chars = input.chars().peekable();
@@ -24,8 +27,12 @@ pub fn expand_env_vars(input: &str) -> String {
             // 处理变量替换
             if found_closing_brace {
                 match env::var(&var_name) {
-                    Ok(value) => result.push_str(&value),
+                    Ok(value) => {
+                        debug!("get env var {} : {}", var_name, value);
+                        result.push_str(&value);
+                    }
                     Err(_) => {
+                        error!("not get env var :{}", var_name);
                         result.push_str("${");
                         result.push_str(&var_name);
                         result.push('}');

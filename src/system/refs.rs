@@ -2,7 +2,7 @@ use crate::predule::*;
 
 use async_trait::async_trait;
 
-use crate::{addr::AddrType, error::SpecResult, types::AsyncUpdateable, vars::EnvEvalable};
+use crate::{addr::AddrType, error::SpecResult, types::AsyncUpdateable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct SysModelSpecRef {
@@ -21,11 +21,7 @@ impl SysModelSpecRef {
 #[async_trait]
 impl AsyncUpdateable for SysModelSpecRef {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        self.addr
-            .clone()
-            .env_eval()
-            .update_local(path, options)
-            .await
+        self.addr.update_local(path, options).await
     }
 
     async fn update_rename(

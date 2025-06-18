@@ -30,7 +30,8 @@ impl EnvEvalable<AddrType> for AddrType {
 #[async_trait]
 impl AsyncUpdateable for AddrType {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        match self {
+        let ins = self.clone().env_eval();
+        match ins {
             AddrType::Git(addr) => addr.update_local(path, options).await,
             AddrType::Http(addr) => addr.update_local(path, options).await,
             AddrType::Local(addr) => addr.update_local(path, options).await,
@@ -43,7 +44,8 @@ impl AsyncUpdateable for AddrType {
         name: &str,
         options: &UpdateOptions,
     ) -> SpecResult<PathBuf> {
-        match self {
+        let ins = self.clone().env_eval();
+        match ins {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,
             AddrType::Http(addr) => addr.update_rename(path, name, options).await,
             AddrType::Local(addr) => addr.update_rename(path, name, options).await,
