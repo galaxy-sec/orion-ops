@@ -1,4 +1,4 @@
-use crate::{predule::*, update::KeepDuration};
+use crate::predule::*;
 
 use async_trait::async_trait;
 
@@ -64,7 +64,8 @@ impl ModuleSpecRef {
                 );
                 std::fs::create_dir_all(local).owe_res().with(local)?;
                 let target_root = local.join(self.name());
-                if options.level() != KeepDuration::DurMod {
+                let target_path = target_root.join(self.node().to_string());
+                if target_path.exists() && options.clean_exist_ref_mod() {
                     let tmp_name = "__mod";
                     let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
                     let mod_path = prj_path.join(MOD_DIR);

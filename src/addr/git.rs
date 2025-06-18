@@ -1,4 +1,4 @@
-use crate::{predule::*, update::KeepScope};
+use crate::predule::*;
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
@@ -280,7 +280,7 @@ impl AsyncUpdateable for GitAddr {
             )
         );
         debug!( target : "addr/git", "update options {:?} where :{} ", options, git_local.display() );
-        if git_local.exists() && options.redo_level() == KeepScope::InHost {
+        if git_local.exists() && options.clean_git_cache() {
             std::fs::remove_dir_all(&git_local).owe_logic().with(&ctx)?;
             std::fs::create_dir_all(&git_local).owe_logic().with(&ctx)?;
             info!(
@@ -288,7 +288,7 @@ impl AsyncUpdateable for GitAddr {
                 "remove cache {} from {} ", self.repo,git_local.display()
             )
         } else {
-            debug!( target : "addr/git", "git_local:{} , redo: {:?} ",  git_local.exists(), options.redo_level() );
+            debug!( target : "addr/git", "git_local:{} , clean : {} ",  git_local.exists(), options.clean_git_cache() );
         }
 
         match git2::Repository::open(&git_local) {
