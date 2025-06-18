@@ -1,5 +1,7 @@
+use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::predule::*;
 
+use crate::tools::ensure_path;
 use crate::{
     const_vars::SYS_MODEL_SPC_ROOT,
     error::SpecResult,
@@ -68,7 +70,8 @@ impl SysProject {
         let sys_local = root_local.join("sys");
         let sys_spec = SysModelSpec::load_from(&sys_local)?;
         let project = GxlProject::load_from(&root_local)?;
-        let value_file = root_local.join("value.yml");
+        let value_root = ensure_path(root_local.join(VALUE_DIR))?;
+        let value_file = value_root.join(VALUE_FILE);
         let val_dict = ValueDict::from_conf(&value_file)?;
         flag.flag_suc();
         Ok(Self {
@@ -94,7 +97,9 @@ impl SysProject {
         self.conf.save_conf(&conf_file)?;
         self.sys_spec.save_local(self.root_local(), "sys")?;
         self.project.save_to(self.root_local(), None)?;
-        let value_file = self.root_local().join("value.yml");
+
+        let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
+        let value_file = value_root.join(VALUE_FILE);
         self.val_dict.save_conf(&value_file)?;
         sys_init_gitignore(self.root_local())?;
         flag.flag_suc();
@@ -127,15 +132,12 @@ impl Localizable for SysConf {
     }
 }
 
-#[async_trait]
-impl Localizable for SysProject {
-    async fn localize(
-        &self,
-        dst_path: Option<LocalizePath>,
-        mut options: LocalizeOptions,
-    ) -> SpecResult<()> {
-        let value_file = self.root_local().join("value.yml");
+impl SysProject {
+    pub async fn localize(&self, mut options: LocalizeOptions) -> SpecResult<()> {
+        let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
+        let value_file = value_root.join(VALUE_FILE);
         options.update_global(value_file);
+        let dst_path = Some(LocalizePath::from_root(value_root));
 
         self.conf
             .localize(dst_path.clone(), options.clone())
@@ -172,7 +174,7 @@ pub mod tests {
         module::depend::{Dependency, DependencySet},
         system::{proj::SysProject, spec::SysModelSpec},
         tools::{make_clean_path, test_init},
-        types::{Localizable, LocalizeOptions},
+        types::LocalizeOptions,
         update::UpdateOptions,
     };
     #[tokio::test]
@@ -203,7 +205,7 @@ pub mod tests {
             .await
             .assert("spec.update_local");
         project
-            .localize(None, LocalizeOptions::for_test())
+            .localize(LocalizeOptions::for_test())
             .await
             .assert("spec.localize");
         Ok(())

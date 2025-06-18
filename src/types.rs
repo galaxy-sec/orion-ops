@@ -8,7 +8,7 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{addr::rename_path, const_vars::LOCAL_DIR, error::SpecResult, update::UpdateOptions};
+use crate::{addr::rename_path, error::SpecResult, update::UpdateOptions};
 
 pub trait Persistable<T> {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()>;
@@ -31,31 +31,28 @@ pub trait AsyncUpdateable {
 
 #[derive(Clone, Debug, Getters)]
 pub struct LocalizePath {
-    local: PathBuf,
+    //local: PathBuf,
     value: PathBuf,
 }
 impl LocalizePath {
-    pub fn new<P: AsRef<Path>>(local: P, value: P) -> Self {
+    pub fn new<P: AsRef<Path>>(value: P) -> Self {
         Self {
-            local: PathBuf::from(local.as_ref()),
+            //local: PathBuf::from(local.as_ref()),
             value: PathBuf::from(value.as_ref()),
         }
     }
-    pub fn from_root(root: &Path) -> Self {
-        Self {
-            local: root.join(LOCAL_DIR),
-            value: root.join("value"),
-        }
+    pub fn from_root(root: PathBuf) -> Self {
+        Self { value: root }
     }
     pub fn join_all<P: AsRef<Path>>(&self, path: P) -> Self {
         Self {
-            local: self.local.join(&path),
+            //local: self.local.join(&path),
             value: self.value.join(&path),
         }
     }
-    pub fn join<P: AsRef<Path>>(&self, local: P, value: P) -> Self {
+    pub fn join<P: AsRef<Path>>(&self, value: P) -> Self {
         Self {
-            local: self.local.join(&local),
+            //local: self.local.join(&local),
             value: self.value.join(&value),
         }
     }

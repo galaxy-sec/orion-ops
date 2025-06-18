@@ -28,10 +28,10 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
         GSysCmd::Localize(args) => {
             configure_dfx_logging(&args);
             let spec = SysProject::load(&current_dir).err_conv()?;
-            spec.localize(
-                None,
-                LocalizeOptions::new(args.value.map(PathBuf::from), args.default_value),
-            )
+            spec.localize(LocalizeOptions::new(
+                args.value.map(PathBuf::from),
+                args.default_value,
+            ))
             .await
             .err_conv()?;
         }

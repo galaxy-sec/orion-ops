@@ -109,12 +109,12 @@ impl Localizable for ModuleSpecRef {
                 let mod_path = local.join(self.name.as_str());
                 let target_path = mod_path.join(self.node().to_string());
                 let spec = ModTargetSpec::load_from(&target_path)?;
-                if let Some(dst) = &dst_path {
-                    spec.save_main(dst.local(), None)?;
-                }
+                //if let Some(dst) = &dst_path {
+                //    spec.save_main(dst.local(), None)?;
+                //}
                 let value = PathBuf::from(self.name());
-                let local = PathBuf::from(self.name()).join("local");
-                let cur_dst_path = dst_path.map(|x| x.join(local, value));
+                //let local = PathBuf::from(self.name()).join("local");
+                let cur_dst_path = dst_path.map(|x| x.join(value));
                 spec.localize(cur_dst_path, options).await?;
                 flag.flag_suc();
             }

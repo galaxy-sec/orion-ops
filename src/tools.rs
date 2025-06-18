@@ -67,11 +67,13 @@ pub fn make_clean_path(path: &Path) -> SpecResult<()> {
     std::fs::create_dir_all(path).owe_sys().with(path)?;
     Ok(())
 }
-pub fn ensure_path(path: &Path) -> SpecResult<()> {
-    if !path.exists() {
-        std::fs::create_dir_all(path).owe_sys().with(path)?;
+pub fn ensure_path<P: AsRef<Path>>(path: P) -> SpecResult<P> {
+    if !path.as_ref().exists() {
+        std::fs::create_dir_all(path.as_ref())
+            .owe_sys()
+            .with(path.as_ref())?;
     }
-    Ok(())
+    Ok(path)
 }
 
 pub fn make_new_path(path: &Path) -> SpecResult<()> {

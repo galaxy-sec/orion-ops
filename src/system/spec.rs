@@ -137,16 +137,6 @@ impl Localizable for SysModelSpec {
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         if let Some(_local) = &self.local {
-            /*
-            let base_path = dst_path.unwrap_or(LocalizePath::from_root(local));
-            let value_path = base_path.value().join(VALUE_FILE);
-            if !value_path.exists() {
-                value_path.parent().map(std::fs::create_dir_all);
-                let export = self.vars().value_dict();
-                export.save_json(&value_path)?
-            }
-            self.mod_list.localize(Some(base_path)).await?;
-            */
             self.mod_list.localize(dst_path, options).await?;
             Ok(())
         } else {

@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{const_vars::LOCAL_DIR, predule::*};
 use std::str::FromStr;
 
 use crate::{const_vars::VALUE_DIR, vars::EnvEvalable};
@@ -244,16 +244,15 @@ impl Localizable for ModTargetSpec {
                 .with(&ctx),
         )?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
-        let localize_path = dst_path.unwrap_or(LocalizePath::new(
-            local.join(crate::const_vars::LOCAL_DIR),
-            local.clone(),
-        ));
+        let localize_path = dst_path.unwrap_or(LocalizePath::new(local.clone()));
 
         let value_root = localize_path.value().join(VALUE_DIR);
         let value_path = value_root.join(crate::const_vars::VALUE_FILE);
         let used_readable = value_root.join(crate::const_vars::USED_READABLE_FILE);
         let used_json_path = value_root.join(crate::const_vars::USED_JSON);
-        let local_path = localize_path.local();
+        //let local_path = localize_path.local();
+        let local_path_ins = local.join(LOCAL_DIR);
+        let local_path = &local_path_ins;
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         if local_path.exists() {
             std::fs::remove_dir_all(local_path).owe_res()?;
