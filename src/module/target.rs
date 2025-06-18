@@ -1,4 +1,9 @@
-use crate::{const_vars::LOCAL_DIR, predule::*};
+use crate::{
+    const_vars::{
+        DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_READABLE_FILE, USER_VALUE_FILE,
+    },
+    predule::*,
+};
 use std::str::FromStr;
 
 use crate::{const_vars::VALUE_DIR, vars::EnvEvalable};
@@ -247,8 +252,11 @@ impl Localizable for ModTargetSpec {
         let localize_path = dst_path.unwrap_or(LocalizePath::new(local.clone()));
 
         let value_root = localize_path.value().join(VALUE_DIR);
-        let value_path = value_root.join(crate::const_vars::VALUE_FILE);
-        let used_readable = value_root.join(crate::const_vars::USED_READABLE_FILE);
+        //let value_path = value_root.join(VALUE_FILE);
+        let used_readable = value_root.join(USED_READABLE_FILE);
+        let default_value_file = value_root.join(DEFAULT_VALUE_FILE);
+        let user_value_file = value_root.join(USER_VALUE_FILE);
+        let sample_value_file = value_root.join(SAMPLE_VALUE_FILE);
         let used_json_path = value_root.join(crate::const_vars::USED_JSON);
         //let local_path = localize_path.local();
         let local_path_ins = local.join(LOCAL_DIR);
@@ -260,32 +268,34 @@ impl Localizable for ModTargetSpec {
         std::fs::create_dir_all(local_path).owe_res()?;
 
         ctx.with_path("dst", local_path);
-        if !value_path.exists() || options.use_default_value() {
-            value_path.parent().map(std::fs::create_dir_all);
+        if !default_value_file.exists() {
+            default_value_file.parent().map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
-            vars_dict.save_valconf(&value_path)?;
-            info!( target:"mod/target", "crate  value.yml at : {}" ,value_path.display() );
+            vars_dict.save_valconf(&default_value_file)?;
+            vars_dict.save_valconf(&sample_value_file)?;
+            info!( target:"mod/target", "crate  value.yml at : {}" ,default_value_file.display() );
         }
         debug!(target : "/mod/target/loc", "value export");
-        if let Some(global) = options.global_value() {
+        let mut used = if let Some(global) = options.global_value() {
             let mut used = OriginDict::from(ValueDict::from_valconf(global)?);
             used.set_source("global");
-            let mut cur_mod = OriginDict::from(ValueDict::from_valconf(&value_path)?);
-            cur_mod.set_source("mod");
-            used.merge(&cur_mod);
-            used.export_origin()
-                .env_eval()
-                .save_valconf(&used_readable)?;
-            used.export_value().env_eval().save_json(&used_json_path)?;
+            used
         } else {
-            //let used = ValueDict::from_valconf(&value_path)?;
-            let used = OriginDict::from(ValueDict::from_valconf(&value_path)?);
-
-            used.export_origin()
-                .env_eval()
-                .save_valconf(&used_readable)?;
-            used.export_value().env_eval().save_json(&used_json_path)?;
+            OriginDict::new()
+        };
+        if user_value_file.exists() && !options.use_default_value() {
+            let mut user_dict = OriginDict::from(ValueDict::from_valconf(&user_value_file)?);
+            user_dict.set_source("mod-user");
+            used.merge(&user_dict);
         }
+        let mut default_dict = OriginDict::from(ValueDict::from_valconf(&default_value_file)?);
+        default_dict.set_source("mod-default");
+        used.merge(&default_dict);
+        used.export_origin()
+            .env_eval()
+            .save_valconf(&used_readable)?;
+        used.export_value().env_eval().save_json(&used_json_path)?;
+
         debug!(target : "/mod/target/loc", "update_local suc");
         let tpl_path_opt = self
             .setting
