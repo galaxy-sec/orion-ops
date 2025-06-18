@@ -4,7 +4,7 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
 use orion_syspec::types::{Localizable, Persistable};
-use orion_syspec::update::{DurationLevel, ScopeLevel, UpdateOptions};
+use orion_syspec::update::UpdateOptions;
 use std::path::PathBuf;
 
 use crate::args::{self};

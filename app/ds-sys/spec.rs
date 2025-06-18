@@ -6,7 +6,7 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::system::proj::SysProject;
 use orion_syspec::tools::make_new_path;
 use orion_syspec::types::Localizable;
-use orion_syspec::update::{DurationLevel, ScopeLevel, UpdateOptions};
+use orion_syspec::update::UpdateOptions;
 
 use crate::args::GSysCmd;
 

@@ -114,7 +114,7 @@ impl HttpAddr {
     pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
-        if dest_path.exists() && options.use_remote_file() {
+        if dest_path.exists() && options.reuse_remote_file() {
             info!(target :"spec/addr", "{} exists , ignore!! ",dest_path.display());
             return Ok(dest_path.to_path_buf());
         }

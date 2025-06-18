@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_getters::Getters;
-use orion_syspec::{infra::DfxArgsGetter, update::DurationLevel};
+use orion_syspec::infra::DfxArgsGetter;
 
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "ds-sys")]
@@ -32,9 +32,6 @@ pub struct UpdateArgs {
     /// 1,  2: force update remote git
     #[arg(short = 'f', long = "force", default_value = "0")]
     pub force: usize,
-    /// update scope;
-    #[clap(value_enum, default_value_t)]
-    pub level: UpLevelArg,
 }
 impl DfxArgsGetter for UpdateArgs {
     fn debug_level(&self) -> usize {
@@ -65,26 +62,5 @@ impl DfxArgsGetter for LocalArgs {
 
     fn log_setting(&self) -> Option<String> {
         self.log.clone()
-    }
-}
-
-#[derive(ValueEnum, Debug, Clone, Default, PartialEq)]
-pub enum UpLevelArg {
-    ///all
-    #[default]
-    All,
-    ///mod
-    Mod,
-    ///mod/element
-    Elm,
-}
-
-impl From<UpLevelArg> for DurationLevel {
-    fn from(value: UpLevelArg) -> Self {
-        match value {
-            UpLevelArg::All => Self::DurLong,
-            UpLevelArg::Mod => Self::DurProj,
-            UpLevelArg::Elm => Self::DurMod,
-        }
     }
 }
