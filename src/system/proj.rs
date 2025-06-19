@@ -72,7 +72,11 @@ impl SysProject {
         let project = GxlProject::load_from(&root_local)?;
         let value_root = ensure_path(root_local.join(VALUE_DIR))?;
         let value_file = value_root.join(VALUE_FILE);
-        let val_dict = ValueDict::from_conf(&value_file)?;
+        let val_dict = if value_file.exists() {
+            ValueDict::from_conf(&value_file)?
+        } else {
+            ValueDict::new()
+        };
         flag.flag_suc();
         Ok(Self {
             conf,

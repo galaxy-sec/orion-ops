@@ -103,7 +103,13 @@ pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecR
     let value_file = if let Some(v_file) = options {
         PathBuf::from(v_file)
     } else {
-        value_root.join(VALUE_FILE)
+        let v_file = value_root.join(VALUE_FILE);
+        if !v_file.exists() {
+            let mut dict = ValueDict::new();
+            dict.insert("SAMPLE_KEY", ValueType::from("SAMPLE_VAL"));
+            dict.save_valconf(&v_file)?;
+        }
+        v_file
     };
     let dict = ValueDict::from_valconf(&value_file)?;
     Ok(dict)
