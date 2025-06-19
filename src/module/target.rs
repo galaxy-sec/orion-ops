@@ -1,6 +1,7 @@
 use crate::{
     const_vars::{
         DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_READABLE_FILE, USER_VALUE_FILE,
+        VALUE_DIR,
     },
     predule::*,
 };
@@ -268,7 +269,7 @@ impl Localizable for ModTargetSpec {
                 .with(&ctx),
         )?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
-        let localize_path = dst_path.unwrap_or(LocalizePath::new(local.clone()));
+        let localize_path = dst_path.unwrap_or(LocalizePath::new(local.join(VALUE_DIR)));
 
         let value_root = localize_path.value(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
