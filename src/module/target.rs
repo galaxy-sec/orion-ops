@@ -16,6 +16,7 @@ use super::{
     localize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
 };
+use crate::tools::make_clean_path;
 use crate::types::LocalizeOptions;
 use crate::{
     addr::path_file_name,
@@ -54,6 +55,41 @@ impl ModTargetSpec {
     pub fn with_depends(mut self, depends: DependencySet) -> Self {
         self.depends = depends;
         self
+    }
+
+    fn build_used_value(
+        &self,
+        options: LocalizeOptions,
+        value_paths: &TargetValuePaths,
+    ) -> Result<OriginDict, StructError<SpecReason>> {
+        let mut used = OriginDict::from(options.global_value().clone());
+        used.set_source("global");
+        if value_paths.user_value_file().exists() && options.use_custom_value() {
+            let mut user_dict =
+                OriginDict::from(ValueDict::from_valconf(value_paths.user_value_file())?);
+            user_dict.set_source("mod-cust");
+            used.merge(&user_dict);
+        }
+        let mut default_dict = OriginDict::from(self.vars.value_dict());
+        default_dict.set_source("mod-default");
+        used.merge(&default_dict);
+        Ok(used)
+    }
+
+    fn crate_sample_value_file(
+        &self,
+        value_paths: &TargetValuePaths,
+    ) -> Result<(), StructError<SpecReason>> {
+        if !(value_paths.sample_value_file().exists() || value_paths.user_value_file().exists()) {
+            value_paths
+                .sample_value_file()
+                .parent()
+                .map(std::fs::create_dir_all);
+            let vars_dict = self.vars.value_dict();
+            vars_dict.save_valconf(value_paths.sample_value_file())?;
+            info!( target:"mod/target", "crate  value.yml at : {}" ,value_paths.sample_value_file().display() );
+        }
+        Ok(())
     }
 }
 
@@ -275,38 +311,11 @@ impl Localizable for ModTargetSpec {
         let value_paths = TargetValuePaths::from(value_root);
         let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
-        if local_path.exists() {
-            std::fs::remove_dir_all(&local_path).owe_res()?;
-        }
-        std::fs::create_dir_all(&local_path).owe_res()?;
-
+        make_clean_path(&local_path)?;
         ctx.with_path("dst", &local_path);
-        if !(value_paths.sample_value_file().exists() || value_paths.user_value_file().exists()) {
-            value_paths
-                .sample_value_file()
-                .parent()
-                .map(std::fs::create_dir_all);
-            let vars_dict = self.vars.value_dict();
-            vars_dict.save_valconf(value_paths.sample_value_file())?;
-            info!( target:"mod/target", "crate  value.yml at : {}" ,value_paths.sample_value_file().display() );
-        }
+        self.crate_sample_value_file(&value_paths)?;
         debug!(target : "/mod/target/loc", "value export");
-        let mut used = if let Some(global) = options.global_value() {
-            let mut used = OriginDict::from(ValueDict::from_valconf(global)?);
-            used.set_source("global");
-            used
-        } else {
-            OriginDict::new()
-        };
-        if value_paths.user_value_file().exists() && options.use_custom_value() {
-            let mut user_dict =
-                OriginDict::from(ValueDict::from_valconf(value_paths.user_value_file())?);
-            user_dict.set_source("mod-user");
-            used.merge(&user_dict);
-        }
-        let mut default_dict = OriginDict::from(self.vars.value_dict());
-        default_dict.set_source("mod-default");
-        used.merge(&default_dict);
+        let used = self.build_used_value(options, &value_paths)?;
         used.export_origin()
             .env_eval()
             .save_valconf(value_paths.used_readable())?;
@@ -338,7 +347,6 @@ impl Localizable for ModTargetSpec {
         localizer
             .render_path(&tpl, &local_path, value_paths.used_json_path(), &tpl_path)
             .with(&ctx)?;
-        //info!( target:"spec/mod/target", "localize mod-target success!: {}" ,local_path.display() );
         flag.flag_suc();
         Ok(())
     }
@@ -359,7 +367,7 @@ pub mod test {
             init::{ModIniter, ModPrjIniter},
         },
         tools::{make_clean_path, test_init},
-        vars::VarType,
+        vars::{OriginValue, ValueType, VarType},
     };
 
     use super::*;
@@ -442,5 +450,120 @@ pub mod test {
             .await
             .assert();
         Ok(())
+    }
+
+    fn build_spec(vars: VarCollection) -> ModTargetSpec {
+        let spec = ModTargetSpec::init(
+            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+            ArtifactPackage::default(),
+            ModWorkflows::default(),
+            GxlProject::default(),
+            CaculateResSpec::new(2, 4),
+            vars,
+            None,
+        );
+        spec
+    }
+
+    #[test]
+    fn test_build_used_value_with_default_only() {
+        test_init();
+        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let spec = build_spec(vars);
+        let options = LocalizeOptions::new(ValueDict::new(), false);
+        let temp_dir = tempfile::tempdir().unwrap();
+        let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
+
+        let result = spec.build_used_value(options, &value_paths).unwrap();
+        assert_eq!(
+            result.get("TEST_KEY"),
+            Some(&OriginValue::from("default_value").with_origin("mod-default"))
+        );
+    }
+
+    #[test]
+    fn test_build_used_value_with_global_value() {
+        test_init();
+        let mut global_dict = ValueDict::new();
+        global_dict.insert("TEST_KEY".to_string(), ValueType::from("global_value"));
+        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let spec = build_spec(vars);
+        let options = LocalizeOptions::new(global_dict, false);
+        let temp_dir = tempfile::tempdir().unwrap();
+        let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
+
+        let result = spec.build_used_value(options, &value_paths).unwrap();
+        assert_eq!(
+            result.get("TEST_KEY"),
+            //Some(&Value::String("global_value".to_string()))
+            Some(&OriginValue::from("global_value").with_origin("global"))
+        );
+    }
+
+    #[test]
+    fn test_build_used_value_with_user_value() {
+        test_init();
+        let temp_dir = tempfile::tempdir().unwrap();
+        let user_value_path = temp_dir.path().join(USER_VALUE_FILE);
+        std::fs::write(&user_value_path, "TEST_KEY: user_value").unwrap();
+
+        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let spec = build_spec(vars);
+        let options = LocalizeOptions::new(ValueDict::new(), true);
+        let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
+
+        let result = spec.build_used_value(options, &value_paths).unwrap();
+        assert_eq!(
+            result.get("TEST_KEY"),
+            Some(&OriginValue::from("user_value").with_origin("mod-cust"))
+        );
+    }
+
+    #[test]
+    fn test_build_used_value_merge_precedence() {
+        test_init();
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cust_value_path = temp_dir.path().join(USER_VALUE_FILE);
+        std::fs::write(
+            &cust_value_path,
+            "TEST_KEY: user_value\nUSER_ONLY: user_only",
+        )
+        .unwrap();
+
+        let mut global_dict = ValueDict::new();
+        global_dict.insert("TEST_KEY".to_string(), ValueType::from("global_value"));
+        global_dict.insert("GLOBAL_ONLY".to_string(), ValueType::from("global_only"));
+
+        let vars = VarCollection::define(vec![
+            VarType::from(("TEST_KEY", "default_value")),
+            VarType::from(("DEFAULT_ONLY", "default_only")),
+        ]);
+        let spec = build_spec(vars);
+        let options = LocalizeOptions::new(global_dict, true);
+        let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
+
+        let result = spec.build_used_value(options, &value_paths).unwrap();
+        // 验证优先级: global > cust  > default
+        assert_eq!(
+            result.get("TEST_KEY"),
+            //Some(&Value::String("user_value".to_string()))
+            Some(&OriginValue::from("global_value").with_origin("global"))
+        );
+        // 验证各层特有键都存在
+        assert_eq!(
+            result.get("GLOBAL_ONLY"),
+            //Some(&Value::String("global_only".to_string()))
+            Some(&OriginValue::from("global_only").with_origin("global"))
+        );
+        assert_eq!(
+            result.get("USER_ONLY"),
+            //Some(&Value::String("user_only".to_string()))
+            Some(&OriginValue::from("user_only").with_origin("mod-cust"))
+        );
+        assert_eq!(
+            result.get("DEFAULT_ONLY"),
+            //Some(&Value::String("default_only".to_string()))
+            Some(&OriginValue::from("default_only").with_origin("mod-default"))
+        );
     }
 }

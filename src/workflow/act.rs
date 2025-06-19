@@ -8,7 +8,7 @@ use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
 use crate::const_vars::WORKFLOWS_DIR;
 use crate::{error::SpecResult, types::Persistable};
 
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug, Default)]
 pub struct Workflows {
     //project: GxlProject,
     actions: Vec<Workflow>,

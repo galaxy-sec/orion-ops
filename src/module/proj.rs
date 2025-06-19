@@ -1,7 +1,9 @@
+use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::predule::*;
+use crate::tools::ensure_path;
 
 use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
-use crate::types::LocalizeOptions;
+use crate::types::{LocalizeOptions, ValueConfable};
 use crate::{
     addr::{AddrType, GitAddr, types::EnvVarPath},
     const_vars::MODULES_SPC_ROOT,
@@ -91,6 +93,20 @@ impl ModProject {
         flag.flag_suc();
         Ok(())
     }
+    pub fn load_global_value(&self, value: &Option<String>) -> SpecResult<ValueDict> {
+        load_project_global_value(self.root_local(), value)
+    }
+}
+
+pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecResult<ValueDict> {
+    let value_root = ensure_path(root.join(VALUE_DIR))?;
+    let value_file = if let Some(v_file) = options {
+        PathBuf::from(v_file)
+    } else {
+        value_root.join(VALUE_FILE)
+    };
+    let dict = ValueDict::from_valconf(&value_file)?;
+    Ok(dict)
 }
 
 impl ModConf {

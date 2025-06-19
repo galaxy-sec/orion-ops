@@ -8,7 +8,7 @@ use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{addr::rename_path, error::SpecResult, update::UpdateOptions};
+use crate::{addr::rename_path, error::SpecResult, update::UpdateOptions, vars::ValueDict};
 
 pub trait Persistable<T> {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()>;
@@ -57,23 +57,24 @@ impl LocalizePath {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct LocalizeOptions {
-    global_value_path: Option<PathBuf>,
+    global_dict: ValueDict,
     mod_custom_value: bool,
 }
 impl LocalizeOptions {
-    pub fn new(global_value_path: Option<PathBuf>, mod_user_value: bool) -> Self {
+    pub fn new(global_dict: ValueDict, mod_user_value: bool) -> Self {
         Self {
-            global_value_path,
+            global_dict,
             mod_custom_value: mod_user_value,
         }
     }
-    pub fn global_value(&self) -> Option<&PathBuf> {
-        self.global_value_path.as_ref()
+    pub fn global_value(&self) -> &ValueDict {
+        &self.global_dict
     }
-    pub fn update_global(&mut self, value: PathBuf) {
-        self.global_value_path = Some(value);
+    pub fn with_global(mut self, value: ValueDict) -> Self {
+        self.global_dict = value;
+        self
     }
     pub fn use_custom_value(&self) -> bool {
         self.mod_custom_value
@@ -81,7 +82,7 @@ impl LocalizeOptions {
 
     pub fn for_test() -> Self {
         Self {
-            global_value_path: None,
+            global_dict: ValueDict::new(),
             mod_custom_value: false,
         }
     }

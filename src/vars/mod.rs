@@ -12,5 +12,6 @@ pub use definition::{VarDefinition, VarValue};
 pub use dict::ValueDict;
 pub use global::setup_start_env_vars;
 pub use origin::OriginDict;
+pub use origin::OriginValue;
 pub use types::EnvEvalable;
 pub use types::{ValueType, VarType};

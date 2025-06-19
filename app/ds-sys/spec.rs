@@ -1,8 +1,7 @@
-use std::path::PathBuf;
-
 use orion_error::ErrorConv;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
+use orion_syspec::module::proj::load_project_global_value;
 use orion_syspec::system::proj::SysProject;
 use orion_syspec::tools::make_new_path;
 use orion_syspec::types::LocalizeOptions;
@@ -28,12 +27,10 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
         GSysCmd::Localize(args) => {
             configure_dfx_logging(&args);
             let spec = SysProject::load(&current_dir).err_conv()?;
-            spec.localize(LocalizeOptions::new(
-                args.value.map(PathBuf::from),
-                args.no_cust_value,
-            ))
-            .await
-            .err_conv()?;
+            let dict = load_project_global_value(spec.root_local(), args.value())?;
+            spec.localize(LocalizeOptions::new(dict, args.no_cust_value))
+                .await
+                .err_conv()?;
         }
     }
     Ok(())

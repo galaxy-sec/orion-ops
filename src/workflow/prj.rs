@@ -5,7 +5,7 @@ use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{const_vars::ADM_GXL, error::SpecResult, types::Persistable};
 
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug, Default)]
 pub struct GxlProject {
     work: String,
     adm: Option<String>,

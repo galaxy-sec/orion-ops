@@ -17,7 +17,7 @@ pub struct Artifact {
     local: String,
 }
 
-#[derive(Getters, Clone, Debug, Deserialize, Serialize, From)]
+#[derive(Getters, Clone, Debug, Deserialize, Serialize, From, Default)]
 #[serde(transparent)]
 pub struct ArtifactPackage {
     items: Vec<Artifact>,

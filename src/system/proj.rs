@@ -16,7 +16,7 @@ use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
 };
-use crate::types::LocalizeOptions;
+use crate::types::{LocalizeOptions, ValueConfable};
 use async_trait::async_trait;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -133,16 +133,17 @@ impl Localizable for SysConf {
 }
 
 impl SysProject {
-    pub async fn localize(&self, mut options: LocalizeOptions) -> SpecResult<()> {
+    pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
         let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
         let value_file = value_root.join(VALUE_FILE);
-        options.update_global(value_file);
+        let dict = ValueDict::from_valconf(&value_file)?;
+        let cur_opt = options.with_global(dict);
         let dst_path = Some(LocalizePath::from_root(value_root));
 
         self.conf
-            .localize(dst_path.clone(), options.clone())
+            .localize(dst_path.clone(), cur_opt.clone())
             .await?;
-        self.sys_spec().localize(dst_path, options).await?;
+        self.sys_spec().localize(dst_path, cur_opt).await?;
         Ok(())
     }
 }

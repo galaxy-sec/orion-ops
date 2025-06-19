@@ -47,6 +47,20 @@ impl From<ValueType> for OriginValue {
         }
     }
 }
+impl From<&str> for OriginValue {
+    fn from(value: &str) -> Self {
+        Self {
+            origin: None,
+            value: ValueType::from(value),
+        }
+    }
+}
+impl OriginValue {
+    pub fn with_origin<S: Into<String>>(mut self, origin: S) -> Self {
+        self.origin = Some(origin.into());
+        self
+    }
+}
 
 impl From<ValueDict> for OriginDict {
     fn from(value: ValueDict) -> Self {
