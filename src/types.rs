@@ -60,13 +60,13 @@ impl LocalizePath {
 #[derive(Clone, Debug)]
 pub struct LocalizeOptions {
     global_value_path: Option<PathBuf>,
-    mod_default_value: bool,
+    mod_custom_value: bool,
 }
 impl LocalizeOptions {
-    pub fn new(global_value_path: Option<PathBuf>, mod_default: bool) -> Self {
+    pub fn new(global_value_path: Option<PathBuf>, mod_user_value: bool) -> Self {
         Self {
             global_value_path,
-            mod_default_value: mod_default,
+            mod_custom_value: mod_user_value,
         }
     }
     pub fn global_value(&self) -> Option<&PathBuf> {
@@ -75,14 +75,14 @@ impl LocalizeOptions {
     pub fn update_global(&mut self, value: PathBuf) {
         self.global_value_path = Some(value);
     }
-    pub fn use_default_value(&self) -> bool {
-        self.mod_default_value
+    pub fn use_custom_value(&self) -> bool {
+        self.mod_custom_value
     }
 
     pub fn for_test() -> Self {
         Self {
             global_value_path: None,
-            mod_default_value: false,
+            mod_custom_value: false,
         }
     }
 }

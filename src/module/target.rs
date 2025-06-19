@@ -273,15 +273,14 @@ impl Localizable for ModTargetSpec {
 
         let value_root = localize_path.value(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
-        let local_path_ins = local.join(LOCAL_DIR);
-        let local_path = &local_path_ins;
+        let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         if local_path.exists() {
-            std::fs::remove_dir_all(local_path).owe_res()?;
+            std::fs::remove_dir_all(&local_path).owe_res()?;
         }
-        std::fs::create_dir_all(local_path).owe_res()?;
+        std::fs::create_dir_all(&local_path).owe_res()?;
 
-        ctx.with_path("dst", local_path);
+        ctx.with_path("dst", &local_path);
         if !(value_paths.sample_value_file().exists() || value_paths.user_value_file().exists()) {
             value_paths
                 .sample_value_file()
@@ -299,9 +298,9 @@ impl Localizable for ModTargetSpec {
         } else {
             OriginDict::new()
         };
-        if value_paths.user_value_file().exists() && !options.use_default_value() {
+        if value_paths.user_value_file().exists() && options.use_custom_value() {
             let mut user_dict =
-                OriginDict::from(ValueDict::from_valconf(&value_paths.user_value_file())?);
+                OriginDict::from(ValueDict::from_valconf(value_paths.user_value_file())?);
             user_dict.set_source("mod-user");
             used.merge(&user_dict);
         }
@@ -337,7 +336,7 @@ impl Localizable for ModTargetSpec {
             LocalizeTemplate::default()
         };
         localizer
-            .render_path(&tpl, local_path, value_paths.used_json_path(), &tpl_path)
+            .render_path(&tpl, &local_path, value_paths.used_json_path(), &tpl_path)
             .with(&ctx)?;
         //info!( target:"spec/mod/target", "localize mod-target success!: {}" ,local_path.display() );
         flag.flag_suc();

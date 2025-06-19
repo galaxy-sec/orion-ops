@@ -66,9 +66,9 @@ pub struct LocalArgs {
     /// use vlaue file; eg: --value cicd_value.yml
     #[arg(long = "value")]
     pub value: Option<String>,
-    /// enable default module mode
-    #[arg(long = "default_value")]
-    pub default_value: bool,
+    /// not use module  user value.yml
+    #[arg(long = "no_cust_value")]
+    pub no_cust_value: bool,
 }
 impl DfxArgsGetter for LocalArgs {
     fn debug_level(&self) -> usize {

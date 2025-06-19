@@ -30,7 +30,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
             let spec = SysProject::load(&current_dir).err_conv()?;
             spec.localize(LocalizeOptions::new(
                 args.value.map(PathBuf::from),
-                args.default_value,
+                args.no_cust_value,
             ))
             .await
             .err_conv()?;

@@ -34,7 +34,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
             let spec = ModProject::load(&current_dir).err_conv()?;
             spec.localize(
                 None,
-                LocalizeOptions::new(args.value.map(PathBuf::from), args.default_value),
+                LocalizeOptions::new(args.value.map(PathBuf::from), args.no_cust_value),
             )
             .await
             .err_conv()?;
