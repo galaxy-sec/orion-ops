@@ -2,12 +2,9 @@ extern mod head { path = "./_gal/"; }
 
 mod env  {
    env _common  : rust_env.init   {
-    sudo      = "false";
     root      = ".";
-    run       = "./run";
     target_name = "";
     prj_key   = "orion-syspec" ;
-    DIST_REPO = "unknow";
     AFT_PREFIX = "ds-";
 
   }
@@ -48,13 +45,9 @@ mod main   {
     }
     flow conf  {
 
-      gx.echo ( "${ENV_PRJ_KEY}" );
       gx.echo ( "PRJ_BINS: ${MAIN_PRJ_BINS} " );
       gx.echo ( "USR_BIN : ${MAIN_USR_BINS} " );
-      gx.echo ( "GXL_OS_SYS: ${GXL_OS_SYS} " );
 
-      gx.echo (  "ENV_BUILD_FLAG :  ${ENV_BUILD_FLAG}  " );
-      gx.echo (  "ENV_TARGET_FLAG : ${ENV_TARGET_FLAG} " );
       gx.cmd (  "mkdir -p ${ENV_RUN}"  );
     }
 
