@@ -62,6 +62,11 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                     *status = YmlStatus::BlockData;
                     continue;
                 }
+                let rst = opt("|").parse_next(input)?;
+                if let Some(tag_code) = rst {
+                    out += tag_code;
+                    continue;
+                }
 
                 let rst = opt("\"").parse_next(input)?;
                 if let Some(tag_code) = rst {
@@ -108,9 +113,10 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
             }
 
             YmlStatus::Comment => {
-                let _ = till_line_ending.parse_next(input)?;
-                let _ = line_ending.parse_next(input)?;
-                //out += "\n";
+                let _ = till_line_ending
+                    .context(wn_desc("comment-line"))
+                    .parse_next(input)?;
+                //let _ = opt(line_ending).context(wn_desc("comment-line_ending")).parse_next(input)?;
                 *status = YmlStatus::Code;
             }
         }
@@ -127,7 +133,7 @@ pub fn remove_comment(code: &str) -> SpecResult<String> {
     let pure_code = ignore_comment(&mut xcode)
         .map_err(WinnowErrorEx::from)
         .owe(SpecReason::from(LocalizeReason::Templatize(
-            "comment error".into(),
+            "yml comment error".into(),
         )))
         .position(err_code_prompt(code))
         .want("remove comment");
@@ -266,6 +272,25 @@ global:
     allowInsecureImages: false
             imageRegistry: ""
         "#;
+        let _codes = remove_comment(&mut data).assert();
+        println!("{}", _codes);
+    }
+
+    #[test]
+    fn test_case8() {
+        let mut data = r#"hello
+# xxxabc"#;
+        let _codes = remove_comment(&mut data).assert();
+        println!("{}", _codes);
+    }
+    //          regex: (\d+);((([0-9]+?)(\.|$)){4})
+    #[test]
+    fn test_case9() {
+        //test this :
+        //tag: !something |
+        //regex
+
+        let mut data = r#"regex: (\d+);((([0-9]+?)(\.|$)){4})"#;
         let _codes = remove_comment(&mut data).assert();
         println!("{}", _codes);
     }

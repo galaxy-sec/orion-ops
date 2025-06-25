@@ -54,8 +54,8 @@ pub fn ignore_comment_line(
         }
         match status {
             CppStatus::Code => {
-                let code = take_while(0.., |c| c != '"' && c != '/' && c != '^' && c != '`')
-                    .parse_next(input)?;
+                let code =
+                    take_while(0.., |c| c != '"' && c != '/' && c != '`').parse_next(input)?;
 
                 if opt(label.line).parse_next(input)?.is_some() {
                     if !code.trim().is_empty() {
@@ -138,7 +138,7 @@ pub fn remove_comment(code: &str, comment: &CommentLabel) -> SpecResult<String> 
     let pure_code = ignore_comment(&mut xcode, comment)
         .map_err(WinnowErrorEx::from)
         .owe(SpecReason::from(LocalizeReason::Templatize(
-            "comment error".into(),
+            "c style comment error".into(),
         )))
         .position(err_code_prompt(code))
         .want("remove comment");
@@ -196,11 +196,6 @@ mod tests {
 
         let mut data = "\"hello //\"//xxx\nboy";
         let expect = "\"hello //\"\nboy";
-        let codes = ignore_comment(&mut data, &CommentLabel::c_style()).assert();
-        assert_eq!(codes, expect);
-
-        let mut data = "hello^\"//you\"^";
-        let expect = "hello^\"//you\"^";
         let codes = ignore_comment(&mut data, &CommentLabel::c_style()).assert();
         assert_eq!(codes, expect);
     }
@@ -307,7 +302,7 @@ mod tests {
         let mut data = r#"
         code /* multi-line comment */ "string with // comment"
         // single-line comment
-        ^"raw data with /* comment */"^
+        "raw data with /* comment */"
         /* another multi-line comment */
         more code
         "#;

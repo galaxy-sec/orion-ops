@@ -11,11 +11,23 @@ impl Display for WinnowErrorEx {
                 write!(f, "Incomplete input:",)?;
                 Vec::new()
             }
-            ErrMode::Backtrack(err) => collect_context(err),
-            ErrMode::Cut(err) => collect_context(err),
+            ErrMode::Backtrack(err) => {
+                write!(f, "backtrack : ")?;
+                if let Some(cause) = err.cause() {
+                    write!(f, "cause: {}", cause)?;
+                }
+                collect_context(err)
+            }
+            ErrMode::Cut(err) => {
+                write!(f, "cut: ")?;
+                if let Some(cause) = err.cause() {
+                    write!(f, "cause: {}", cause)?;
+                }
+                collect_context(err)
+            }
         };
         context_vec.reverse();
-        writeln!(f, "parse syntax :",)?;
+        writeln!(f, "parse context:",)?;
         for context in context_vec {
             write!(f, "{}::", context)?;
         }
