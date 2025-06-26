@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ds-mcp": {
+      "command": "uv",
+      "args": ["run", "--project", "/Users/zuowenjian/devspace/galaxy/orion-syspec/target/debug/", "ds-mcp"],
+      "env": {
+      }
+    }
+  }
+}

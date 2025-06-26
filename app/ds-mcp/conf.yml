@@ -1,0 +1,77 @@
+# ds-mcp 服务配置
+mcpServer:
+  # 服务基本信息
+  serviceInfo:
+    name: "ds-mcp"
+    version: "1.0.0"
+    description: "Data Science MCP Service"
+    environment: "production"  # 可选: development, staging, production
+  
+  # 网络配置
+  network:
+    host: "0.0.0.0"
+    port: 3000
+    basePath: "/api/v1"
+    timeout: 30  # 请求超时时间(秒)
+    maxConnections: 100  # 最大并发连接数
+  
+  
+  # 日志配置
+  logging:
+    level: "info"  # trace, debug, info, warn, error
+    directory: "logs"
+    rotation:
+      strategy: "daily"  # daily, size, never
+      maxSizeMB: 100
+      keepDays: 7
+    format: "json"  # text, json
+  
+  # 端点配置
+  endpoints:
+    # 核心MCP端点
+    mcpEndpoint:
+      path: "/mcp"
+      methods: ["POST"]
+      description: "Main MCP request handler"
+      rateLimit:
+        enabled: true
+        requestsPerMinute: 100
+    
+    # 服务发现端点
+    manifestEndpoint:
+      path: "/manifest"
+      methods: ["GET"]
+      description: "Service capabilities manifest"
+      rateLimit:
+        enabled: false
+    
+    # 健康检查端点
+    healthEndpoint:
+      path: "/health"
+      methods: ["GET"]
+      description: "Service health check"
+  
+  # 能力配置
+  capabilities:
+    - name: "add"
+      description: "Add two numbers"
+      params:
+        - name: "a"
+          type: "number"
+          required: true
+        - name: "b"
+          type: "number"
+          required: true
+    
+    - name: "getSystemInfo"
+      description: "Get system information"
+      params: []
+    
+    - name: "processText"
+      description: "Process text input"
+      params:
+        - name: "text"
+          type: "string"
+          required: true
+  
+  
