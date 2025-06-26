@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 // use thiserror::Error; // 如果不需要可以移除
 use validator::Validate;
 use validator::ValidationError;
 
 /// MCP 请求结构（严格符合 JSON-RPC 2.0）
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")] // 字段名使用驼峰式（与 JSON-RPC 规范一致）
 pub struct MCPRequest {
     /// JSON-RPC 版本（必须为 "2.0"）
@@ -25,17 +25,17 @@ pub struct MCPRequest {
 // 修改 MCPResponse 结构体 - 添加 result 验证
 // ------------------------------
 // 注意：需要在 MCPResponse 的 result 字段上添加自定义验证
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct MCPResponse {
     /// JSON-RPC 版本（必须为 "2.0"）
     #[validate(custom(function = "validate_jsonrpc"))]
     pub jsonrpc: String,
     /// 响应结果（与 error 互斥）
-    #[validate(custom(function = "validate_result"))] // 添加验证函数
+    //#[validate(custom(function = "validate_result"))] // 添加验证函数
     pub result: Option<serde_json::Value>,
     /// 错误信息（与 result 互斥）
-    #[validate(custom(function = "validate_error"))]
+    //#[validate(custom(function = "validate_error"))]
     pub error: Option<MCPError>,
     /// 响应标识（与请求 id 一致）
     #[validate(custom(function = "validate_id"))]
@@ -43,7 +43,7 @@ pub struct MCPResponse {
 }
 
 /// MCP 错误结构（严格符合 JSON-RPC 2.0）
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct MCPError {
     /// 错误码（必选整数）
@@ -119,6 +119,19 @@ pub fn validate_mcp_response(response: &MCPResponse) -> Result<(), validator::Va
     response.validate()
 }
 
-// ------------------------------
-// 测试用例保持不变...
-// ------------------------------
+/// MCP 能力描述
+#[derive(Debug, Serialize)]
+pub struct Capability {
+    pub name: String,                  // 能力名称
+    pub description: String,           // 能力描述
+    pub parameters: serde_json::Value, // 参数结构
+}
+
+/// 服务清单
+#[derive(Debug, Serialize)]
+pub struct Manifest {
+    pub name: String,                  // 服务名称
+    pub description: String,           // 服务描述
+    pub version: String,               // 服务版本
+    pub capabilities: Vec<Capability>, // 支持的能力
+}

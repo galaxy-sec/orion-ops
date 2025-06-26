@@ -3,19 +3,9 @@ mod args;
 mod mcp_protocol;
 // src/main.rs
 use actix_cors::Cors;
-use actix_web::{
-    App, HttpResponse, HttpServer, Responder, error, get, post,
-    web::{self, Data},
-};
-use anyhow::{Result, anyhow};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, web::Data};
 use app::{AppState, get_manifest, handle_mcp_request};
-use mcp_protocol::*;
 use orion_syspec::infra::configure_dfx_logging;
-use serde_json::json;
-use std::sync::{
-    Arc,
-    atomic::{AtomicU64, Ordering},
-};
 use tracing::info;
 
 use crate::args::TempArgs;

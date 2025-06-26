@@ -1,6 +1,6 @@
-use std::{
-    cmp::Ordering,
-    sync::{Arc, atomic::AtomicU64},
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
 };
 
 use crate::{VERSION, mcp_protocol::*};
@@ -21,7 +21,7 @@ pub struct AppState {
 
 impl AppState {
     // 创建新实例
-    fn new() -> Self {
+    pub fn new() -> Self {
         AppState {
             request_counter: Arc::new(AtomicU64::new(0)),
         }
@@ -96,6 +96,7 @@ impl AppState {
         Ok(json!({ "processed_text": processed }))
     }
 }
+
 // 处理 MCP 请求
 #[post("/mcp")]
 pub async fn handle_mcp_request(
@@ -107,25 +108,35 @@ pub async fn handle_mcp_request(
 
     // 处理请求
     let result = match req.method.as_str() {
-        "add" => state.add(&req.params).await,
+        "add" => state.add(req.params.as_ref().unwrap_or(&json!({}))).await,
         "getSystemInfo" => state.get_system_info().await,
-        "processText" => state.process_text(&req.params).await,
-        "initialize" => state.initialize(&req.params).await,
+        "processText" => {
+            state
+                .process_text(req.params.as_ref().unwrap_or(&json!({})))
+                .await
+        }
+        "initialize" => {
+            state
+                .initialize(req.params.as_ref().unwrap_or(&json!({})))
+                .await
+        }
         _ => Err(anyhow!("未知的方法: {}", req.method)),
     };
 
     // 构建响应
     match result {
         Ok(result) => HttpResponse::Ok().json(MCPResponse {
+            jsonrpc: "2.0".to_string(),
             id: req.id.clone(),
-            result,
+            result: Some(result),
             error: None,
         }),
         Err(err) => {
             tracing::error!("处理请求失败: {}", err);
             HttpResponse::Ok().json(MCPResponse {
+                jsonrpc: "2.0".to_string(),
                 id: req.id.clone(),
-                result: json!(null),
+                result: None,
                 error: Some(MCPError {
                     code: 500,
                     message: err.to_string(),
