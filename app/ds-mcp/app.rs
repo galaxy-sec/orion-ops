@@ -4,9 +4,8 @@ use std::sync::{
 };
 
 use crate::{VERSION, mcp_protocol::*};
-use actix_cors::Cors;
 use actix_web::{
-    App, HttpResponse, HttpServer, Responder, error, get, post,
+     HttpResponse,  Responder,  get, post,
     web::{self, Data},
 };
 use anyhow::{Result, anyhow};
@@ -31,33 +30,13 @@ impl AppState {
     // 新增：处理 initialize 请求
     async fn initialize(&self, params: &serde_json::Value) -> Result<serde_json::Value> {
         // 解析客户端信息（可选）
-        let client_info = params
-            .get("clientInfo")
-            .ok_or_else(|| anyhow!("缺少 clientInfo 参数"))?;
-        let client_name = client_info
-            .get("name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("未知客户端");
-        let client_version = client_info
-            .get("version")
-            .and_then(|v| v.as_str())
-            .unwrap_or("未知版本");
+        let manifest =  build_manifest() ;
 
-        // 解析协议版本（可选）
-        let protocol_version = params
-            .get("protocolVersion")
-            .and_then(|v| v.as_str())
-            .unwrap_or("未知协议版本");
-
-        // 返回初始化成功的信息（可根据需求扩展）
-        Ok(json!(
-            {
-                "status": "success",
-                "message": format!("欢迎使用 {} (版本: {})，服务端协议版本: {}", client_name, client_version, protocol_version),
-                "supported_methods": ["add", "getSystemInfo", "processText", "initialize"], // 列出所有支持的方法
-                "server_time": chrono::Utc::now().to_rfc3339() // 可选：返回服务器时间
-            }
-        ))
+        Ok(json!({
+            "jsonrpc": "2.0",
+            "result": serde_json::to_value(manifest)?,
+            "id": params.get("id").cloned().unwrap_or(serde_json::Value::Null)
+        }))
     }
 
     // 示例能力：计算两个数之和
@@ -147,10 +126,23 @@ pub async fn handle_mcp_request(
     }
 }
 
-// 提供服务清单
-#[get("/manifest")]
-pub async fn get_manifest() -> impl Responder {
-    let manifest = Manifest {
+pub fn build_manifest() -> Manifest {
+    Manifest {
+    protocol_version: "2.0".to_string(),
+    /* 
+    capabilities: vec![
+        Capability {
+            name: "add".to_string(),
+            description: "Add two numbers".to_string(),
+            parameters: serde_json::json!({})
+        }
+    ],
+    */
+    server_info: ServerInfo {
+        name: "ds-mcp".to_string(),
+        version: "1.0.0".to_string(),
+        description: "Data Science MCP Service".to_string()
+    },
         name: "AI能力服务".to_string(),
         description: "通过MCP协议提供多种AI能力的服务".to_string(),
         version: VERSION.to_string(),
@@ -184,7 +176,12 @@ pub async fn get_manifest() -> impl Responder {
                 }),
             },
         ],
-    };
+    }
+}
 
-    HttpResponse::Ok().json(manifest)
+// 提供服务清单
+#[get("/manifest")]
+pub async fn get_manifest() -> impl Responder {
+
+    HttpResponse::Ok().json(build_manifest())
 }

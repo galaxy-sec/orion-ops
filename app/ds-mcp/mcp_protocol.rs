@@ -14,9 +14,11 @@ pub struct MCPRequest {
     #[validate(length(min = 1))]
     pub method: String,
     /// 方法参数（可选对象，自动验证为 JSON 对象）
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(custom(function = "validate_params"))]
     pub params: Option<serde_json::Value>,
     /// 请求标识（可选，支持字符串/数字/null）
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(custom(function = "validate_id"))]
     pub id: Option<serde_json::Value>,
 }
@@ -33,11 +35,14 @@ pub struct MCPResponse {
     pub jsonrpc: String,
     /// 响应结果（与 error 互斥）
     //#[validate(custom(function = "validate_result"))] // 添加验证函数
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<serde_json::Value>,
     /// 错误信息（与 result 互斥）
     //#[validate(custom(function = "validate_error"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<MCPError>,
     /// 响应标识（与请求 id 一致）
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(custom(function = "validate_id"))]
     pub id: Option<serde_json::Value>,
 }
@@ -128,10 +133,22 @@ pub struct Capability {
 }
 
 /// 服务清单
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize )]
+pub struct ServerInfo {
+    pub name: String,
+    pub version: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Validate)]
 pub struct Manifest {
-    pub name: String,                  // 服务名称
-    pub description: String,           // 服务描述
-    pub version: String,               // 服务版本
-    pub capabilities: Vec<Capability>, // 支持的能力
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: String,
+    #[validate(length(min = 1))]
+    pub capabilities: Vec<Capability>,
+    #[serde(rename = "serverInfo")]
+    pub server_info: ServerInfo,
+    pub name: String,
+    pub version: String,
+    pub description: String,
 }
