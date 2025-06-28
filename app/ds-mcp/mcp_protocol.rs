@@ -140,15 +140,15 @@ pub struct ServerInfo {
     pub description: String,
 }
 
-#[derive(Debug, Serialize, Validate)]
+
+
+#[derive(Debug, Serialize)]
 pub struct Manifest {
     #[serde(rename = "protocolVersion")]
     pub protocol_version: String,
-    #[validate(length(min = 1))]
-    pub capabilities: Vec<Capability>,
+    #[serde(rename = "capabilities")]
+    pub capabilities: serde_json::Value, // 改为对象类型
     #[serde(rename = "serverInfo")]
     pub server_info: ServerInfo,
-    pub name: String,
-    pub version: String,
-    pub description: String,
+    // 移除冗余的 name/version/description（这些应属于 serverInfo 或单独字段）
 }

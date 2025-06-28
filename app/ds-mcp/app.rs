@@ -9,6 +9,7 @@ use actix_web::{
     web::{self, Data},
 };
 use anyhow::{Result, anyhow};
+use log::debug;
 use serde_json::json;
 use tracing::info;
 
@@ -102,14 +103,8 @@ pub async fn handle_mcp_request(
         _ => Err(anyhow!("未知的方法: {}", req.method)),
     };
 
-    // 构建响应
     match result {
-        Ok(result) => HttpResponse::Ok().json(MCPResponse {
-            jsonrpc: "2.0".to_string(),
-            id: req.id.clone(),
-            result: Some(result),
-            error: None,
-        }),
+        Ok(result) => HttpResponse::Ok().json(result),
         Err(err) => {
             tracing::error!("处理请求失败: {}", err);
             HttpResponse::Ok().json(MCPResponse {
@@ -128,54 +123,22 @@ pub async fn handle_mcp_request(
 
 pub fn build_manifest() -> Manifest {
     Manifest {
-    protocol_version: "2.0".to_string(),
-    /* 
-    capabilities: vec![
-        Capability {
-            name: "add".to_string(),
-            description: "Add two numbers".to_string(),
-            parameters: serde_json::json!({})
-        }
-    ],
-    */
-    server_info: ServerInfo {
-        name: "ds-mcp".to_string(),
-        version: "1.0.0".to_string(),
-        description: "Data Science MCP Service".to_string()
-    },
-        name: "AI能力服务".to_string(),
-        description: "通过MCP协议提供多种AI能力的服务".to_string(),
-        version: VERSION.to_string(),
-        capabilities: vec![
-            Capability {
-                name: "add".to_string(),
-                description: "计算两个数的和".to_string(),
-                parameters: json!({
-                    "type": "object",
-                    "properties": {
-                        "a": {"type": "number", "description": "第一个数字"},
-                        "b": {"type": "number", "description": "第二个数字"}
-                    },
-                    "required": ["a", "b"]
-                }),
+        protocol_version: "1.0.0".to_string(), // 根据协议规范设置版本
+        capabilities: serde_json::json!( {
+            "tool_invocation": { 
+                "description": "支持工具调用",
+                "max_concurrent": 5 
             },
-            Capability {
-                name: "getSystemInfo".to_string(),
-                description: "获取系统信息".to_string(),
-                parameters: json!({}),
-            },
-            Capability {
-                name: "processText".to_string(),
-                description: "处理文本（示例：转换为大写）".to_string(),
-                parameters: json!({
-                    "type": "object",
-                    "properties": {
-                        "text": {"type": "string", "description": "需要处理的文本"}
-                    },
-                    "required": ["text"]
-                }),
-            },
-        ],
+            "resource_management": {
+                "description": "支持资源读写",
+                "max_size": 1024 * 1024 // 1MB
+            }
+        }),
+        server_info: ServerInfo {
+            name: "ds-mcp".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Data Science MCP Service".to_string(),
+        },
     }
 }
 
