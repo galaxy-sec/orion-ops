@@ -1,10 +1,7 @@
 use orion_syspec::infra::DfxArgsGetter;
 
-
 #[derive(Default)]
-pub struct TempArgs {
-
-}
+pub struct TempArgs {}
 impl DfxArgsGetter for TempArgs {
     fn debug_level(&self) -> usize {
         5

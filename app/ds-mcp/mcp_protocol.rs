@@ -133,22 +133,19 @@ pub struct Capability {
 }
 
 /// 服务清单
-#[derive(Debug, Serialize )]
+#[derive(Debug, Serialize)]
 pub struct ServerInfo {
     pub name: String,
     pub version: String,
     pub description: String,
 }
 
-
-
 #[derive(Debug, Serialize)]
 pub struct Manifest {
     #[serde(rename = "protocolVersion")]
     pub protocol_version: String,
     #[serde(rename = "capabilities")]
-    pub capabilities: serde_json::Value, // 改为对象类型
+    pub capabilities: serde_json::Value, // 客户端期望对象（键值对）
     #[serde(rename = "serverInfo")]
     pub server_info: ServerInfo,
-    // 移除冗余的 name/version/description（这些应属于 serverInfo 或单独字段）
 }

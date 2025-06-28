@@ -77,48 +77,85 @@ impl AppState {
     }
 }
 
-// 处理 MCP 请求
 #[post("/mcp")]
 pub async fn handle_mcp_request(
     req: web::Json<MCPRequest>,
     state: Data<AppState>,
 ) -> impl Responder {
-    // 记录日志
     info!("Received MCP request: {:?}", req);
 
-    // 处理请求
-    let result = match req.method.as_str() {
-        "add" => state.add(req.params.as_ref().unwrap_or(&json!({}))).await,
-        "getSystemInfo" => state.get_system_info().await,
-        "processText" => {
-            state
-                .process_text(req.params.as_ref().unwrap_or(&json!({})))
-                .await
-        }
-        "initialize" => {
-            state
-                .initialize(req.params.as_ref().unwrap_or(&json!({})))
-                .await
-        }
-        _ => Err(anyhow!("未知的方法: {}", req.method)),
+    // 初始化 MCPResponse，包含 jsonrpc 和请求 id
+    let mut response = MCPResponse {
+        jsonrpc: "2.0".to_string(),
+        id: req.id.clone(), // 保留客户端请求的 id（可能为 null）
+        result: None,
+        error: None,
     };
 
-    match result {
-        Ok(result) => HttpResponse::Ok().json(result),
-        Err(err) => {
-            tracing::error!("处理请求失败: {}", err);
-            HttpResponse::Ok().json(MCPResponse {
-                jsonrpc: "2.0".to_string(),
-                id: req.id.clone(),
-                result: None,
-                error: Some(MCPError {
-                    code: 500,
-                    message: err.to_string(),
-                    data: None,
-                }),
-            })
+    // 根据方法名处理请求，并填充 result 或 error
+    match req.method.as_str() {
+        "add" => {
+            let params = req.params.as_ref().unwrap_or(&json!(null));
+            match state.add(params).await {
+                Ok(result) => response.result = Some(result),
+                Err(err) => {
+                    response.error = Some(MCPError {
+                        code: 500,
+                        message: err.to_string(),
+                        data: None,
+                    });
+                }
+            }
+        }
+        "getSystemInfo" => {
+            match state.get_system_info().await {
+                Ok(result) => response.result = Some(result),
+                Err(err) => {
+                    response.error = Some(MCPError {
+                        code: 500,
+                        message: err.to_string(),
+                        data: None,
+                    });
+                }
+            }
+        }
+        "processText" => {
+            let params = req.params.as_ref().unwrap_or(&json!(null));
+            match state.process_text(params).await {
+                Ok(result) => response.result = Some(result),
+                Err(err) => {
+                    response.error = Some(MCPError {
+                        code: 500,
+                        message: err.to_string(),
+                        data: None,
+                    });
+                }
+            }
+        }
+        "initialize" => {
+            let params = req.params.as_ref().unwrap_or(&json!(null));
+            match state.initialize(params).await {
+                Ok(result) => response.result = Some(result),
+                Err(err) => {
+                    response.error = Some(MCPError {
+                        code: 500,
+                        message: err.to_string(),
+                        data: None,
+                    });
+                }
+            }
+        }
+        _ => {
+            response.error = Some(MCPError {
+                code: -32601, // JSON-RPC 标准方法未找到错误码
+                message: format!("Method '{}' not found", req.method),
+                data: None,
+            });
         }
     }
+
+    // 返回统一包装后的 MCPResponse
+    HttpResponse::Ok().json(response)
 }
 
 pub fn build_manifest() -> Manifest {
