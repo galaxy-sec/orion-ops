@@ -3,7 +3,9 @@ use std::env;
 use log::debug;
 use tracing::error;
 
-pub fn expand_env_vars(input: &str) -> String {
+use super::EnvDict;
+
+pub fn expand_env_vars(_dict: &EnvDict, input: &str) -> String {
     let mut result = String::new();
     let mut chars = input.chars().peekable();
 
@@ -55,7 +57,10 @@ pub fn expand_env_vars(input: &str) -> String {
 mod tests {
     use std::env;
 
-    use crate::{tools::get_repo_name, vars::env_eval::expand_env_vars};
+    use crate::{
+        tools::get_repo_name,
+        vars::{EnvDict, env_eval::expand_env_vars},
+    };
 
     #[test]
     fn test_get_last_segment() {
@@ -90,7 +95,10 @@ mod tests {
     #[test]
     fn test_basic_expansion() {
         unsafe { env::set_var("HOME", "/home/user") };
-        assert_eq!(expand_env_vars("${HOME}/bin"), "/home/user/bin");
+        assert_eq!(
+            expand_env_vars(&EnvDict::default(), "${HOME}/bin"),
+            "/home/user/bin"
+        );
     }
 
     #[test]
@@ -98,7 +106,7 @@ mod tests {
         unsafe { env::set_var("USER", "john") };
         unsafe { env::set_var("APP", "myapp") };
         assert_eq!(
-            expand_env_vars("/opt/${APP}/bin/${USER}"),
+            expand_env_vars(&EnvDict::default(), "/opt/${APP}/bin/${USER}"),
             "/opt/myapp/bin/john"
         );
     }
@@ -107,7 +115,7 @@ mod tests {
     fn test_undefined_variable() {
         unsafe { env::remove_var("UNDEFINED_VAR") };
         assert_eq!(
-            expand_env_vars("Path: ${UNDEFINED_VAR}/data"),
+            expand_env_vars(&EnvDict::default(), "Path: ${UNDEFINED_VAR}/data"),
             "Path: ${UNDEFINED_VAR}/data"
         );
     }
@@ -115,42 +123,51 @@ mod tests {
     #[test]
     fn test_nested_braces() {
         unsafe { env::set_var("VAR", "value") };
-        assert_eq!(expand_env_vars("${VAR}}"), "value}");
-        assert_eq!(expand_env_vars("${VAR}}}"), "value}}");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${VAR}}"), "value}");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${VAR}}}"), "value}}");
     }
 
     #[test]
     fn test_unclosed_brace() {
         unsafe { env::set_var("HOME", "/home/user") };
-        assert_eq!(expand_env_vars("${HOME"), "${HOME");
-        assert_eq!(expand_env_vars("${HOME${USER"), "${HOME${USER");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${HOME"), "${HOME");
+        assert_eq!(
+            expand_env_vars(&EnvDict::default(), "${HOME${USER"),
+            "${HOME${USER"
+        );
     }
 
     #[test]
     fn test_empty_variable_name() {
-        assert_eq!(expand_env_vars("${}"), "${}");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${}"), "${}");
     }
 
     #[test]
     fn test_special_characters() {
         unsafe { env::set_var("VAR_WITH_UNDERSCORE", "ok") };
-        assert_eq!(expand_env_vars("${VAR_WITH_UNDERSCORE}"), "ok");
+        assert_eq!(
+            expand_env_vars(&EnvDict::default(), "${VAR_WITH_UNDERSCORE}"),
+            "ok"
+        );
     }
 
     #[test]
     fn test_edge_cases() {
-        assert_eq!(expand_env_vars(""), "");
-        assert_eq!(expand_env_vars("no variables"), "no variables");
-        assert_eq!(expand_env_vars("$"), "$");
-        assert_eq!(expand_env_vars("${"), "${");
-        assert_eq!(expand_env_vars("}"), "}");
-        assert_eq!(expand_env_vars("${}"), "${}");
+        assert_eq!(expand_env_vars(&EnvDict::default(), ""), "");
+        assert_eq!(
+            expand_env_vars(&EnvDict::default(), "no variables"),
+            "no variables"
+        );
+        assert_eq!(expand_env_vars(&EnvDict::default(), "$"), "$");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${"), "${");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "}"), "}");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${}"), "${}");
     }
 
     #[test]
     fn test_consecutive_variables() {
         unsafe { env::set_var("A", "1") };
         unsafe { env::set_var("B", "2") };
-        assert_eq!(expand_env_vars("${A}${B}"), "12");
+        assert_eq!(expand_env_vars(&EnvDict::default(), "${A}${B}"), "12");
     }
 }

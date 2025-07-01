@@ -6,6 +6,7 @@ use orion_syspec::system::proj::SysProject;
 use orion_syspec::tools::make_new_path;
 use orion_syspec::types::LocalizeOptions;
 use orion_syspec::update::UpdateOptions;
+use orion_syspec::vars::ValueDict;
 
 use crate::args::GSysCmd;
 
@@ -20,7 +21,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
         }
         GSysCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
-            let options = UpdateOptions::from(dfx.force);
+            let options = UpdateOptions::from((dfx.force, ValueDict::default()));
             let spec = SysProject::load(&current_dir).err_conv()?;
             spec.update(&options).await.err_conv()?;
         }

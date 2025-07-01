@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{predule::*, vars::EnvDict};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
@@ -39,16 +39,16 @@ pub struct GitAddr {
     ssh_passphrase: Option<String>,
 }
 impl EnvEvalable<GitAddr> for GitAddr {
-    fn env_eval(self) -> GitAddr {
+    fn env_eval(self, dict: &EnvDict) -> GitAddr {
         Self {
-            repo: self.repo.env_eval(),
-            res: self.res.env_eval(),
-            tag: self.tag.env_eval(),
-            branch: self.branch.env_eval(),
-            rev: self.rev.env_eval(),
-            path: self.path.env_eval(),
-            ssh_key: self.ssh_key.env_eval(),
-            ssh_passphrase: self.ssh_passphrase.env_eval(),
+            repo: self.repo.env_eval(dict),
+            res: self.res.env_eval(dict),
+            tag: self.tag.env_eval(dict),
+            branch: self.branch.env_eval(dict),
+            rev: self.rev.env_eval(dict),
+            path: self.path.env_eval(dict),
+            ssh_key: self.ssh_key.env_eval(dict),
+            ssh_passphrase: self.ssh_passphrase.env_eval(dict),
         }
     }
 }

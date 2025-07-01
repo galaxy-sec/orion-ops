@@ -8,7 +8,6 @@ use crate::{
 };
 use std::{fs::read_to_string, str::FromStr};
 
-use crate::vars::EnvEvalable;
 use async_trait::async_trait;
 
 use super::{
@@ -65,12 +64,15 @@ impl ModTargetSpec {
         let mut used = OriginDict::from(options.global_value().clone());
         used.set_source("global");
         if value_paths.user_value_file().exists() && options.use_custom_value() {
-            let mut user_dict =
-                OriginDict::from(ValueDict::from_valconf(value_paths.user_value_file())?);
+            let mut user_dict = OriginDict::from(ValueDict::eval_from_file(
+                &used.export_dict(),
+                value_paths.user_value_file(),
+            )?);
             user_dict.set_source("mod-cust");
             used.merge(&user_dict);
         }
-        let mut default_dict = OriginDict::from(self.vars.value_dict());
+        let mut default_dict =
+            OriginDict::from(self.vars.value_dict().env_eval(&used.export_dict()));
         default_dict.set_source("mod-default");
         used.merge(&default_dict);
         Ok(used)
@@ -327,9 +329,9 @@ impl Localizable for ModTargetSpec {
         debug!(target : "/mod/target/loc", "value export");
         let used = self.build_used_value(options, &value_paths)?;
         used.export_origin()
-            .env_eval()
+            //.env_eval()
             .save_valconf(value_paths.used_readable())?;
-        used.export_value().env_eval().save_json(&used_value_file)?;
+        used.export_value().save_json(&used_value_file)?;
 
         debug!(target : "/mod/target/loc", "update_local suc");
         let tpl_path_opt = self

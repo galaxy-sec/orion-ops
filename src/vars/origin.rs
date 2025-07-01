@@ -4,18 +4,18 @@ use derive_getters::Getters;
 use derive_more::Deref;
 use serde_derive::{Deserialize, Serialize};
 
-use super::{EnvEvalable, ValueDict, dict::ValueMap, types::ValueType};
+use super::{EnvDict, EnvEvalable, ValueDict, dict::ValueMap, types::ValueType};
 
 pub type OriginMap = HashMap<String, OriginValue>;
 
 impl EnvEvalable<OriginMap> for OriginMap {
-    fn env_eval(self) -> OriginMap {
-        let mut dict = HashMap::new();
+    fn env_eval(self, edict: &EnvDict) -> OriginMap {
+        let mut origins = HashMap::new();
         for (k, v) in self {
-            let e_v = v.env_eval();
-            dict.insert(k, e_v);
+            let e_v = v.env_eval(edict);
+            origins.insert(k, e_v);
         }
-        dict
+        origins
     }
 }
 
@@ -26,10 +26,10 @@ pub struct OriginValue {
 }
 
 impl EnvEvalable<OriginValue> for OriginValue {
-    fn env_eval(self) -> OriginValue {
+    fn env_eval(self, dict: &EnvDict) -> OriginValue {
         Self {
             origin: self.origin,
-            value: self.value.env_eval(),
+            value: self.value.env_eval(dict),
         }
     }
 }
@@ -102,6 +102,9 @@ impl OriginDict {
             map.insert(k.clone(), v.value().clone());
         }
         map
+    }
+    pub fn export_dict(&self) -> ValueDict {
+        ValueDict::from(self.export_value())
     }
     pub fn export_origin(&self) -> OriginMap {
         let mut map = OriginMap::new();

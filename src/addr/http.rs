@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{predule::*, vars::EnvDict};
 
 use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
@@ -18,11 +18,11 @@ pub struct HttpAddr {
 }
 
 impl EnvEvalable<HttpAddr> for HttpAddr {
-    fn env_eval(self) -> HttpAddr {
+    fn env_eval(self, dict: &EnvDict) -> HttpAddr {
         Self {
-            url: self.url.env_eval(),
-            username: self.username.env_eval(),
-            password: self.password.env_eval(),
+            url: self.url.env_eval(dict),
+            username: self.username.env_eval(dict),
+            password: self.password.env_eval(dict),
         }
     }
 }

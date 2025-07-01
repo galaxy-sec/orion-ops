@@ -1,4 +1,4 @@
-use super::{VarValue, definition::VarDefinition, env_eval::expand_env_vars};
+use super::{ValueDict, VarValue, definition::VarDefinition, env_eval::expand_env_vars};
 use derive_more::{Display, From};
 use serde_derive::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -54,24 +54,25 @@ impl From<(&str, f64)> for VarType {
     }
 }
 
+pub type EnvDict = ValueDict;
 pub trait EnvEvalable<T> {
-    fn env_eval(self) -> T;
+    fn env_eval(self, dict: &EnvDict) -> T;
 }
 
 impl EnvEvalable<VarValue<String>> for VarValue<String> {
-    fn env_eval(self) -> VarValue<String> {
-        VarValue::from(expand_env_vars(self.value()))
+    fn env_eval(self, dict: &EnvDict) -> VarValue<String> {
+        VarValue::from(expand_env_vars(dict, self.value()))
     }
 }
 impl EnvEvalable<String> for String {
-    fn env_eval(self) -> String {
-        expand_env_vars(self.as_str())
+    fn env_eval(self, dict: &EnvDict) -> String {
+        expand_env_vars(dict, self.as_str())
     }
 }
 
 impl EnvEvalable<Option<String>> for Option<String> {
-    fn env_eval(self) -> Option<String> {
-        self.map(|x| expand_env_vars(x.as_str()))
+    fn env_eval(self, dict: &EnvDict) -> Option<String> {
+        self.map(|x| expand_env_vars(dict, x.as_str()))
     }
 }
 
@@ -85,9 +86,9 @@ pub enum ValueType {
     Float(VarValue<f64>),
 }
 impl EnvEvalable<ValueType> for ValueType {
-    fn env_eval(self) -> ValueType {
+    fn env_eval(self, dict: &EnvDict) -> ValueType {
         match self {
-            ValueType::String(v) => ValueType::String(v.env_eval()),
+            ValueType::String(v) => ValueType::String(v.env_eval(dict)),
             _ => self,
         }
     }

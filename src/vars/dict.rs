@@ -1,25 +1,30 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use derive_getters::Getters;
-use derive_more::Deref;
+use derive_more::{Deref, From};
 use serde_derive::{Deserialize, Serialize};
 
-use super::types::{EnvEvalable, ValueType};
+use crate::{error::SpecResult, types::Yamlable};
+
+use super::{
+    EnvDict,
+    types::{EnvEvalable, ValueType},
+};
 
 pub type ValueMap = HashMap<String, ValueType>;
 
 impl EnvEvalable<ValueMap> for ValueMap {
-    fn env_eval(self) -> ValueMap {
-        let mut dict = HashMap::new();
+    fn env_eval(self, dict: &EnvDict) -> ValueMap {
+        let mut vmap = HashMap::new();
         for (k, v) in self {
-            let e_v = v.env_eval();
-            dict.insert(k, e_v);
+            let e_v = v.env_eval(dict);
+            vmap.insert(k, e_v);
         }
-        dict
+        vmap
     }
 }
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default, From)]
 #[serde(transparent)]
 pub struct ValueDict {
     dict: HashMap<String, ValueType>,
@@ -41,13 +46,17 @@ impl ValueDict {
             }
         }
     }
-    pub fn env_eval(self) -> Self {
-        let mut dict = HashMap::new();
+    pub fn env_eval(self, dict: &EnvDict) -> Self {
+        let mut map = HashMap::new();
         for (k, v) in self.dict {
-            let e_v = v.env_eval();
-            dict.insert(k, e_v);
+            let e_v = v.env_eval(dict);
+            map.insert(k, e_v);
         }
-        Self { dict }
+        Self { dict: map }
+    }
+    pub fn eval_from_file(dict: &EnvDict, file_path: &PathBuf) -> SpecResult<Self> {
+        let ins = ValueDict::from_yml(file_path)?;
+        Ok(ins.env_eval(dict))
     }
 }
 

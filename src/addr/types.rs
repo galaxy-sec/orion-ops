@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{predule::*, vars::EnvDict};
 
 use derive_more::From;
 
@@ -18,11 +18,11 @@ pub enum AddrType {
 }
 
 impl EnvEvalable<AddrType> for AddrType {
-    fn env_eval(self) -> AddrType {
+    fn env_eval(self, dict: &EnvDict) -> AddrType {
         match self {
-            AddrType::Git(v) => AddrType::Git(v.env_eval()),
-            AddrType::Http(v) => AddrType::Http(v.env_eval()),
-            AddrType::Local(v) => AddrType::Local(v.env_eval()),
+            AddrType::Git(v) => AddrType::Git(v.env_eval(dict)),
+            AddrType::Http(v) => AddrType::Http(v.env_eval(dict)),
+            AddrType::Local(v) => AddrType::Local(v.env_eval(dict)),
         }
     }
 }
@@ -30,7 +30,7 @@ impl EnvEvalable<AddrType> for AddrType {
 #[async_trait]
 impl AsyncUpdateable for AddrType {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
-        let ins = self.clone().env_eval();
+        let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_local(path, options).await,
             AddrType::Http(addr) => addr.update_local(path, options).await,
@@ -44,7 +44,7 @@ impl AsyncUpdateable for AddrType {
         name: &str,
         options: &UpdateOptions,
     ) -> SpecResult<PathBuf> {
-        let ins = self.clone().env_eval();
+        let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,
             AddrType::Http(addr) => addr.update_rename(path, name, options).await,
@@ -77,8 +77,8 @@ pub struct EnvVarPath {
     origin: String,
 }
 impl EnvVarPath {
-    pub fn path(&self) -> PathBuf {
-        let real = self.origin.clone().env_eval();
+    pub fn path(&self, dict: &EnvDict) -> PathBuf {
+        let real = self.origin.clone().env_eval(dict);
         PathBuf::from(real)
     }
 }

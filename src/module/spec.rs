@@ -224,7 +224,7 @@ impl ModuleSpec {
             VarCollection::define(vec![
                 VarType::from(("EXAMPLE_SIZE", 1000)),
                 VarType::from(("WORK_ROOT", "myhome/bin")),
-                VarType::from(("WORK_BIN", "${WORK_ROOT}/bin")),
+                VarType::from(("WORK_BIN", "${HOME}/bin")),
             ]),
             None,
         );

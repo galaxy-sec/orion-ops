@@ -62,7 +62,8 @@ impl DependencySet {
         //options.
         for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.update(&self.dep_root().path(), options).await?;
+                dep.update(&self.dep_root().path(options.values()), options)
+                    .await?;
             }
         }
         Ok(())
@@ -70,6 +71,7 @@ impl DependencySet {
     pub fn push(&mut self, item: Dependency) {
         self.deps.push(item);
     }
+    /*
     pub fn check_exists(&self) -> Result<(), PathBuf> {
         for x in &self.deps {
             let path = self.dep_root().path().join(x.local().path());
@@ -79,6 +81,7 @@ impl DependencySet {
         }
         Ok(())
     }
+    */
 }
 
 impl Dependency {
@@ -106,7 +109,7 @@ impl AsyncUpdateable for Dependency {
 impl Dependency {
     pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         //let item_path = path.join(self.local());
-        let path = root.join(self.local().path());
+        let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {
             self.update_rename(&path, rename, options).await
         } else {

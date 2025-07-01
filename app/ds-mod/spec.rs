@@ -5,6 +5,7 @@ use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
 use orion_syspec::types::{Localizable, LocalizeOptions, Persistable};
 use orion_syspec::update::UpdateOptions;
+use orion_syspec::vars::ValueDict;
 use std::path::PathBuf;
 
 use crate::args::{self};
@@ -26,7 +27,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
         args::GxModCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            let options = UpdateOptions::from(dfx.force);
+            let options = UpdateOptions::from((dfx.force, ValueDict::default()));
             spec.update(&options).await.err_conv()?;
         }
         args::GxModCmd::Localize(args) => {

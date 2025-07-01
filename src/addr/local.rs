@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{predule::*, vars::EnvDict};
 
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
@@ -12,9 +12,9 @@ pub struct LocalAddr {
 }
 
 impl EnvEvalable<LocalAddr> for LocalAddr {
-    fn env_eval(self) -> LocalAddr {
+    fn env_eval(self, dict: &EnvDict) -> LocalAddr {
         Self {
-            path: self.path.env_eval(),
+            path: self.path.env_eval(dict),
         }
     }
 }

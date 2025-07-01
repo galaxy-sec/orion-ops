@@ -1,5 +1,7 @@
 use derive_more::From;
 
+use crate::vars::ValueDict;
+
 //use super::predule::*;
 #[derive(Debug, From, Clone, Default, PartialEq)]
 pub enum KeepDuration {
@@ -16,14 +18,14 @@ pub enum UpdateScope {
     InHost,
 }
 
-impl From<usize> for UpdateOptions {
-    fn from(value: usize) -> Self {
-        match value {
-            0 => Self::new(UpdateScope::InElm),
-            1 => Self::new(UpdateScope::InMod),
-            2 => Self::new(UpdateScope::InProj),
-            3 => Self::new(UpdateScope::InHost),
-            _ => Self::new(UpdateScope::InHost),
+impl From<(usize, ValueDict)> for UpdateOptions {
+    fn from(value: (usize, ValueDict)) -> Self {
+        match value.0 {
+            0 => Self::new(UpdateScope::InElm, value.1),
+            1 => Self::new(UpdateScope::InMod, value.1),
+            2 => Self::new(UpdateScope::InProj, value.1),
+            3 => Self::new(UpdateScope::InHost, value.1),
+            _ => Self::new(UpdateScope::InHost, value.1),
         }
     }
 }
@@ -31,17 +33,23 @@ impl From<usize> for UpdateOptions {
 #[derive(Clone, Debug, Default)]
 pub struct UpdateOptions {
     scope_level: UpdateScope,
+    values: ValueDict,
 }
 impl UpdateOptions {
-    pub fn new(re_level: UpdateScope) -> Self {
+    pub fn new(re_level: UpdateScope, values: ValueDict) -> Self {
         Self {
             scope_level: re_level,
+            values,
         }
     }
     pub fn for_test() -> Self {
         Self {
             scope_level: UpdateScope::InProj,
+            values: ValueDict::default(),
         }
+    }
+    pub fn values(&self) -> &ValueDict {
+        &self.values
     }
 }
 impl UpdateOptions {
