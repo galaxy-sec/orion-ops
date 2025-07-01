@@ -1,6 +1,6 @@
 extern mod head { path = "./_gal/"; }
 
-mod env  {
+mod envs  {
    env _common  : rust_env.init   {
     root      = ".";
     target_name = "";
@@ -47,8 +47,6 @@ mod main   {
 
       gx.echo ( "PRJ_BINS: ${MAIN_PRJ_BINS} " );
       gx.echo ( "USR_BIN : ${MAIN_USR_BINS} " );
-
-      gx.cmd (  "mkdir -p ${ENV_RUN}"  );
     }
 
 

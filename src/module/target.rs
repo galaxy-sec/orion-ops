@@ -1,9 +1,10 @@
 use crate::{
     const_vars::{
-        DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_READABLE_FILE, USER_VALUE_FILE,
-        VALUE_DIR,
+        DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_JSON, USED_READABLE_FILE,
+        USER_VALUE_FILE, VALUE_DIR,
     },
     predule::*,
+    tools::ensure_path,
 };
 use std::{fs::read_to_string, str::FromStr};
 
@@ -316,6 +317,8 @@ impl Localizable for ModTargetSpec {
 
         let value_root = localize_path.path(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
+        let used_value_path = ensure_path(local.join(VALUE_DIR))?;
+        let used_value_file = used_value_path.join(USED_JSON);
         let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         make_clean_path(&local_path)?;
@@ -326,9 +329,7 @@ impl Localizable for ModTargetSpec {
         used.export_origin()
             .env_eval()
             .save_valconf(value_paths.used_readable())?;
-        used.export_value()
-            .env_eval()
-            .save_json(value_paths.used_json_path())?;
+        used.export_value().env_eval().save_json(&used_value_file)?;
 
         debug!(target : "/mod/target/loc", "update_local suc");
         let tpl_path_opt = self
@@ -352,7 +353,7 @@ impl Localizable for ModTargetSpec {
             LocalizeTemplate::default()
         };
         localizer
-            .render_path(&tpl, &local_path, value_paths.used_json_path(), &tpl_path)
+            .render_path(&tpl, &local_path, &used_value_file, &tpl_path)
             .with(&ctx)?;
         flag.flag_suc();
         Ok(())

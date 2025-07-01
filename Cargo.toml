@@ -1,6 +1,6 @@
 [package]
 name = "orion-syspec"
-version = "0.7.5"
+version = "0.7.6"
 edition = "2024"
 
 [[bin]]
@@ -12,9 +12,9 @@ name = "ds-mod"
 path = "app/ds-mod/main.rs"
 
 
-[[bin]]
-name = "ds-mcp"
-path = "app/ds-mcp/main.rs"
+#[[bin]]
+#name = "ds-mcp"
+#path = "app/ds-mcp/main.rs"
 
 [workspace]
 members = [".", "crates/orion_common", "crates/orion_infra"]
@@ -77,21 +77,21 @@ actix-cors = "~0.7"
 tracing-actix-web = "0.7.18"
 tracing-appender = "0.2"
 chrono = "0.4"
-rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main"  ,features = [
-    "server",
-    "transport-sse-server",
-    "transport-io",
-    "transport-streamable-http-server",
-    "auth",
-] }
+#rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = [
+#    "server",
+#    "transport-sse-server",
+#    "transport-io",
+#    "transport-streamable-http-server",
+#    "auth",
+#] }
 #tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "registry"] }
 tracing-subscriber = { version = "0.3", features = [
     "fmt",
     "env-filter",
     "time",
 ] }
-validator = { version = "~0.20", features = ["derive"] }
-axum =  "~0.8"
+#validator = { version = "~0.20", features = ["derive"] }
+#axum = "~0.8"
 
 [dev-dependencies]
 mockall = "~0.13"

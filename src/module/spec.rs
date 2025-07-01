@@ -221,7 +221,11 @@ impl ModuleSpec {
             GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            VarCollection::define(vec![
+                VarType::from(("EXAMPLE_SIZE", 1000)),
+                VarType::from(("WORK_ROOT", "myhome/bin")),
+                VarType::from(("WORK_BIN", "${WORK_ROOT}/bin")),
+            ]),
             None,
         );
         let x86_ubt22_host = ModTargetSpec::init(
