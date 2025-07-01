@@ -200,7 +200,7 @@ mod tests {
         );
 
         http_addr
-            .update_local(&temp_dir.path().to_path_buf(), &UpdateOptions::for_test())
+            .update_local(temp_dir.path(), &UpdateOptions::for_test())
             .await?;
 
         // 3. 验证结果

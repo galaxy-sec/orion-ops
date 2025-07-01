@@ -2411,7 +2411,7 @@ dependencies = [
 
 [[package]]
 name = "orion-syspec"
-version = "0.7.6"
+version = "0.8.0"
 dependencies = [
  "actix-cors",
  "anyhow",

@@ -463,7 +463,7 @@ pub mod test {
     }
 
     fn build_spec(vars: VarCollection) -> ModTargetSpec {
-        let spec = ModTargetSpec::init(
+        ModTargetSpec::init(
             TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::default(),
             ModWorkflows::default(),
@@ -471,8 +471,7 @@ pub mod test {
             CaculateResSpec::new(2, 4),
             vars,
             None,
-        );
-        spec
+        )
     }
 
     #[test]

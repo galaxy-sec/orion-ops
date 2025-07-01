@@ -310,12 +310,12 @@ mod tests {
     }
     #[test]
     fn test_complex_mixed_case2() {
-        let mut data = r#" code /* multi-line comment */ "string with // comment"
+        let data = r#" code /* multi-line comment */ "string with // comment"
         // single-line comment
         /* another multi-line comment */
         more code
         "#;
-        let _codes = remove_comment(&mut data, &CommentLabel::c_style()).assert();
+        let _codes = remove_comment(data, &CommentLabel::c_style()).assert();
         println!("{}", _codes);
     }
 }

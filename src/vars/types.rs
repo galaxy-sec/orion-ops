@@ -217,7 +217,7 @@ value = 42
         assert_eq!(serialized, expected);
 
         // 测试 Float 类型的 TOML 序列化
-        let float_var = VarType::from(("test_float", 3.14));
+        let float_var = VarType::from(("test_float", 3.33));
         let serialized = toml::to_string(&float_var).unwrap();
         let expected = r#"name = "test_float"
 value = 3.14

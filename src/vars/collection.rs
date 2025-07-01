@@ -70,7 +70,7 @@ mod tests {
 
         let vars2 = VarCollection::define(vec![
             VarType::from(("b", false)),
-            VarType::from(("d", 3.14)),
+            VarType::from(("d", 3.33)),
         ]);
 
         let merged = vars1.merge(&vars2);

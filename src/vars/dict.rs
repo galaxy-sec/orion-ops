@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::Path};
 
 use derive_getters::Getters;
 use derive_more::{Deref, From};
@@ -54,7 +54,7 @@ impl ValueDict {
         }
         Self { dict: map }
     }
-    pub fn eval_from_file(dict: &EnvDict, file_path: &PathBuf) -> SpecResult<Self> {
+    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> SpecResult<Self> {
         let ins = ValueDict::from_yml(file_path)?;
         Ok(ins.env_eval(dict))
     }

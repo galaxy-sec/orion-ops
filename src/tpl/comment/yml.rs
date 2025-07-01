@@ -173,19 +173,19 @@ mod tests {
 
     #[test]
     fn test_case1() {
-        let mut data = r#"
+        let data = r#"
 hr:  65    # Home runs
 avg: 0.278 # Batting average
 rbi: 147   # Runs Batted In
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
         assert!(!_codes.contains("#"));
     }
 
     #[test]
     fn test_case2() {
-        let mut data = r#"
+        let data = r#"
             # Ranking of 1998 home runs
             ---
             - Mark McGwire
@@ -197,14 +197,14 @@ rbi: 147   # Runs Batted In
             - Chicago Cubs
             - St Louis Cardinals
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
         assert!(!_codes.contains("#"));
     }
 
     #[test]
     fn test_case4() {
-        let mut data = r#"
+        let data = r#"
     ---
     hr: # 1998 hr ranking
         - Mark McGwire
@@ -214,14 +214,14 @@ rbi: 147   # Runs Batted In
         - Sammy Sosa
         - Ken Griffey
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
         assert!(!_codes.contains("#"));
     }
 
     #[test]
     fn test_case5() {
-        let mut data = r#"
+        let data = r#"
     ---
     unicode: "Sosa did fine.\u263A"
     control: "\b1998\t1999\t2000\n"
@@ -231,14 +231,14 @@ rbi: 147   # Runs Batted In
     quoted: ' # Not a ''comment''.'
     tie-fighter: '|\-*-/|'
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
         assert!(_codes.contains("#"));
     }
 
     #[test]
     fn test_case6() {
-        let mut data = r#"
+        let data = r#"
     ---
     application specific tag: !something |
      The #semantics of the tag
@@ -249,14 +249,14 @@ rbi: 147   # Runs Batted In
     galaxy is ok
 
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
         assert!(_codes.contains("#"));
     }
 
     #[test]
     fn test_case7() {
-        let mut data = r#"
+        let data = r#"
 global:
     imageRegistry: ""
     ## E.g.
@@ -272,15 +272,15 @@ global:
     allowInsecureImages: false
             imageRegistry: ""
         "#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
     }
 
     #[test]
     fn test_case8() {
-        let mut data = r#"hello
+        let data = r#"hello
 # xxxabc"#;
-        let _codes = remove_comment(&mut data).assert();
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
     }
     //          regex: (\d+);((([0-9]+?)(\.|$)){4})
@@ -290,8 +290,8 @@ global:
         //tag: !something |
         //regex
 
-        let mut data = r#"regex: (\d+);((([0-9]+?)(\.|$)){4})"#;
-        let _codes = remove_comment(&mut data).assert();
+        let data = r#"regex: (\d+);((([0-9]+?)(\.|$)){4})"#;
+        let _codes = remove_comment(data).assert();
         println!("{}", _codes);
     }
 }

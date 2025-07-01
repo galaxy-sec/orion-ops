@@ -275,7 +275,7 @@ mod tests {
         let mut setting = TemplatePath::default();
         setting.exclude_mut().push(tpl_dir.join("exclude.txt"));
 
-        let _ = LocalizeTemplate::default()
+        LocalizeTemplate::default()
             .render_path(&tpl_dir, &output_dir, &data_file, &setting)
             .unwrap();
 
@@ -306,7 +306,7 @@ mod tests {
         let cust = TemplateConfig::example();
 
         //let _result = LocalizeTemplate::default()
-        let _result = LocalizeTemplate::new(cust)
+        LocalizeTemplate::new(cust)
             .render_path(
                 &helm_dir,
                 &out_dir,
