@@ -43,7 +43,7 @@ impl SysProject {
     pub fn new(spec: SysModelSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
         let conf = SysConf::new(local_res);
         let mut val_dict = ValueDict::default();
-        val_dict.insert("KEY1", ValueType::from("VALUE1"));
+        val_dict.insert("TEST_WORK_ROOT", ValueType::from("/home/galaxy"));
         Self {
             conf,
             sys_spec: spec,

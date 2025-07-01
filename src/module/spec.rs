@@ -223,8 +223,8 @@ impl ModuleSpec {
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![
                 VarType::from(("EXAMPLE_SIZE", 1000)),
-                VarType::from(("WORK_ROOT", "myhome/bin")),
-                VarType::from(("WORK_BIN", "${HOME}/bin")),
+                VarType::from(("HOME_BIN", "${HOME}/bin")),
+                VarType::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
             ]),
             None,
         );
@@ -241,7 +241,11 @@ impl ModuleSpec {
             GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            VarCollection::define(vec![
+                VarType::from(("EXAMPLE_SIZE", 1000)),
+                VarType::from(("HOME_BIN", "${HOME}/bin")),
+                VarType::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
+            ]),
             None,
         );
 

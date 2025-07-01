@@ -3,9 +3,9 @@ use std::env;
 use log::debug;
 use tracing::error;
 
-use super::EnvDict;
+use super::{EnvDict, ValueType};
 
-pub fn expand_env_vars(_dict: &EnvDict, input: &str) -> String {
+pub fn expand_env_vars(dict: &EnvDict, input: &str) -> String {
     let mut result = String::new();
     let mut chars = input.chars().peekable();
 
@@ -28,16 +28,20 @@ pub fn expand_env_vars(_dict: &EnvDict, input: &str) -> String {
 
             // 处理变量替换
             if found_closing_brace {
-                match env::var(&var_name) {
-                    Ok(value) => {
-                        debug!("get env var {} : {}", var_name, value);
-                        result.push_str(&value);
-                    }
-                    Err(_) => {
-                        error!("not get env var :{}", var_name);
-                        result.push_str("${");
-                        result.push_str(&var_name);
-                        result.push('}');
+                if let Some(ValueType::String(value)) = dict.get(&var_name) {
+                    result.push_str(value.value());
+                } else {
+                    match env::var(&var_name) {
+                        Ok(value) => {
+                            debug!("get env var {} : {}", var_name, value);
+                            result.push_str(&value);
+                        }
+                        Err(_) => {
+                            error!("not get env var :{}", var_name);
+                            result.push_str("${");
+                            result.push_str(&var_name);
+                            result.push('}');
+                        }
                     }
                 }
             } else {
@@ -59,7 +63,7 @@ mod tests {
 
     use crate::{
         tools::get_repo_name,
-        vars::{EnvDict, env_eval::expand_env_vars},
+        vars::{EnvDict, ValueType, env_eval::expand_env_vars},
     };
 
     #[test]
@@ -105,9 +109,16 @@ mod tests {
     fn test_multiple_variables() {
         unsafe { env::set_var("USER", "john") };
         unsafe { env::set_var("APP", "myapp") };
+        let mut dict = EnvDict::new();
+        dict.insert("USER", ValueType::from("galaxy"));
+        dict.insert("APP", ValueType::from("galaxy"));
         assert_eq!(
             expand_env_vars(&EnvDict::default(), "/opt/${APP}/bin/${USER}"),
             "/opt/myapp/bin/john"
+        );
+        assert_eq!(
+            expand_env_vars(&dict, "/opt/${APP}/bin/${USER}"),
+            "/opt/galaxy/bin/galaxy"
         );
     }
 

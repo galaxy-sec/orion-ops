@@ -1,6 +1,7 @@
 use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::predule::*;
 use crate::tools::ensure_path;
+use crate::vars::EnvDict;
 
 use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
 use crate::types::{LocalizeOptions, ValueConfable};
@@ -40,7 +41,7 @@ impl ModProject {
     pub fn new(spec: ModuleSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
         let conf = ModConf::new(local_res);
         let mut val_dict = ValueDict::default();
-        val_dict.insert("KEY1", ValueType::from("VALUE1"));
+        val_dict.insert("TEST_WORK_ROOT", ValueType::from("/home/galaxy"));
         Self {
             conf,
             mod_spec: spec,
@@ -111,7 +112,7 @@ pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecR
         }
         v_file
     };
-    let dict = ValueDict::from_valconf(&value_file)?;
+    let dict = ValueDict::eval_from_file(&EnvDict::default(), &value_file)?;
     Ok(dict)
 }
 
