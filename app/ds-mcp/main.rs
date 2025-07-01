@@ -1,52 +1,37 @@
-mod app;
-mod args;
-mod mcp_protocol;
-// src/main.rs
-use actix_cors::Cors;
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, web::Data};
-use app::{AppState, get_manifest, handle_mcp_request};
-use orion_syspec::infra::configure_dfx_logging;
-use tracing::info;
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpService, session::local::LocalSessionManager,
+};
+use tracing_subscriber::{
+    layer::SubscriberExt,
+    util::SubscriberInitExt,
+    {self},
+};
+mod ds_sys;
+mod error;
+use ds_sys::SysMCService;
 
-use crate::args::TempArgs;
+const BIND_ADDRESS: &str = "127.0.0.1:3000";
 
-lazy_static::lazy_static! {
-    static ref VERSION: String = env!("CARGO_PKG_VERSION").to_string();
-}
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "debug".to_string().into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-// 健康检查端点
-#[get("/health")]
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("OK")
-}
+    let service = StreamableHttpService::new(
+        || Ok(SysMCService::new().unwrap()),
+        LocalSessionManager::default().into(),
+        Default::default(),
+    );
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // 初始化日志
-    configure_dfx_logging(&TempArgs::default());
-
-    // 创建应用状态
-    let state = AppState::new();
-
-    info!("MCP服务已启动，监听地址: 0.0.0.0:3000");
-
-    HttpServer::new(move || {
-        // 配置CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
-
-        App::new()
-            .app_data(Data::new(state.clone()))
-            .wrap(cors)
-            .wrap(tracing_actix_web::TracingLogger::default())
-            .service(handle_mcp_request)
-            .service(get_manifest)
-            .service(health_check)
-    })
-    .bind("0.0.0.0:3000")?
-    .run()
-    .await
+    let router = axum::Router::new().nest_service("/mcp", service);
+    let tcp_listener = tokio::net::TcpListener::bind(BIND_ADDRESS).await?;
+    let _ = axum::serve(tcp_listener, router)
+        .with_graceful_shutdown(async { tokio::signal::ctrl_c().await.unwrap() })
+        .await;
+    Ok(())
 }

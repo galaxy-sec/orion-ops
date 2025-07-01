@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
-    types::{Localizable, LocalizePath},
+    types::{Localizable, ValuePath},
     vars::{VarCollection, VarType},
     workflow::prj::GxlProject,
 };
@@ -131,7 +131,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
 impl Localizable for ModuleSpec {
     async fn localize(
         &self,
-        dst_path: Option<LocalizePath>,
+        dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         for target in self.targets.values() {

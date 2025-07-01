@@ -2,10 +2,11 @@ use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
+use serde::Serialize;
 
 use crate::{error::SpecResult, task::OperationType, types::Persistable};
 
-#[derive(Getters, Clone, Debug, PartialEq)]
+#[derive(Getters, Clone, Debug, PartialEq, Serialize)]
 pub struct GxlAction {
     task: OperationType,
     file: String,

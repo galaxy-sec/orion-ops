@@ -5,7 +5,7 @@ use crate::{
     },
     predule::*,
 };
-use std::str::FromStr;
+use std::{fs::read_to_string, str::FromStr};
 
 use crate::vars::EnvEvalable;
 use async_trait::async_trait;
@@ -30,14 +30,13 @@ use crate::{
     software::LogsSpec,
     tools::get_sub_dirs,
     types::{
-        AsyncUpdateable, Configable, JsonAble, Localizable, LocalizePath, Persistable,
-        ValueConfable,
+        AsyncUpdateable, Configable, JsonAble, Localizable, Persistable, ValueConfable, ValuePath,
     },
     vars::{OriginDict, ValueDict, VarCollection},
     workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug, Serialize)]
 pub struct ModTargetSpec {
     target: TargetNode,
     artifact: ArtifactPackage,
@@ -284,13 +283,21 @@ impl ModTargetSpec {
             depends: DependencySet::default(),
         }
     }
+    pub fn get_local_values(&self, parent: ValuePath) -> SpecResult<Option<String>> {
+        let value_paths = TargetValuePaths::from(parent.path());
+        if value_paths.used_readable().exists() {
+            let data = read_to_string(value_paths.used_readable()).owe_sys()?;
+            return Ok(Some(data));
+        }
+        Ok(None)
+    }
 }
 
 #[async_trait]
 impl Localizable for ModTargetSpec {
     async fn localize(
         &self,
-        dst_path: Option<LocalizePath>,
+        dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         let mut flag = log_guard!(
@@ -305,9 +312,9 @@ impl Localizable for ModTargetSpec {
                 .with(&ctx),
         )?;
         let tpl = local.join(crate::const_vars::SPEC_DIR);
-        let localize_path = dst_path.unwrap_or(LocalizePath::new(local.join(VALUE_DIR)));
+        let localize_path = dst_path.unwrap_or(ValuePath::new(local.join(VALUE_DIR)));
 
-        let value_root = localize_path.value(); //.join(VALUE_DIR);
+        let value_root = localize_path.path(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
         let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );

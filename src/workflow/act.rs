@@ -4,11 +4,12 @@ use super::gxl::GxlAction;
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
+use serde::Serialize;
 
 use crate::const_vars::WORKFLOWS_DIR;
 use crate::{error::SpecResult, types::Persistable};
 
-#[derive(Getters, Clone, Debug, Default)]
+#[derive(Getters, Clone, Debug, Default, Serialize)]
 pub struct Workflows {
     //project: GxlProject,
     actions: Vec<Workflow>,
@@ -64,7 +65,7 @@ impl Persistable<Workflows> for Workflows {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum Workflow {
     Gxl(GxlAction),
 }

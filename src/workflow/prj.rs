@@ -2,10 +2,11 @@ use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
+use serde::Serialize;
 
 use crate::{const_vars::ADM_GXL, error::SpecResult, types::Persistable};
 
-#[derive(Getters, Clone, Debug, Default)]
+#[derive(Getters, Clone, Debug, Default, Serialize)]
 pub struct GxlProject {
     work: String,
     adm: Option<String>,

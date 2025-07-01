@@ -7,7 +7,7 @@ use crate::{
     error::SpecResult,
     module::depend::DependencySet,
     tools::make_clean_path,
-    types::{Configable, Localizable, LocalizePath, Persistable},
+    types::{Configable, Localizable, Persistable, ValuePath},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
@@ -129,7 +129,7 @@ impl SysProject {
 impl Localizable for SysConf {
     async fn localize(
         &self,
-        _dst_path: Option<LocalizePath>,
+        _dst_path: Option<ValuePath>,
         _options: LocalizeOptions,
     ) -> SpecResult<()> {
         Ok(())
@@ -138,17 +138,21 @@ impl Localizable for SysConf {
 
 impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
-        let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
-        let value_file = value_root.join(VALUE_FILE);
+        let value_path = self.value_path().ensure_exist()?;
+        let value_file = value_path.value_file();
         let dict = ValueDict::from_valconf(&value_file)?;
         let cur_opt = options.with_global(dict);
-        let dst_path = Some(LocalizePath::from_root(value_root));
+        let dst_path = Some(value_path);
 
         self.conf
             .localize(dst_path.clone(), cur_opt.clone())
             .await?;
         self.sys_spec().localize(dst_path, cur_opt).await?;
         Ok(())
+    }
+    pub fn value_path(&self) -> ValuePath {
+        let value_root = self.root_local().join(VALUE_DIR);
+        ValuePath::from_root(value_root)
     }
 }
 impl SysProject {

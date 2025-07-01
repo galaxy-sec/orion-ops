@@ -10,7 +10,7 @@ use crate::{
     error::SpecResult,
     module::target::ModTargetSpec,
     tools::make_clean_path,
-    types::{AsyncUpdateable, Localizable, LocalizePath, Persistable},
+    types::{AsyncUpdateable, Localizable, Persistable, ValuePath},
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -52,6 +52,19 @@ impl ModuleSpecRef {
     pub fn set_local(&mut self, local: PathBuf) {
         self.local = Some(local);
     }
+    pub fn get_target_spec(&self) -> SpecResult<Option<ModTargetSpec>> {
+        if self.is_enable() {
+            if let Some(local) = &self.local {
+                let target_root = local.join(self.name());
+                let target_path = target_root.join(self.node().to_string());
+                if target_path.exists() {
+                    let spec = ModTargetSpec::load_from(&target_path).with(&target_root)?;
+                    return Ok(Some(spec));
+                }
+            }
+        }
+        Ok(None)
+    }
 }
 impl ModuleSpecRef {
     pub async fn update(&self, _sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
@@ -91,13 +104,18 @@ impl ModuleSpecRef {
         }
         Ok(())
     }
+
+    pub fn spec_value_path(&self, parent: ValuePath) -> ValuePath {
+        let value = PathBuf::from(self.name());
+        parent.join(value)
+    }
 }
 
 #[async_trait]
 impl Localizable for ModuleSpecRef {
     async fn localize(
         &self,
-        dst_path: Option<LocalizePath>,
+        dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         if self.enable.is_none_or(|x| x) {

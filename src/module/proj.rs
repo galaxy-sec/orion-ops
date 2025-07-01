@@ -12,7 +12,7 @@ use crate::{
         spec::ModuleSpec,
     },
     tools::make_clean_path,
-    types::{AsyncUpdateable, Configable, Localizable, LocalizePath, Persistable},
+    types::{AsyncUpdateable, Configable, Localizable, Persistable, ValuePath},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
@@ -135,7 +135,7 @@ impl ModProject {
 impl Localizable for ModConf {
     async fn localize(
         &self,
-        _dst_path: Option<LocalizePath>,
+        _dst_path: Option<ValuePath>,
         _options: LocalizeOptions,
     ) -> SpecResult<()> {
         Ok(())
@@ -146,7 +146,7 @@ impl Localizable for ModConf {
 impl Localizable for ModProject {
     async fn localize(
         &self,
-        dst_path: Option<LocalizePath>,
+        dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         //let local_path = LocalizePath::from_root(self.root_local());

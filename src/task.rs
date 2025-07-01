@@ -1,9 +1,10 @@
 use derive_getters::Getters;
 use derive_more::Display;
+use serde::Serialize;
 
 use crate::{error::SpecResult, module::TargetNode};
 
-#[derive(Clone, Debug, PartialEq, Display)]
+#[derive(Clone, Debug, PartialEq, Display, Serialize)]
 pub enum OperationType {
     #[display("setup")]
     Setup,

@@ -6,7 +6,7 @@ use crate::{
     const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
-    types::{Localizable, LocalizePath},
+    types::{Localizable, ValuePath},
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
@@ -133,7 +133,7 @@ impl SysModelSpec {
 impl Localizable for SysModelSpec {
     async fn localize(
         &self,
-        dst_path: Option<LocalizePath>,
+        dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         if let Some(_local) = &self.local {
