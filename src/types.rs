@@ -27,6 +27,11 @@ pub struct UpdateValues {
     pub position: PathBuf,
     pub vars: VarCollection,
 }
+impl UpdateValues {
+    pub fn new(position: PathBuf, vars: VarCollection) -> Self {
+        Self { position, vars }
+    }
+}
 #[async_trait]
 pub trait AsyncUpdateable {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf>;
