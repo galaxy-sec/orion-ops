@@ -10,10 +10,19 @@ pub enum OsType {
     MacOs,
     Ubuntu,
 }
+//produce addr
+//deploy addr
+//translate addr
+//release_source
+//deploy_source
+//transfrom_addr
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
 pub struct Artifact {
     name: String,
-    addr: AddrType,
+    #[serde(alias = "addr")]
+    deployment_repo: AddrType,
+    transit_storage: Option<AddrType>,
+    release_repo: Option<AddrType>,
     local: String,
 }
 
@@ -39,7 +48,9 @@ impl Artifact {
     pub fn new<S: Into<String>, A: Into<AddrType>>(name: S, addr: A, local: S) -> Self {
         Self {
             name: name.into(),
-            addr: addr.into(),
+            deployment_repo: addr.into(),
+            transit_storage: None,
+            release_repo: None,
             local: local.into(),
         }
     }

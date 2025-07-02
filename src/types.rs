@@ -9,8 +9,12 @@ use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
-    addr::rename_path, const_vars::VALUE_FILE, error::SpecResult, tools::ensure_path,
-    update::UpdateOptions, vars::ValueDict,
+    addr::rename_path,
+    const_vars::VALUE_FILE,
+    error::SpecResult,
+    tools::ensure_path,
+    update::UpdateOptions,
+    vars::{ValueDict, VarCollection, VarDefinition},
 };
 
 pub trait Persistable<T> {
@@ -18,6 +22,11 @@ pub trait Persistable<T> {
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
+#[derive(Clone)]
+pub struct UpdateValues {
+    pub position: PathBuf,
+    pub vars: VarCollection,
+}
 #[async_trait]
 pub trait AsyncUpdateable {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf>;
