@@ -10,7 +10,7 @@ pub struct VarDefinition {
     //constr: Option<ValueConstraint>,
 }
 impl VarDefinition {
-    pub(crate) fn var_value(&self) -> ValueType {
+    pub(crate) fn value(&self) -> ValueType {
         self.value.clone()
     }
 
