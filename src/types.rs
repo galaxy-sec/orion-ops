@@ -69,13 +69,13 @@ impl ValuePath {
 #[derive(Clone, Debug, Default)]
 pub struct LocalizeOptions {
     global_dict: ValueDict,
-    mod_custom_value: bool,
+    use_default_value: bool,
 }
 impl LocalizeOptions {
     pub fn new(global_dict: ValueDict, mod_user_value: bool) -> Self {
         Self {
             global_dict,
-            mod_custom_value: mod_user_value,
+            use_default_value: mod_user_value,
         }
     }
     pub fn global_value(&self) -> &ValueDict {
@@ -85,14 +85,14 @@ impl LocalizeOptions {
         self.global_dict = value;
         self
     }
-    pub fn use_custom_value(&self) -> bool {
-        self.mod_custom_value
+    pub fn use_default_value(&self) -> bool {
+        self.use_default_value
     }
 
     pub fn for_test() -> Self {
         Self {
             global_dict: ValueDict::new(),
-            mod_custom_value: false,
+            use_default_value: false,
         }
     }
 }

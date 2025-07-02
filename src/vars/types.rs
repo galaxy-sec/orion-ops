@@ -220,7 +220,7 @@ value = 42
         let float_var = VarType::from(("test_float", 3.33));
         let serialized = toml::to_string(&float_var).unwrap();
         let expected = r#"name = "test_float"
-value = 3.14
+value = 3.33
 "#;
         assert_eq!(serialized, expected);
     }

@@ -63,13 +63,14 @@ impl ModTargetSpec {
     ) -> Result<OriginDict, StructError<SpecReason>> {
         let mut used = OriginDict::from(options.global_value().clone());
         used.set_source("global");
-        if value_paths.user_value_file().exists() && options.use_custom_value() {
+        if value_paths.user_value_file().exists() && !options.use_default_value() {
             let mut user_dict = OriginDict::from(ValueDict::eval_from_file(
                 &used.export_dict(),
                 value_paths.user_value_file(),
             )?);
             user_dict.set_source("mod-cust");
             used.merge(&user_dict);
+            info!( target:"mod/target", "use  model value : {}" , value_paths.user_value_file().display());
         }
         let mut default_dict =
             OriginDict::from(self.vars.value_dict().env_eval(&used.export_dict()));
@@ -333,7 +334,7 @@ impl Localizable for ModTargetSpec {
             .save_valconf(value_paths.used_readable())?;
         used.export_value().save_json(&used_value_file)?;
 
-        debug!(target : "/mod/target/loc", "update_local suc");
+        debug!(target : "/mod/target/loc", "use value: {}", used_value_file.display());
         let tpl_path_opt = self
             .setting
             .as_ref()

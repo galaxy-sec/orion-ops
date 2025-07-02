@@ -29,7 +29,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
             configure_dfx_logging(&args);
             let spec = SysProject::load(&current_dir).err_conv()?;
             let dict = load_project_global_value(spec.root_local(), args.value())?;
-            spec.localize(LocalizeOptions::new(dict, args.no_cust_value))
+            spec.localize(LocalizeOptions::new(dict, args.use_default_value))
                 .await
                 .err_conv()?;
         }

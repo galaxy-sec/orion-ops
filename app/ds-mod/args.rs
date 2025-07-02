@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use derive_getters::Getters;
 use orion_syspec::infra::DfxArgsGetter;
 
@@ -67,8 +67,8 @@ pub struct LocalArgs {
     #[arg(long = "value")]
     pub value: Option<String>,
     /// not use module  user value.yml
-    #[arg(long = "no_cust_value")]
-    pub no_cust_value: bool,
+    #[arg(long = "default", default_value = "false" , action = ArgAction::SetTrue)]
+    pub use_default_value: bool,
 }
 impl DfxArgsGetter for LocalArgs {
     fn debug_level(&self) -> usize {
