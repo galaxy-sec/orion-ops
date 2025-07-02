@@ -2,11 +2,11 @@ pub mod depend;
 pub mod init;
 pub mod localize;
 pub mod metrc;
+pub mod model;
 pub mod proj;
 pub mod refs;
 pub mod setting;
 pub mod spec;
-pub mod target;
 use derive_more::{Display, From};
 use serde::Serializer;
 use serde_derive::{Deserialize, Serialize};
@@ -78,12 +78,12 @@ impl FromStr for RunSPC {
 }
 
 #[derive(Clone, Debug, From, PartialEq, Eq, Hash)]
-pub struct TargetNode {
+pub struct ModelSTD {
     arch: CpuArch,
     os: OsCPE,
     spc: RunSPC,
 }
-impl TargetNode {
+impl ModelSTD {
     pub fn arm_mac14_host() -> Self {
         Self {
             arch: CpuArch::Arm,
@@ -108,7 +108,7 @@ impl TargetNode {
 }
 
 // 紧凑的序列化实现
-impl serde::Serialize for TargetNode {
+impl serde::Serialize for ModelSTD {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -120,7 +120,7 @@ impl serde::Serialize for TargetNode {
 }
 
 // 对应的反序列化实现
-impl<'de> serde::Deserialize<'de> for TargetNode {
+impl<'de> serde::Deserialize<'de> for ModelSTD {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -130,18 +130,18 @@ impl<'de> serde::Deserialize<'de> for TargetNode {
     }
 }
 
-impl TargetNode {
+impl ModelSTD {
     pub fn new(arch: CpuArch, os: OsCPE, spc: RunSPC) -> Self {
         Self { arch, os, spc }
     }
 }
 
-impl Display for TargetNode {
+impl Display for ModelSTD {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}-{}-{}", self.arch, self.os, self.spc)
     }
 }
-impl FromStr for TargetNode {
+impl FromStr for ModelSTD {
     type Err = String;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = value.split('-').collect();
@@ -153,6 +153,6 @@ impl FromStr for TargetNode {
         let os = OsCPE::from_str(parts[1])?;
         let spc = RunSPC::from_str(parts[2])?;
 
-        Ok(TargetNode { arch, os, spc })
+        Ok(ModelSTD { arch, os, spc })
     }
 }

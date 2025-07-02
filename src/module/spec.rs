@@ -10,11 +10,11 @@ use crate::{
 use async_trait::async_trait;
 
 use super::{
-    CpuArch, OsCPE, RunSPC, TargetNode,
+    CpuArch, ModelSTD, OsCPE, RunSPC,
     depend::DependencySet,
     init::{ModIniter, ModPrjIniter, mod_init_gitignore},
+    model::ModModelSpec,
     setting::Setting,
-    target::ModTargetSpec,
 };
 use crate::types::LocalizeOptions;
 use crate::{
@@ -31,14 +31,14 @@ use crate::{
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
     name: String,
-    targets: HashMap<TargetNode, ModTargetSpec>,
+    targets: HashMap<ModelSTD, ModModelSpec>,
     local: Option<PathBuf>,
 }
 impl ModuleSpec {
-    pub fn init<S: Into<String>>(name: S, target_vec: Vec<ModTargetSpec>) -> ModuleSpec {
+    pub fn init<S: Into<String>>(name: S, target_vec: Vec<ModModelSpec>) -> ModuleSpec {
         let mut targets = HashMap::new();
         for node in target_vec {
-            targets.insert(node.target().clone(), node);
+            targets.insert(node.model().clone(), node);
         }
         Self {
             name: name.into(),
@@ -46,7 +46,7 @@ impl ModuleSpec {
             local: None,
         }
     }
-    pub fn clean_other(&mut self, node: &TargetNode) -> SpecResult<()> {
+    pub fn clean_other(&mut self, node: &ModelSTD) -> SpecResult<()> {
         if let Some(local) = &self.local {
             let src_path = local.join(MOD_DIR);
             let subs = get_sub_dirs(&src_path)?;
@@ -115,8 +115,8 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         let subs = get_sub_dirs(&src_path)?;
         let mut targets = HashMap::new();
         for sub in subs {
-            let node = ModTargetSpec::load_from(&sub).with(&sub)?;
-            targets.insert(node.target().clone(), node);
+            let node = ModModelSpec::load_from(&sub).with(&sub)?;
+            targets.insert(node.model().clone(), node);
         }
         flag.flag_suc();
         Ok(Self {
@@ -137,7 +137,7 @@ impl Localizable for ModuleSpec {
         for target in self.targets.values() {
             let target_dst_path = dst_path
                 .as_ref()
-                .map(|x| x.join_all(PathBuf::from(target.target().to_string())));
+                .map(|x| x.join_all(PathBuf::from(target.model().to_string())));
             target.localize(target_dst_path, options.clone()).await?;
         }
         Ok(())
@@ -147,8 +147,8 @@ impl Localizable for ModuleSpec {
 impl ModuleSpec {
     pub fn for_example() -> Self {
         let name = "postgresql";
-        let k8s = ModTargetSpec::init(
-            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+        let k8s = ModModelSpec::init(
+            ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -165,8 +165,8 @@ impl ModuleSpec {
         )
         .with_depends(DependencySet::example());
 
-        let host = ModTargetSpec::init(
-            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+        let host = ModModelSpec::init(
+            ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -191,8 +191,8 @@ impl ModuleSpec {
             "https://mirrors.aliyun.com/postgresql/README",
         )));
 
-        let x86_ubu22_k8s = ModTargetSpec::init(
-            TargetNode::x86_ubt22_k8s(),
+        let x86_ubu22_k8s = ModModelSpec::init(
+            ModelSTD::x86_ubt22_k8s(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -208,8 +208,8 @@ impl ModuleSpec {
             None,
         );
 
-        let arm_mac_host = ModTargetSpec::init(
-            TargetNode::arm_mac14_host(),
+        let arm_mac_host = ModModelSpec::init(
+            ModelSTD::arm_mac14_host(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -228,8 +228,8 @@ impl ModuleSpec {
             ]),
             None,
         );
-        let x86_ubt22_host = ModTargetSpec::init(
-            TargetNode::arm_mac14_host(),
+        let x86_ubt22_host = ModModelSpec::init(
+            ModelSTD::arm_mac14_host(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -261,8 +261,8 @@ pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
 }
 pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
     let name = "postgresql";
-    let k8s = ModTargetSpec::init(
-        TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+    let k8s = ModModelSpec::init(
+        ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         ArtifactPackage::from(vec![Artifact::new(
             name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
@@ -277,8 +277,8 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
     )
     .with_depends(DependencySet::for_test());
 
-    let host = ModTargetSpec::init(
-        TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+    let host = ModModelSpec::init(
+        ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ArtifactPackage::from(vec![Artifact::new(
             name,
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),

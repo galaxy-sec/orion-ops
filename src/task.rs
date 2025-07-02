@@ -2,7 +2,7 @@ use derive_getters::Getters;
 use derive_more::Display;
 use serde::Serialize;
 
-use crate::{error::SpecResult, module::TargetNode};
+use crate::{error::SpecResult, module::ModelSTD};
 
 #[derive(Clone, Debug, PartialEq, Display, Serialize)]
 pub enum OperationType {
@@ -27,7 +27,7 @@ pub trait Task {
 pub type TaskHandle = Box<dyn Task>;
 
 pub trait NodeSetupTaskBuilder {
-    fn make_setup_task(&self, node: &TargetNode) -> SpecResult<TaskHandle>;
+    fn make_setup_task(&self, node: &ModelSTD) -> SpecResult<TaskHandle>;
 }
 
 pub trait UpdateTaskMaker {

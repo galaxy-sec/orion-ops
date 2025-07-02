@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_file_new_target() -> SpecResult<()> {
+    fn test_rename_path_file_new_model() -> SpecResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().assert();
         let src_path = temp_dir.path().join("source.txt");
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_dir_new_target() -> SpecResult<()> {
+    fn test_rename_path_dir_new_model() -> SpecResult<()> {
         // 创建临时目录
         let temp_dir = PathBuf::from("./test/temp/rename_test");
         if temp_dir.exists() {

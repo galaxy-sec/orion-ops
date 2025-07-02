@@ -20,7 +20,7 @@ use crate::types::LocalizeOptions;
 use crate::{
     addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
-    module::{CpuArch, OsCPE, RunSPC, TargetNode, refs::ModuleSpecRef, spec::ModuleSpec},
+    module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
     types::{Configable, Persistable},
 };
 #[derive(Getters, Clone, Debug)]
@@ -160,7 +160,7 @@ impl SysModelSpec {
             ModuleSpecRef::from(
                 mod_name,
                 GitAddr::from(repo).tag("0.1.0"),
-                TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+                ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
         );
@@ -168,7 +168,7 @@ impl SysModelSpec {
             ModuleSpecRef::from(
                 "you_mod2",
                 GitAddr::from(repo).branch("beta"),
-                TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+                ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
         );
@@ -176,7 +176,7 @@ impl SysModelSpec {
             ModuleSpecRef::from(
                 "you_mod3",
                 GitAddr::from("http://github").tag("v1.0.0"),
-                TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+                ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             )
             .with_enable(false),
         );
@@ -192,7 +192,7 @@ pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysMod
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             mod_name,
             LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
-            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+            ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ));
     }
 

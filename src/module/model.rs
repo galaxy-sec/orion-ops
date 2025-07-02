@@ -11,7 +11,7 @@ use std::{fs::read_to_string, str::FromStr};
 use async_trait::async_trait;
 
 use super::{
-    TargetNode,
+    ModelSTD,
     depend::DependencySet,
     localize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
@@ -37,8 +37,8 @@ use crate::{
 };
 
 #[derive(Getters, Clone, Debug, Serialize)]
-pub struct ModTargetSpec {
-    target: TargetNode,
+pub struct ModModelSpec {
+    model: ModelSTD,
     artifact: ArtifactPackage,
     workflow: ModWorkflows,
     gxl_prj: GxlProject,
@@ -50,7 +50,7 @@ pub struct ModTargetSpec {
     depends: DependencySet,
 }
 
-impl ModTargetSpec {
+impl ModModelSpec {
     pub fn with_depends(mut self, depends: DependencySet) -> Self {
         self.depends = depends;
         self
@@ -97,16 +97,16 @@ impl ModTargetSpec {
 }
 
 #[async_trait]
-impl AsyncUpdateable for ModTargetSpec {
+impl AsyncUpdateable for ModModelSpec {
     async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
         Ok(path.to_path_buf())
     }
 }
-impl ModTargetSpec {
+impl ModModelSpec {
     pub fn save_main(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
-        let target_path = root.join(name.unwrap_or(self.target().to_string()));
+        let target_path = root.join(name.unwrap_or(self.model().to_string()));
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
@@ -114,7 +114,7 @@ impl ModTargetSpec {
         Ok(())
     }
 
-    pub fn clean_other(root: &Path, node: &TargetNode) -> SpecResult<()> {
+    pub fn clean_other(root: &Path, node: &ModelSTD) -> SpecResult<()> {
         let subs = get_sub_dirs(root)?;
         for sub in subs {
             if !sub.ends_with(node.to_string().as_str()) {
@@ -182,9 +182,9 @@ impl From<&PathBuf> for TargetValuePaths {
     }
 }
 
-impl Persistable<ModTargetSpec> for ModTargetSpec {
+impl Persistable<ModModelSpec> for ModModelSpec {
     fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
-        let target_path = root.join(name.unwrap_or(self.target().to_string()));
+        let target_path = root.join(name.unwrap_or(self.model().to_string()));
 
         let mut flag = log_guard!(
             info!(target: "spec/mod/target", "save target  success!:{}", target_path.display()),
@@ -220,7 +220,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         );
         let paths = ModTargetPaths::from(&target_root.to_path_buf());
         ctx.with_path("root", target_root);
-        let target = TargetNode::from_str(path_file_name(target_root)?.as_str())
+        let target = ModelSTD::from_str(path_file_name(target_root)?.as_str())
             .owe_res()
             .with(&ctx)?;
         let actions = ModWorkflows::load_from(paths.workflow_path()).with(&ctx)?;
@@ -248,7 +248,7 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         let gxl_prj = GxlProject::load_from(paths.target_root()).with(&ctx)?;
         flag.flag_suc();
         Ok(Self {
-            target,
+            model: target,
             artifact,
             workflow: actions,
             //conf_spec,
@@ -262,9 +262,9 @@ impl Persistable<ModTargetSpec> for ModTargetSpec {
         })
     }
 }
-impl ModTargetSpec {
+impl ModModelSpec {
     pub fn init(
-        target: TargetNode,
+        target: ModelSTD,
         artifact: ArtifactPackage,
         workflow: ModWorkflows,
         gxl_prj: GxlProject,
@@ -274,7 +274,7 @@ impl ModTargetSpec {
         setting: Option<Setting>,
     ) -> Self {
         Self {
-            target,
+            model: target,
             workflow,
             gxl_prj,
             artifact,
@@ -298,14 +298,14 @@ impl ModTargetSpec {
 }
 
 #[async_trait]
-impl Localizable for ModTargetSpec {
+impl Localizable for ModModelSpec {
     async fn localize(
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
         let mut flag = log_guard!(
-            info!(target : "/mod/target", "mod-target localize {} success!", self.target()),
+            info!(target : "/mod/target", "mod-target localize {} success!", self.model()),
             error!(target: "/mod/target", "mod-target localize {} fail!",
                 self.local.clone().unwrap_or(PathBuf::from("unknow")).display())
         );
@@ -383,10 +383,10 @@ pub mod test {
 
     use super::*;
 
-    pub fn make_mod_k8s_4test() -> SpecResult<ModTargetSpec> {
+    pub fn make_mod_k8s_4test() -> SpecResult<ModModelSpec> {
         let name = "postgresql";
-        let k8s = ModTargetSpec::init(
-            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+        let k8s = ModModelSpec::init(
+            ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -405,10 +405,10 @@ pub mod test {
         Ok(k8s)
     }
 
-    pub fn make_mod_host_4test() -> SpecResult<ModTargetSpec> {
+    pub fn make_mod_host_4test() -> SpecResult<ModModelSpec> {
         let name = "postgresql";
-        let host = ModTargetSpec::init(
-            TargetNode::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+        let host = ModModelSpec::init(
+            ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
                 HttpAddr::from(
@@ -431,13 +431,12 @@ pub mod test {
     async fn build_target_k8s() -> SpecResult<()> {
         test_init();
         let spec = make_mod_k8s_4test().assert();
-        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string());
+        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());
         make_clean_path(&spec_path)?;
         spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
-        let loaded = ModTargetSpec::load_from(
-            &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
-        )
-        .assert();
+        let loaded =
+            ModModelSpec::load_from(&PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string()))
+                .assert();
         loaded
             .localize(None, LocalizeOptions::for_test())
             .await
@@ -449,13 +448,12 @@ pub mod test {
     async fn build_target_host() -> SpecResult<()> {
         test_init();
         let spec = make_mod_host_4test().assert();
-        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string());
+        let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());
         make_clean_path(&spec_path)?;
         spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
-        let loaded = ModTargetSpec::load_from(
-            &PathBuf::from(TARGET_SPC_ROOT).join(spec.target().to_string()),
-        )
-        .assert();
+        let loaded =
+            ModModelSpec::load_from(&PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string()))
+                .assert();
         loaded
             .localize(None, LocalizeOptions::for_test())
             .await
@@ -463,9 +461,9 @@ pub mod test {
         Ok(())
     }
 
-    fn build_spec(vars: VarCollection) -> ModTargetSpec {
-        ModTargetSpec::init(
-            TargetNode::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+    fn build_spec(vars: VarCollection) -> ModModelSpec {
+        ModModelSpec::init(
+            ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::default(),
             ModWorkflows::default(),
             GxlProject::default(),
