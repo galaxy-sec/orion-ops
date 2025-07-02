@@ -53,6 +53,16 @@ impl From<(&str, f64)> for VarType {
         Self::Float(VarDefinition::from(value))
     }
 }
+impl From<(&str, ValueType)> for VarType {
+    fn from(value: (&str, ValueType)) -> Self {
+        match value.1 {
+            ValueType::String(var_value) => Self::String(VarDefinition::from(var_value.value().clone()))
+            ValueType::Bool(var_value) => todo!(),
+            ValueType::Int(var_value) => todo!(),
+            ValueType::Float(var_value) => todo!(),
+        }
+    }
+}
 
 pub type EnvDict = ValueDict;
 pub trait EnvEvalable<T> {

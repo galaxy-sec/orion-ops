@@ -517,7 +517,7 @@ pub mod test {
 
         let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
         let spec = build_spec(vars);
-        let options = LocalizeOptions::new(ValueDict::new(), true);
+        let options = LocalizeOptions::new(ValueDict::new(), false);
         let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
 
         let result = spec.build_used_value(options, &value_paths).unwrap();
@@ -547,7 +547,7 @@ pub mod test {
             VarType::from(("DEFAULT_ONLY", "default_only")),
         ]);
         let spec = build_spec(vars);
-        let options = LocalizeOptions::new(global_dict, true);
+        let options = LocalizeOptions::new(global_dict, false);
         let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
 
         let result = spec.build_used_value(options, &value_paths).unwrap();

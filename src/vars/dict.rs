@@ -1,7 +1,8 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use derive_getters::Getters;
 use derive_more::{Deref, From};
+use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{error::SpecResult, types::Yamlable};
@@ -11,11 +12,12 @@ use super::{
     types::{EnvEvalable, ValueType},
 };
 
-pub type ValueMap = HashMap<String, ValueType>;
+//pub type ValueMap = HashMap<String, ValueType>;
+pub type ValueMap = IndexMap<String, ValueType>;
 
 impl EnvEvalable<ValueMap> for ValueMap {
     fn env_eval(self, dict: &EnvDict) -> ValueMap {
-        let mut vmap = HashMap::new();
+        let mut vmap = ValueMap::new();
         for (k, v) in self {
             let e_v = v.env_eval(dict);
             vmap.insert(k, e_v);
@@ -27,12 +29,12 @@ impl EnvEvalable<ValueMap> for ValueMap {
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default, From)]
 #[serde(transparent)]
 pub struct ValueDict {
-    dict: HashMap<String, ValueType>,
+    dict: ValueMap,
 }
 impl ValueDict {
     pub fn new() -> Self {
         Self {
-            dict: HashMap::new(),
+            dict: ValueMap::new(),
         }
     }
 
@@ -47,7 +49,7 @@ impl ValueDict {
         }
     }
     pub fn env_eval(self, dict: &EnvDict) -> Self {
-        let mut map = HashMap::new();
+        let mut map = ValueMap::new();
         for (k, v) in self.dict {
             let e_v = v.env_eval(dict);
             map.insert(k, e_v);
@@ -55,14 +57,57 @@ impl ValueDict {
         Self { dict: map }
     }
     pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> SpecResult<Self> {
+        let mut cur_dict = dict.clone();
         let ins = ValueDict::from_yml(file_path)?;
-        Ok(ins.env_eval(dict))
+        Ok(ins.eval_import(&mut cur_dict))
+    }
+
+    fn eval_import(self, dict: &mut ValueDict) -> Self {
+        let mut map = ValueMap::new();
+        for (k, v) in self.dict {
+            let e_v = v.env_eval(dict);
+            dict.insert(k.clone(), e_v.clone());
+            map.insert(k, e_v);
+        }
+        Self { dict: map }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use std::{io::Write, path::PathBuf};
+    use tempfile::NamedTempFile;
+
+    // 辅助函数：创建临时测试文件
+    fn create_temp_file(content: &str) -> NamedTempFile {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, "{}", content).unwrap();
+        file
+    }
+    #[test]
+    fn test_eval_from_file_basic() {
+        // 准备测试数据
+        let file = create_temp_file(
+            r#"
+        key1: "value1"
+        key2:  ${key1}
+        key3:  ${key2}
+        "#,
+        );
+
+        // 准备环境字典
+        let env_dict = EnvDict::new();
+
+        // 执行方法
+        let result = ValueDict::eval_from_file(&env_dict, file.path()).unwrap();
+
+        // 验证结果
+        assert_eq!(result.get("key1"), Some(&ValueType::from("value1")));
+        assert_eq!(result.get("key2"), Some(&ValueType::from("value1")));
+        assert_eq!(result.get("key3"), Some(&ValueType::from("value1")));
+    }
 
     #[test]
     fn test_dict_toml_serialization() {

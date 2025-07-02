@@ -1,9 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
-use super::{ValueDict, types::VarType};
+use crate::{error::SpecResult, types::Yamlable};
+
+use super::{EnvDict, EnvEvalable, ValueDict, types::VarType};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
 //#[serde(transparent)]
@@ -53,6 +55,21 @@ impl VarCollection {
         }
 
         Self { vars: result }
+    }
+    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> SpecResult<Self> {
+        let mut cur_dict = dict.clone();
+        let ins = VarCollection::from_yml(file_path)?;
+        Ok(ins.eval_import(&mut cur_dict))
+    }
+
+    fn eval_import(self, dict: &mut ValueDict) -> Self {
+        let mut vars = Vec::new();
+        for v in self.vars {
+            let e_v = v.var_value().env_eval(dict);
+            dict.insert(v.name(), e_v.clone());
+            vars.push(VarType::from((v.name(), e_v)));
+        }
+        Self { dict: vars }
     }
 }
 
