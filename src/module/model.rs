@@ -243,7 +243,8 @@ impl Persistable<ModModelSpec> for ModModelSpec {
         ctx.with_path("res_spec", paths.res_path());
         let res_spec = CaculateResSpec::from_conf(paths.res_path()).with(&ctx)?;
         ctx.with_path("vars", paths.vars_path());
-        let vars = VarCollection::from_conf(paths.vars_path()).with(&ctx)?;
+        let vars =
+            VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path()).with(&ctx)?;
 
         let gxl_prj = GxlProject::load_from(paths.target_root()).with(&ctx)?;
         flag.flag_suc();
@@ -378,7 +379,7 @@ pub mod test {
             init::{ModIniter, ModPrjIniter},
         },
         tools::{make_clean_path, test_init},
-        vars::{OriginValue, ValueType, VarType},
+        vars::{OriginValue, ValueType, VarDefinition},
     };
 
     use super::*;
@@ -398,7 +399,7 @@ pub mod test {
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
         .with_depends(DependencySet::for_test());
@@ -420,7 +421,7 @@ pub mod test {
             GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
         .with_depends(DependencySet::for_test());
@@ -476,7 +477,7 @@ pub mod test {
     #[test]
     fn test_build_used_value_with_default_only() {
         test_init();
-        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let vars = VarCollection::define(vec![VarDefinition::from(("TEST_KEY", "default_value"))]);
         let spec = build_spec(vars);
         let options = LocalizeOptions::new(ValueDict::new(), false);
         let temp_dir = tempfile::tempdir().unwrap();
@@ -494,7 +495,7 @@ pub mod test {
         test_init();
         let mut global_dict = ValueDict::new();
         global_dict.insert("TEST_KEY".to_string(), ValueType::from("global_value"));
-        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let vars = VarCollection::define(vec![VarDefinition::from(("TEST_KEY", "default_value"))]);
         let spec = build_spec(vars);
         let options = LocalizeOptions::new(global_dict, false);
         let temp_dir = tempfile::tempdir().unwrap();
@@ -515,7 +516,7 @@ pub mod test {
         let user_value_path = temp_dir.path().join(USER_VALUE_FILE);
         std::fs::write(&user_value_path, "TEST_KEY: user_value").unwrap();
 
-        let vars = VarCollection::define(vec![VarType::from(("TEST_KEY", "default_value"))]);
+        let vars = VarCollection::define(vec![VarDefinition::from(("TEST_KEY", "default_value"))]);
         let spec = build_spec(vars);
         let options = LocalizeOptions::new(ValueDict::new(), false);
         let value_paths = TargetValuePaths::from(&temp_dir.path().to_path_buf());
@@ -543,8 +544,8 @@ pub mod test {
         global_dict.insert("GLOBAL_ONLY".to_string(), ValueType::from("global_only"));
 
         let vars = VarCollection::define(vec![
-            VarType::from(("TEST_KEY", "default_value")),
-            VarType::from(("DEFAULT_ONLY", "default_only")),
+            VarDefinition::from(("TEST_KEY", "default_value")),
+            VarDefinition::from(("DEFAULT_ONLY", "default_only")),
         ]);
         let spec = build_spec(vars);
         let options = LocalizeOptions::new(global_dict, false);

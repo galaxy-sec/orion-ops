@@ -29,7 +29,7 @@ pub fn expand_env_vars(dict: &EnvDict, input: &str) -> String {
             // 处理变量替换
             if found_closing_brace {
                 if let Some(ValueType::String(value)) = dict.get(&var_name) {
-                    result.push_str(value.value());
+                    result.push_str(value);
                 } else {
                     match env::var(&var_name) {
                         Ok(value) => {

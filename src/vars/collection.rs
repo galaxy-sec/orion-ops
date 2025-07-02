@@ -5,15 +5,15 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{error::SpecResult, types::Yamlable};
 
-use super::{EnvDict, EnvEvalable, ValueDict, types::VarType};
+use super::{EnvDict, EnvEvalable, ValueDict, VarDefinition};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
 //#[serde(transparent)]
 pub struct VarCollection {
-    vars: Vec<VarType>,
+    vars: Vec<VarDefinition>,
 }
 impl VarCollection {
-    pub fn define(vars: Vec<VarType>) -> Self {
+    pub fn define(vars: Vec<VarDefinition>) -> Self {
         Self { vars }
     }
     pub fn value_dict(&self) -> ValueDict {
@@ -67,27 +67,64 @@ impl VarCollection {
         for v in self.vars {
             let e_v = v.var_value().env_eval(dict);
             dict.insert(v.name(), e_v.clone());
-            vars.push(VarType::from((v.name(), e_v)));
+            vars.push(VarDefinition::from((v.name(), e_v)));
         }
-        Self { dict: vars }
+        Self { vars }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::vars::ValueType;
+
     use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    // 辅助函数：创建临时测试文件
+    fn create_temp_file(content: &str) -> NamedTempFile {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, "{}", content).unwrap();
+        file
+    }
+    #[test]
+    fn test_eval_from_file_basic() {
+        // 准备测试数据
+        let file = create_temp_file(
+            r#"
+        vars:
+          - name: "username"
+            value: "admin"
+          - name: "account"
+            value: ${username}
+        "#,
+        );
+
+        // 准备环境字典
+        let env_dict = EnvDict::new();
+
+        // 执行方法
+        let result = VarCollection::eval_from_file(&env_dict, file.path()).unwrap();
+
+        // 验证结果
+        assert_eq!(result.vars().len(), 2);
+        assert_eq!(result.vars()[0].name(), "username");
+        assert_eq!(result.vars()[0].var_value(), ValueType::from("admin"));
+        assert_eq!(result.vars()[1].name(), "account");
+        assert_eq!(result.vars()[1].var_value(), ValueType::from("admin"));
+    }
 
     #[test]
     fn test_merge_vars() {
         let vars1 = VarCollection::define(vec![
-            VarType::from(("a", "1")),
-            VarType::from(("b", true)),
-            VarType::from(("c", 10)),
+            VarDefinition::from(("a", "1")),
+            VarDefinition::from(("b", true)),
+            VarDefinition::from(("c", 10)),
         ]);
 
         let vars2 = VarCollection::define(vec![
-            VarType::from(("b", false)),
-            VarType::from(("d", 3.33)),
+            VarDefinition::from(("b", false)),
+            VarDefinition::from(("d", 3.33)),
         ]);
 
         let merged = vars1.merge(&vars2);
@@ -100,8 +137,8 @@ mod tests {
         assert_eq!(names, vec!["a", "b", "c", "d"]);
 
         // 验证变量b被正确覆盖
-        if let VarType::Bool(var) = &merged.vars()[1] {
-            assert_eq!(var.var_value().value(), &false);
+        if let ValueType::Bool(var) = &merged.vars()[1].var_value() {
+            assert_eq!(var, &false);
         } else {
             panic!("变量b类型错误");
         }
@@ -110,9 +147,9 @@ mod tests {
     #[test]
     fn test_toml_serialization() {
         let collection = VarCollection::define(vec![
-            VarType::from(("name", "Alice")),
-            VarType::from(("age", 30)),
-            VarType::from(("active", true)),
+            VarDefinition::from(("name", "Alice")),
+            VarDefinition::from(("age", 30)),
+            VarDefinition::from(("active", true)),
         ]);
 
         // 序列化为 TOML 字符串

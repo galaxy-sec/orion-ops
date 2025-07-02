@@ -1,10 +1,10 @@
-use crate::predule::*;
+use crate::{predule::*, vars::VarDefinition};
 use std::collections::HashMap;
 
 use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
     types::{Localizable, ValuePath},
-    vars::{VarCollection, VarType},
+    vars::VarCollection,
     workflow::prj::GxlProject,
 };
 use async_trait::async_trait;
@@ -160,7 +160,7 @@ impl ModuleSpec {
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
         .with_depends(DependencySet::example());
@@ -178,7 +178,7 @@ impl ModuleSpec {
             GxlProject::spec_host_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+            VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
         .with_depends(DependencySet::example());
@@ -204,7 +204,7 @@ impl ModuleSpec {
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
             CaculateResSpec::new(2, 4),
-            VarCollection::define(vec![VarType::from(("EXAMPLE_SIZE", 1000))]),
+            VarCollection::define(vec![VarDefinition::from(("EXAMPLE_SIZE", 1000))]),
             None,
         );
 
@@ -222,9 +222,9 @@ impl ModuleSpec {
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![
-                VarType::from(("EXAMPLE_SIZE", 1000)),
-                VarType::from(("HOME_BIN", "${HOME}/bin")),
-                VarType::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
+                VarDefinition::from(("EXAMPLE_SIZE", 1000)),
+                VarDefinition::from(("HOME_BIN", "${HOME}/bin")),
+                VarDefinition::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
             ]),
             None,
         );
@@ -242,9 +242,9 @@ impl ModuleSpec {
             //conf.clone(),
             CaculateResSpec::new(2, 4),
             VarCollection::define(vec![
-                VarType::from(("EXAMPLE_SIZE", 1000)),
-                VarType::from(("HOME_BIN", "${HOME}/bin")),
-                VarType::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
+                VarDefinition::from(("EXAMPLE_SIZE", 1000)),
+                VarDefinition::from(("HOME_BIN", "${HOME}/bin")),
+                VarDefinition::from(("WORK_BIN", "${TEST_WORK_ROOT}/bin")),
             ]),
             None,
         );
@@ -272,7 +272,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
         GxlProject::spec_k8s_tpl(),
         //conf.clone(),
         CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+        VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
     .with_depends(DependencySet::for_test());
@@ -288,7 +288,7 @@ pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
         GxlProject::spec_host_tpl(),
         //conf.clone(),
         CaculateResSpec::new(2, 4),
-        VarCollection::define(vec![VarType::from(("SPEED_LIMIT", 1000))]),
+        VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
         Some(Setting::example()),
     )
     .with_depends(DependencySet::for_test());
