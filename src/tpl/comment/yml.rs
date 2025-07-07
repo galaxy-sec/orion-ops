@@ -27,6 +27,7 @@ pub enum YmlStatus {
 }
 pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalResult<String> {
     let mut out = String::new();
+    let mut line = String::new();
     loop {
         if input.is_empty() {
             break;
@@ -39,47 +40,47 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                 .parse_next(input)?;
 
                 if opt("\n").parse_next(input)?.is_some() {
-                    if !code.trim().is_empty() {
-                        out += code;
+                    line += code;
+                    if !line.trim().is_empty() {
+                        out += line.as_str();
                         out += "\n";
+                        line = String::new();
                     }
                     continue;
                 }
 
                 if opt("#").parse_next(input)?.is_some() {
                     if !code.trim().is_empty() {
-                        out += code;
+                        line += code;
                     }
                     *status = YmlStatus::Comment;
                     continue;
                 }
-                //if !code.trim().is_empty() {
-                //}
-                out += code;
+                line += code;
                 if input.is_empty() {
                     break;
                 }
                 let rst = opt("|\n").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::BlockData;
                     continue;
                 }
                 let rst = opt("|").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     continue;
                 }
 
                 let rst = opt("\"").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::StringDouble;
                     continue;
                 }
                 let rst = opt("\'").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::StringSingle;
                     continue;
                 }
@@ -94,7 +95,7 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                     if data.trim().is_empty() {
                         *status = YmlStatus::Code;
                     } else {
-                        out += data;
+                        line += data;
                     }
                 }
                 Err(e) => return Err(e),
@@ -102,16 +103,16 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
 
             YmlStatus::StringDouble => {
                 let data = take_till(0.., |c| c == '"').parse_next(input)?;
-                out += data;
+                line += data;
                 let data = literal("\"").parse_next(input)?;
-                out += data;
+                line += data;
                 *status = YmlStatus::Code;
             }
             YmlStatus::StringSingle => {
                 let data = take_till(0.., |c| c == '\'').parse_next(input)?;
-                out += data;
+                line += data;
                 let data = literal("\'").parse_next(input)?;
-                out += data;
+                line += data;
                 *status = YmlStatus::Code;
             }
 
@@ -119,7 +120,7 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                 let _ = till_line_ending
                     .context(wn_desc("comment-line"))
                     .parse_next(input)?;
-                //let _ = opt(line_ending).context(wn_desc("comment-line_ending")).parse_next(input)?;
+                //let _ = opt(line_ending) .context(wn_desc("comment-line_ending")) .parse_next(input)?;
                 *status = YmlStatus::Code;
             }
         }
@@ -307,7 +308,6 @@ global:
         let data = r#"
 tunable:
 # -- See the [property reference documentation](https://docs.redpanda.com/docs/reference/cluster-
-properties/#log_segment_size_min).
 log_segment_size_min: 16777216 # 16 mb
 # -- See the property reference documentation.
 log_segment_size_max: 268435456 # 256 mb
