@@ -168,10 +168,14 @@ impl HttpAddr {
 
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(
+        &self,
+        dest_dir: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        self.download(&dest_path, options).await
+        Ok(UpdateValue::from(self.download(&dest_path, options).await?))
     }
 }
 

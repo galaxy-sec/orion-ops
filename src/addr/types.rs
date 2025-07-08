@@ -1,4 +1,7 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{
+    predule::*,
+    vars::{EnvDict, VarCollection},
+};
 
 use derive_more::From;
 

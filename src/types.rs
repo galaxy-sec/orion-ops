@@ -25,24 +25,43 @@ pub trait Persistable<T> {
 #[derive(Clone)]
 pub struct UpdateValues {
     pub position: PathBuf,
-    pub vars: VarCollection,
+    pub vars: Option<VarCollection>,
 }
 impl UpdateValues {
     pub fn new(position: PathBuf, vars: VarCollection) -> Self {
-        Self { position, vars }
+        Self {
+            position,
+            vars: Some(vars),
+        }
+    }
+    pub fn vars(&self) -> Option<&VarCollection> {
+        self.vars.as_ref()
+    }
+    pub fn position(&self) -> &PathBuf {
+        &self.position
     }
 }
+impl From<PathBuf> for UpdateValues {
+    fn from(value: PathBuf) -> Self {
+        Self {
+            vars: None,
+            position: value,
+        }
+    }
+}
+
 #[async_trait]
 pub trait AsyncUpdateable {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf>;
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValues>;
     async fn update_rename(
         &self,
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<PathBuf> {
+    ) -> SpecResult<UpdateValues> {
         let target = self.update_local(path, options).await?;
-        rename_path(&target, name)
+        rename_path(target.position(), name);
+        Ok(target)
     }
 }
 

@@ -250,7 +250,7 @@ impl GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         if let Some(postfix) = self
             .rev
@@ -325,7 +325,7 @@ impl AsyncUpdateable for GitAddr {
             .owe_res()
             .with(&ctx)?;
         flag.flag_suc();
-        Ok(real_path)
+        Ok(UpdateValue::from(real_path))
     }
 }
 
@@ -498,16 +498,16 @@ mod tests {
             GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("master"); // 替换为实际测试分支
 
         // 执行克隆
-        let cloned_path = git_addr
+        let cloned_v = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await?;
 
         // 验证克隆结果
-        assert!(cloned_path.exists());
-        assert!(cloned_path.join(".git").exists());
+        assert!(cloned_v.position().exists());
+        assert!(cloned_v.position().join(".git").exists());
 
         // 验证分支/标签是否正确检出
-        let repo = git2::Repository::open(&cloned_path).owe_res()?;
+        let repo = git2::Repository::open(cloned_v.position()).owe_res()?;
         let head = repo.head().owe_res()?;
         assert!(head.is_branch() || head.is_tag());
 
@@ -530,11 +530,11 @@ mod tests {
             .path("postgresql/x86-ubt22-k8s"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(real_path, dest_path.join("x86-ubt22-k8s"));
+        assert_eq!(git_up.position(), &dest_path.join("x86-ubt22-k8s"));
         Ok(())
     }
 
@@ -554,11 +554,11 @@ mod tests {
         //;
 
         // 执行克隆
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(real_path, dest_path.join("modspec.git_master"));
+        assert_eq!(git_up.position(), &dest_path.join("modspec.git_master"));
         Ok(())
     }
 
@@ -574,10 +574,10 @@ mod tests {
         let git_addr =
             GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("develop"); // 替换为实际测试分支
 
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await?;
-        let repo = git2::Repository::open(real_path).assert();
+        let repo = git2::Repository::open(git_up.position().clone()).assert();
         let head = repo.head().assert();
         assert!(head.shorthand().unwrap_or("").contains("develop"));
         Ok(())

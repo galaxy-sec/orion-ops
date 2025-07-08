@@ -1,4 +1,5 @@
 use crate::{
+    addr::types::UpdateValue,
     const_vars::{
         DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_JSON, USED_READABLE_FILE,
         USER_VALUE_FILE, VALUE_DIR,
@@ -98,10 +99,10 @@ impl ModModelSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ModModelSpec {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
-        Ok(path.to_path_buf())
+        Ok(UpdateValue::new(self.vars.clone(), path.to_path_buf()))
     }
 }
 impl ModModelSpec {

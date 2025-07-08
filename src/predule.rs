@@ -10,3 +10,5 @@ pub use std::path::PathBuf;
 
 pub use crate::error::SpecResult;
 pub use async_trait::async_trait;
+
+pub use crate::addr::types::UpdateValue;

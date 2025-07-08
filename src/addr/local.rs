@@ -21,7 +21,11 @@ impl EnvEvalable<LocalAddr> for LocalAddr {
 #[async_trait]
 impl AsyncUpdateable for LocalAddr {
     //#[debug_ensures(matches!(*result, Ok(v) if v.exists()), "path not exists")]
-    async fn update_local(&self, path: &Path, up_options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(
+        &self,
+        path: &Path,
+        up_options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -56,7 +60,7 @@ impl AsyncUpdateable for LocalAddr {
                 .with(&ctx)?;
         }
         flag.flag_suc();
-        Ok(dst)
+        Ok(UpdateValue::from(dst))
     }
 
     async fn update_rename(
