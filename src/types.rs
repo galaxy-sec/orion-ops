@@ -14,7 +14,7 @@ use crate::{
     error::SpecResult,
     tools::ensure_path,
     update::UpdateOptions,
-    vars::{ValueDict, VarCollection, VarDefinition},
+    vars::{ValueDict, VarCollection},
 };
 
 pub trait Persistable<T> {
@@ -23,11 +23,11 @@ pub trait Persistable<T> {
 }
 
 #[derive(Clone)]
-pub struct UpdateValues {
+pub struct UpdateValue {
     pub position: PathBuf,
     pub vars: Option<VarCollection>,
 }
-impl UpdateValues {
+impl UpdateValue {
     pub fn new(position: PathBuf, vars: VarCollection) -> Self {
         Self {
             position,
@@ -41,7 +41,7 @@ impl UpdateValues {
         &self.position
     }
 }
-impl From<PathBuf> for UpdateValues {
+impl From<PathBuf> for UpdateValue {
     fn from(value: PathBuf) -> Self {
         Self {
             vars: None,
@@ -52,13 +52,13 @@ impl From<PathBuf> for UpdateValues {
 
 #[async_trait]
 pub trait AsyncUpdateable {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValues>;
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue>;
     async fn update_rename(
         &self,
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateValues> {
+    ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
         rename_path(target.position(), name);
         Ok(target)

@@ -1,7 +1,4 @@
-use crate::{
-    predule::*,
-    vars::{EnvDict, VarCollection},
-};
+use crate::{predule::*, vars::EnvDict};
 
 use derive_more::From;
 
@@ -32,7 +29,7 @@ impl EnvEvalable<AddrType> for AddrType {
 
 #[async_trait]
 impl AsyncUpdateable for AddrType {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_local(path, options).await,
@@ -46,7 +43,7 @@ impl AsyncUpdateable for AddrType {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<PathBuf> {
+    ) -> SpecResult<UpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,

@@ -68,9 +68,9 @@ impl AsyncUpdateable for LocalAddr {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<PathBuf> {
+    ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
-        rename_path(&target, name)
+        Ok(UpdateValue::from(rename_path(target.position(), name)?))
     }
 }
 

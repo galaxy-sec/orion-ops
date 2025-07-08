@@ -101,13 +101,13 @@ impl Dependency {
 
 #[async_trait]
 impl AsyncUpdateable for Dependency {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         self.addr.update_local(path, options).await
     }
 }
 
 impl Dependency {
-    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {
