@@ -48,6 +48,17 @@ impl WorkInsConf {
             work_envs,
         }
     }
+    pub fn load(mut self) -> SpecResult<Self> {
+        let mut updated_sys = Vec::new();
+        for mut sys in self.systems {
+            if sys.is_update() {
+                sys = sys.load()?;
+            }
+            updated_sys.push(sys);
+        }
+        self.systems = updated_sys;
+        Ok(self)
+    }
 }
 
 #[derive(Getters, Clone, Debug)]
@@ -81,7 +92,7 @@ impl OpsProject {
         );
 
         let conf_file = root_local.join(OPS_PRJ_FILE);
-        let conf = WorkInsConf::from_conf(&conf_file)?;
+        let conf = WorkInsConf::from_conf(&conf_file)?.load()?;
         let root_local = root_local.to_path_buf();
         let project = GxlProject::load_from(&root_local)?;
         let value_root = ensure_path(root_local.join(VALUE_DIR))?;
@@ -151,6 +162,7 @@ impl SysUpdateable<WorkInsConf> for WorkInsConf {
 impl SysUpdateable<OpsProject> for OpsProject {
     async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> SpecResult<Self> {
         self.conf = self.conf.update_local(path, options).await?;
+        self.save()?;
         Ok(self)
     }
 }
@@ -205,8 +217,6 @@ impl OpsProject {
 
         let conf = WorkInsConf::for_test();
         let proj = OpsProject::new(conf, prj_path.to_path_buf());
-
-        proj.save()?;
         Ok(proj)
     }
 }
@@ -232,10 +242,6 @@ pub mod tests {
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join("workins_sys_1");
         make_clean_path(&prj_path)?;
         let project = OpsProject::for_test("workins_sys_1".into()).assert("make workins");
-        if prj_path.exists() {
-            std::fs::remove_dir_all(&prj_path).assert("ok");
-        }
-        std::fs::create_dir_all(&prj_path).assert("yes");
         project.save().assert("save workins_prj");
         let mut project = OpsProject::load(&prj_path).assert("workins-prj");
         project = project
