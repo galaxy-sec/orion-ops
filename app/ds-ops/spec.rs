@@ -2,11 +2,11 @@ use orion_error::ErrorConv;
 use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::load_project_global_value;
+use orion_syspec::ops_prj::proj::OpsProject;
 use orion_syspec::tools::make_new_path;
 use orion_syspec::types::LocalizeOptions;
 use orion_syspec::update::UpdateOptions;
 use orion_syspec::vars::ValueDict;
-use orion_syspec::workins::proj::OpsProject;
 
 use crate::args::GInsCmd;
 
