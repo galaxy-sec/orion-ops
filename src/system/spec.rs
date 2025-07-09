@@ -164,7 +164,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 mod_name,
-                GitAddr::from(repo).tag("0.1.0"),
+                GitAddr::from(repo).with_tag("0.1.0"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -172,7 +172,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod2",
-                GitAddr::from(repo).branch("beta"),
+                GitAddr::from(repo).with_branch("beta"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -180,7 +180,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod3",
-                GitAddr::from("http://github").tag("v1.0.0"),
+                GitAddr::from("http://github").with_tag("v1.0.0"),
                 ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             )
             .with_enable(false),

@@ -1,22 +1,34 @@
 use crate::{
-    error::{SpecError, SpecReason, ToErr},
+    error::{SpecReason, ToErr},
     predule::*,
     types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath},
 };
 
 use async_trait::async_trait;
-use contracts::requires;
 use orion_error::{UvsLogicFrom, UvsReason};
 
 use crate::{addr::AddrType, error::SpecResult, types::UnitUpdateable};
 
 use super::spec::SysModelSpec;
 
+fn convert_syspec_addr(origin: AddrType) -> AddrType {
+    match origin {
+        AddrType::Git(git_addr) => {
+            if git_addr.path().is_none() {
+                AddrType::from(git_addr.with_path("sys"))
+            } else {
+                AddrType::from(git_addr)
+            }
+        }
+        AddrType::Http(_) => origin,
+        AddrType::Local(_) => origin,
+    }
+}
+
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct SysModelSpecRef {
     name: String,
     addr: AddrType,
-    local: Option<PathBuf>,
     #[serde(skip)]
     spec: Option<SysModelSpec>,
 }
@@ -25,20 +37,15 @@ impl SysModelSpecRef {
         Self {
             name: name.into(),
             addr: addr.into(),
-            local: None,
             spec: None,
         }
     }
-    pub fn is_update(&self) -> bool {
-        self.local.is_some()
+    pub fn is_update(&self, path: &Path) -> bool {
+        path.join(self.name()).exists()
     }
 
-    #[requires(self.local().is_some())]
-    pub fn load(mut self) -> SpecResult<Self> {
-        let path = self
-            .local()
-            .clone()
-            .ok_or(SpecError::from_logic("spec no local path".into()))?;
+    pub fn load(mut self, path: &Path) -> SpecResult<Self> {
+        let path = path.join(self.name());
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj/sys-model",
@@ -69,11 +76,10 @@ impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
                 "update spec ref to {} fail!", path.display()
             )
         );
-        let update_v = self
-            .addr
+        let spec_addr = convert_syspec_addr(self.addr.clone());
+        let update_v = spec_addr
             .update_rename(path, self.name.as_str(), options)
             .await?;
-        self.local = Some(update_v.position().clone());
         let spec = SysModelSpec::load_from(update_v.position())?;
         spec.update_local(options).await?;
         self.spec = Some(spec);

@@ -48,16 +48,18 @@ impl WorkInsConf {
             work_envs,
         }
     }
-    pub fn load(mut self) -> SpecResult<Self> {
+    pub fn load(path: &Path) -> SpecResult<Self> {
+        let conf_file = path.join(OPS_PRJ_FILE);
+        let mut ins = Self::from_conf(&conf_file)?;
         let mut updated_sys = Vec::new();
-        for mut sys in self.systems {
-            if sys.is_update() {
-                sys = sys.load()?;
+        for mut sys in ins.systems {
+            if sys.is_update(path) {
+                sys = sys.load(path)?;
             }
             updated_sys.push(sys);
         }
-        self.systems = updated_sys;
-        Ok(self)
+        ins.systems = updated_sys;
+        Ok(ins)
     }
 }
 
@@ -91,8 +93,7 @@ impl OpsProject {
             )
         );
 
-        let conf_file = root_local.join(OPS_PRJ_FILE);
-        let conf = WorkInsConf::from_conf(&conf_file)?.load()?;
+        let conf = WorkInsConf::load(root_local)?;
         let root_local = root_local.to_path_buf();
         let project = GxlProject::load_from(&root_local)?;
         let value_root = ensure_path(root_local.join(VALUE_DIR))?;

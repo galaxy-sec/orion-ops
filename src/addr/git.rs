@@ -17,7 +17,7 @@ use crate::{
     vars::EnvEvalable,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, Getters)]
 #[serde(rename = "git")]
 pub struct GitAddr {
     repo: String,
@@ -60,29 +60,29 @@ impl GitAddr {
             ..Default::default()
         }
     }
-    pub fn tag<S: Into<String>>(mut self, tag: S) -> Self {
+    pub fn with_tag<S: Into<String>>(mut self, tag: S) -> Self {
         self.tag = Some(tag.into());
         self
     }
-    pub fn branch<S: Into<String>>(mut self, branch: S) -> Self {
+    pub fn with_branch<S: Into<String>>(mut self, branch: S) -> Self {
         self.branch = Some(branch.into());
         self
     }
-    pub fn rev<S: Into<String>>(mut self, rev: S) -> Self {
+    pub fn with_rev<S: Into<String>>(mut self, rev: S) -> Self {
         self.rev = Some(rev.into());
         self
     }
-    pub fn path<S: Into<String>>(mut self, path: S) -> Self {
+    pub fn with_path<S: Into<String>>(mut self, path: S) -> Self {
         self.path = Some(path.into());
         self
     }
     // 新增：设置SSH私钥
-    pub fn ssh_key<S: Into<String>>(mut self, ssh_key: S) -> Self {
+    pub fn with_ssh_key<S: Into<String>>(mut self, ssh_key: S) -> Self {
         self.ssh_key = Some(ssh_key.into());
         self
     }
     // 新增：设置SSH密钥密码
-    pub fn ssh_passphrase<S: Into<String>>(mut self, ssh_passphrase: S) -> Self {
+    pub fn with_ssh_passphrase<S: Into<String>>(mut self, ssh_passphrase: S) -> Self {
         self.ssh_passphrase = Some(ssh_passphrase.into());
         self
     }
@@ -499,7 +499,7 @@ mod tests {
 
         // 使用一个小型测试仓库（这里使用 GitHub 上的一个测试仓库）
         let git_addr =
-            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("master"); // 替换为实际测试分支
+            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").with_branch("master"); // 替换为实际测试分支
 
         // 执行克隆
         let cloned_v = git_addr
@@ -530,8 +530,8 @@ mod tests {
         std::fs::create_dir_all(&dest_path).assert();
 
         let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")
-            .branch("master")
-            .path("postgresql/x86-ubt22-k8s"); // 或使用 .tag("v1.0") 测试标签
+            .with_branch("master")
+            .with_path("postgresql/x86-ubt22-k8s"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
         let git_up = git_addr
@@ -552,8 +552,8 @@ mod tests {
         }
         std::fs::create_dir_all(&dest_path).assert();
 
-        let git_addr =
-            GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git").branch("master");
+        let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")
+            .with_branch("master");
         //.path("*");
         //;
 
@@ -576,7 +576,7 @@ mod tests {
 
         // 测试切换到非默认分支
         let git_addr =
-            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("develop"); // 替换为实际测试分支
+            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").with_branch("develop"); // 替换为实际测试分支
 
         let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
