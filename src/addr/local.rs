@@ -3,7 +3,7 @@ use crate::{predule::*, vars::EnvDict};
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
 
-use crate::{log_guard, types::UnitUpdateable, vars::EnvEvalable};
+use crate::{auto_exit_log, types::UnitUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
@@ -36,7 +36,7 @@ impl UnitUpdateable for LocalAddr {
         let name = path_file_name(&src)?;
         let dst = path.join(name);
         let dst_copy = dst.clone();
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
                 target : "spec/addr/local",
                 "update {} to {} success!", src.display(),dst_copy.display()
@@ -59,7 +59,7 @@ impl UnitUpdateable for LocalAddr {
                 .owe_data()
                 .with(&ctx)?;
         }
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(UnitUpdateValue::from(dst))
     }
 
@@ -90,13 +90,13 @@ pub fn rename_path(local: &Path, name: &str) -> SpecResult<PathBuf> {
         .ok_or(StructError::from_conf("bad path".to_string()))?;
 
     let dst_copy = dst_path.clone();
-    let mut flag = log_guard!(
+    let mut flag = auto_exit_log!(
         info!(target:"spec","rename {} to {} sucess!",local.display(),dst_copy.display()),
         error!(target:"spec","rename {} to {} failed!",local.display(),dst_copy.display())
     );
     if dst_path.exists() {
         if dst_path == local {
-            flag.flag_suc();
+            flag.mark_suc();
             return Ok(dst_path.clone());
         }
         if dst_path.is_dir() {
@@ -113,7 +113,7 @@ pub fn rename_path(local: &Path, name: &str) -> SpecResult<PathBuf> {
     }
     ctx.with("new path", format!("{}", dst_path.display()));
     std::fs::rename(local, &dst_path).owe_conf().with(&ctx)?;
-    flag.flag_suc();
+    flag.mark_suc();
     Ok(dst_path)
 }
 impl LocalAddr {

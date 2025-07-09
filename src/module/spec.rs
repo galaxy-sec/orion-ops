@@ -111,7 +111,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
     fn load_from(path: &Path) -> SpecResult<Self> {
         let name = path_file_name(path)?;
         let name_copy = name.clone();
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target: "mod/spec", "load mod-spec {} success!", name_copy ),
             error!(target: "mod/spec", "load mod-spec {} fail!", name_copy)
         );
@@ -122,7 +122,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
             let node = ModModelSpec::load_from(&sub).with(&sub)?;
             targets.insert(node.model().clone(), node);
         }
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(Self {
             name,
             targets,

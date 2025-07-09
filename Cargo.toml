@@ -12,8 +12,8 @@ name = "ds-mod"
 path = "app/ds-mod/main.rs"
 
 [[bin]]
-name = "ds-work"
-path = "app/ds-work/main.rs"
+name = "ds-ops"
+path = "app/ds-ops/main.rs"
 
 #[[bin]]
 #name = "ds-mcp"

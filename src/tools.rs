@@ -89,7 +89,7 @@ pub struct BoolFlag {
     is_suc: bool,
 }
 impl BoolFlag {
-    pub fn flag_suc(&mut self) {
+    pub fn mark_suc(&mut self) {
         self.is_suc = true;
     }
     pub fn is_suc(&self) -> bool {

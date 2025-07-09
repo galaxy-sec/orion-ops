@@ -68,7 +68,7 @@ impl SysModelSpec {
     pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
         let root = path.join(name);
 
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target: "sys", "save sys spec success!:{}", root.display()),
             error!(target: "sys", "save sys spec failed!:{}", root.display())
         );
@@ -78,7 +78,7 @@ impl SysModelSpec {
         self.mod_list.save_conf(paths.modlist_path())?;
 
         self.workflow.save_to(paths.workflow_path(), None)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(())
     }
 
@@ -89,7 +89,7 @@ impl SysModelSpec {
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
 
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target: "sys", "load sys spec success!:{}", root.display()),
             error!(target: "sys", "load sys spec failed!:{}", root.display())
         );
@@ -101,7 +101,7 @@ impl SysModelSpec {
             .with(&ctx)?;
         mod_list.set_mods_local(paths.spec_path().clone());
         let workflow = SysWorkflows::load_from(paths.workflow_path()).with(&ctx)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(Self {
             name: name.to_string(),
             mod_list,

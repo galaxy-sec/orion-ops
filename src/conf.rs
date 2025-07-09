@@ -6,9 +6,9 @@ use std::{
 
 use crate::{
     addr::{AddrType, path_file_name},
+    auto_exit_log,
     const_vars::CONFS_DIR,
     error::SpecResult,
-    log_guard,
     types::{Configable, UnitUpdateable},
 };
 use async_trait::async_trait;
@@ -126,7 +126,7 @@ impl UnitUpdateable for ConfSpec {
     ) -> SpecResult<UnitUpdateValue> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
-        let mut is_suc = log_guard!(
+        let mut is_suc = auto_exit_log!(
             info!( target:"spec/confspec", "upload_local confspec suc: {}" ,path.display() ),
             error!( target:"spec/confspec", "upload_local confspec fail: {}" ,path.display() )
         );
@@ -138,7 +138,7 @@ impl UnitUpdateable for ConfSpec {
                 let x = addr
                     .update_rename(&root, filename.as_str(), options)
                     .await?;
-                is_suc.flag_suc();
+                is_suc.mark_suc();
                 return Ok(x);
             }
         }

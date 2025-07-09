@@ -50,7 +50,7 @@ impl ModProject {
         }
     }
     pub fn load(root_local: &Path) -> SpecResult<Self> {
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
                 target : "/mod_prj",
                 "load modprj  to {} success!", root_local.display()
@@ -66,7 +66,7 @@ impl ModProject {
         let root_local = root_local.to_path_buf();
         let mod_spec = ModuleSpec::load_from(&root_local)?;
         let project = GxlProject::load_from(&root_local)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(Self {
             conf,
             mod_spec,
@@ -75,7 +75,7 @@ impl ModProject {
         })
     }
     pub fn save(&self) -> SpecResult<()> {
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
                 target : "spec/local/modprj",
                 "save modprj  to {} success!", self.root_local().display()
@@ -91,7 +91,7 @@ impl ModProject {
             .save_to(self.root_local(), Some("./".into()))?;
         self.project.save_to(self.root_local(), None)?;
         mod_init_gitignore(self.root_local())?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(())
     }
     pub fn load_global_value(&self, value: &Option<String>) -> SpecResult<ValueDict> {

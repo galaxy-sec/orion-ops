@@ -10,8 +10,8 @@ use log::warn;
 use orion_error::UvsResFrom;
 
 use crate::{
+    auto_exit_log,
     error::SpecResult,
-    log_guard,
     tools::{ensure_path, get_repo_name},
     types::UnitUpdateable,
     vars::EnvEvalable,
@@ -274,7 +274,7 @@ impl UnitUpdateable for GitAddr {
         ctx.with("repo", &self.repo);
         ctx.with_path("path", &git_local);
         let git_local_copy = git_local.clone();
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
                 target : "addr/git",
                 "update {} to {} success!", self.repo,git_local_copy.display()
@@ -328,7 +328,7 @@ impl UnitUpdateable for GitAddr {
         fs_extra::copy_items(&[&git_local], path, &options)
             .owe_res()
             .with(&ctx)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(UnitUpdateValue::from(real_path))
     }
 }

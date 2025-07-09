@@ -53,13 +53,13 @@ impl SysProject {
         }
     }
     pub fn load(root_local: &Path) -> SpecResult<Self> {
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
-                target : "/sys_prj",
+                target : "ops-prj",
                 "load project from {} success!", root_local.display()
             ),
             error!(
-                target : "/sys_prj",
+                target : "ops-prj",
                 "load project  from {} fail!", root_local.display()
             )
         );
@@ -77,7 +77,7 @@ impl SysProject {
         } else {
             ValueDict::new()
         };
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(Self {
             conf,
             sys_spec,
@@ -87,7 +87,7 @@ impl SysProject {
         })
     }
     pub fn save(&self) -> SpecResult<()> {
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(
                 target : "sysprj",
                 "save project to {} success!", self.root_local().display()
@@ -106,7 +106,7 @@ impl SysProject {
         let value_file = value_root.join(VALUE_FILE);
         self.val_dict.save_conf(&value_file)?;
         sys_init_gitignore(self.root_local())?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(())
     }
 }

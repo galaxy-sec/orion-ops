@@ -190,7 +190,7 @@ impl Persistable<ModModelSpec> for ModModelSpec {
     fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
         let target_path = root.join(name.unwrap_or(self.model().to_string()));
 
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target: "spec/mod/target", "save target  success!:{}", target_path.display()),
             error!(target: "spec/mod/target", "save target failed!:{}", target_path.display())
         );
@@ -211,14 +211,14 @@ impl Persistable<ModModelSpec> for ModModelSpec {
         self.res_spec.save_conf(paths.res_path())?;
         self.vars.save_conf(paths.vars_path())?;
         self.gxl_prj.save_to(&paths.target_root, None)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(())
     }
 
     fn load_from(target_root: &Path) -> SpecResult<Self> {
         let mut ctx = WithContext::want("load target mod spec");
 
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target: "spec/mod/target", "load target  success!:{}", target_root.display()),
             error!(target: "spec/mod/target", "load target failed!:{}", target_root.display())
         );
@@ -251,7 +251,7 @@ impl Persistable<ModModelSpec> for ModModelSpec {
             VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path()).with(&ctx)?;
 
         let gxl_prj = GxlProject::load_from(paths.target_root()).with(&ctx)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(Self {
             model: target,
             artifact,
@@ -309,7 +309,7 @@ impl Localizable for ModModelSpec {
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> SpecResult<()> {
-        let mut flag = log_guard!(
+        let mut flag = auto_exit_log!(
             info!(target : "/mod/target", "mod-target localize {} success!", self.model()),
             error!(target: "/mod/target", "mod-target localize {} fail!",
                 self.local.clone().unwrap_or(PathBuf::from("unknow")).display())
@@ -363,7 +363,7 @@ impl Localizable for ModModelSpec {
         localizer
             .render_path(&tpl, &local_path, &used_value_file, &tpl_path)
             .with(&ctx)?;
-        flag.flag_suc();
+        flag.mark_suc();
         Ok(())
     }
 }

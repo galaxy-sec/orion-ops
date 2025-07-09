@@ -83,6 +83,7 @@ pub trait UnitUpdateable {
 
 #[async_trait]
 pub trait SysUpdateable<T> {
+    //pub type UpdateObj = T;
     async fn update_local(self, path: &Path, options: &UpdateOptions) -> SpecResult<T>;
 }
 

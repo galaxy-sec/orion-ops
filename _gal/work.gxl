@@ -52,7 +52,7 @@ mod main   {
 
   #[usage(desp="use project cargo conf")]
   flow cargo_env {
-    gx.cmd  ( cmd : "cp -f build/cargo.conf $CARGO_HOME/config" );
+    gx.cmd  (  "cp -f build/cargo.conf $CARGO_HOME/config" );
   }
 
   #[usage(desp="build system")]
@@ -78,6 +78,7 @@ mod main   {
     gx.cmd  (  "rm -f ${MAIN_PRJ_BINS}/r*"  );
     gx.cmd (  "cp ${MAIN_BLD_BINS}/ds-mod  ${MAIN_PRJ_BINS}/${AP}mod"  );
     gx.cmd (  "cp ${MAIN_BLD_BINS}/ds-sys  ${MAIN_PRJ_BINS}/${AP}sys"  );
+    gx.cmd (  "cp ${MAIN_BLD_BINS}/ds-ops  ${MAIN_PRJ_BINS}/${AP}ops"  );
     gx.cmd (  "cp ${MAIN_PRJ_BINS}/${AP}* ${MAIN_USR_BINS}/"  );
   }
   flow _pub_sys: : _pub_dysec {
@@ -109,5 +110,4 @@ mod main   {
         local_file : "./version.txt"
     );
   }
-
 }

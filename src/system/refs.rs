@@ -31,9 +31,25 @@ impl SysModelSpecRef {
 #[async_trait]
 impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
     async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> SpecResult<Self> {
-        let update_v = self.addr.update_local(path, options).await?;
+        let mut flag = auto_exit_log!(
+            info!(
+                target : "ops-prj/sys-model",
+                "update spec ref to {} success!", path.display()
+            ),
+            error!(
+                target : "ops-prj/sys-model",
+                "update spec ref to {} fail!", path.display()
+            )
+        );
+        let update_v = self
+            .addr
+            .update_rename(path, self.name.as_str(), options)
+            //.update_local(path, options)
+            .await?;
         let spec = SysModelSpec::load_from(update_v.position())?;
+        spec.update_local(options).await?;
         self.spec = Some(spec);
+        flag.mark_suc();
         Ok(self)
     }
 }

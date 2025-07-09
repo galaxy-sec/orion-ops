@@ -79,7 +79,7 @@ impl ModuleSpecRef {
     ) -> SpecResult<UnitUpdateValue> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {
-            let mut flag = log_guard!(
+            let mut flag = auto_exit_log!(
                 info!(target: "/mod/ref",  "update mod ref {} success!", self.name ),
                 error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
             );
@@ -107,7 +107,7 @@ impl ModuleSpecRef {
             let spec = ModModelSpec::load_from(&target_path).with(&target_root)?;
             let _x = spec.update_local(&target_path, options).await?;
             ModModelSpec::clean_other(&target_root, self.model())?;
-            flag.flag_suc();
+            flag.mark_suc();
             return Ok(_x);
         } else {
             Err(SpecError::from_logic(
@@ -131,7 +131,7 @@ impl Localizable for ModuleSpecRef {
     ) -> SpecResult<()> {
         if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
-                let mut flag = log_guard!(
+                let mut flag = auto_exit_log!(
                     info!(target: "spec/mod/", "localize mod {} success!", self.name ),
                     error!(target: "spec/mod/", "localize mod {} fail!", self.name )
                 );
@@ -145,7 +145,7 @@ impl Localizable for ModuleSpecRef {
                 //let local = PathBuf::from(self.name()).join("local");
                 let cur_dst_path = dst_path.map(|x| x.join(value));
                 spec.localize(cur_dst_path, options).await?;
-                flag.flag_suc();
+                flag.mark_suc();
             }
             Ok(())
         } else {
