@@ -172,10 +172,12 @@ impl AsyncUpdateable for HttpAddr {
         &self,
         dest_dir: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateValue> {
+    ) -> SpecResult<ModUpdateValue> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        Ok(UpdateValue::from(self.download(&dest_path, options).await?))
+        Ok(ModUpdateValue::from(
+            self.download(&dest_path, options).await?,
+        ))
     }
 }
 

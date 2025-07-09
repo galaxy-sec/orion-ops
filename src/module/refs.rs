@@ -76,7 +76,7 @@ impl ModuleSpecRef {
         &self,
         _sys_root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateValue> {
+    ) -> SpecResult<ModUpdateValue> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {
             let mut flag = log_guard!(

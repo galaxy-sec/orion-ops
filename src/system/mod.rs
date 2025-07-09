@@ -5,8 +5,8 @@ pub mod spec;
 use crate::predule::*;
 use std::{net::Ipv4Addr, path::PathBuf};
 
-use crate::types::{Localizable, LocalizeOptions, ValuePath};
-use crate::vars::{ValueDict, ValueType};
+use crate::types::{Localizable, LocalizeOptions, SysUpdateValue, ValuePath};
+use crate::vars::{ValueDict, ValueType, VarCollection};
 use async_trait::async_trait;
 use derive_more::Deref;
 
@@ -51,13 +51,21 @@ impl ModulesList {
 }
 
 impl ModulesList {
-    pub async fn update(&self, sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(
+        &self,
+        sys_root: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<SysUpdateValue> {
+        let mut vars = VarCollection::default();
         for m in &self.mods {
             if m.is_enable() {
-                m.update(sys_root, options).await?;
+                let update_v = m.update(sys_root, options).await?;
+                if let Some(v) = update_v.vars {
+                    vars = vars.merge(v);
+                }
             }
         }
-        Ok(())
+        Ok(SysUpdateValue::new(vars))
     }
     pub fn value_path(&self, parent: ValuePath) -> ValuePath {
         parent.join_all("mods")

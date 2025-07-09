@@ -25,7 +25,7 @@ impl AsyncUpdateable for LocalAddr {
         &self,
         path: &Path,
         up_options: &UpdateOptions,
-    ) -> SpecResult<UpdateValue> {
+    ) -> SpecResult<ModUpdateValue> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -60,7 +60,7 @@ impl AsyncUpdateable for LocalAddr {
                 .with(&ctx)?;
         }
         flag.flag_suc();
-        Ok(UpdateValue::from(dst))
+        Ok(ModUpdateValue::from(dst))
     }
 
     async fn update_rename(
@@ -68,9 +68,9 @@ impl AsyncUpdateable for LocalAddr {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateValue> {
+    ) -> SpecResult<ModUpdateValue> {
         let target = self.update_local(path, options).await?;
-        Ok(UpdateValue::from(rename_path(target.position(), name)?))
+        Ok(ModUpdateValue::from(rename_path(target.position(), name)?))
     }
 }
 

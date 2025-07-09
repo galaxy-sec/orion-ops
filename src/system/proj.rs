@@ -120,8 +120,7 @@ impl SysConf {
 impl SysProject {
     pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
         self.conf.update(options).await?;
-        self.sys_spec().update_local(options).await?;
-        Ok(())
+        self.sys_spec().update_local(options).await
     }
 }
 

@@ -119,7 +119,11 @@ impl ConfSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
+    async fn update_local(
+        &self,
+        path: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<ModUpdateValue> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = log_guard!(
@@ -138,7 +142,7 @@ impl AsyncUpdateable for ConfSpec {
                 return Ok(x);
             }
         }
-        Ok(UpdateValue::from(root))
+        Ok(ModUpdateValue::from(root))
     }
 }
 

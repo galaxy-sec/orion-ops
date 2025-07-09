@@ -1,4 +1,4 @@
-use crate::predule::*;
+use crate::{predule::*, types::Yamlable};
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -121,7 +121,12 @@ impl SysModelSpec {
 
     pub async fn update_local(&self, options: &UpdateOptions) -> SpecResult<()> {
         if let Some(local) = &self.local {
-            self.mod_list.update(local, options).await?;
+            let value = self.mod_list.update(local, options).await?;
+            let path = local.join("vars.yml");
+            if path.exists() {
+                std::fs::remove_file(&path).owe_sys()?;
+            }
+            value.vars.save_yml(&path)?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()

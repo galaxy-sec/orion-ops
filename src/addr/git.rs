@@ -250,7 +250,11 @@ impl GitAddr {
 
 #[async_trait]
 impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
+    async fn update_local(
+        &self,
+        path: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<ModUpdateValue> {
         let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         if let Some(postfix) = self
             .rev
@@ -325,7 +329,7 @@ impl AsyncUpdateable for GitAddr {
             .owe_res()
             .with(&ctx)?;
         flag.flag_suc();
-        Ok(UpdateValue::from(real_path))
+        Ok(ModUpdateValue::from(real_path))
     }
 }
 

@@ -20,7 +20,11 @@ impl SysModelSpecRef {
 
 #[async_trait]
 impl AsyncUpdateable for SysModelSpecRef {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
+    async fn update_local(
+        &self,
+        path: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<ModUpdateValue> {
         self.addr.update_local(path, options).await
     }
 
@@ -29,7 +33,7 @@ impl AsyncUpdateable for SysModelSpecRef {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateValue> {
+    ) -> SpecResult<ModUpdateValue> {
         self.addr.update_rename(path, name, options).await
     }
 }

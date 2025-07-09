@@ -7,7 +7,7 @@ use crate::{error::SpecResult, types::Yamlable};
 
 use super::{EnvDict, EnvEvalable, ValueDict, VarDefinition};
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 //#[serde(transparent)]
 pub struct VarCollection {
     vars: Vec<VarDefinition>,
@@ -24,7 +24,7 @@ impl VarCollection {
         dict
     }
     // 基于VarType的name进行合并，相同的name会被覆盖
-    pub fn merge(&self, other: &VarCollection) -> Self {
+    pub fn merge(&self, other: VarCollection) -> Self {
         let mut merged = HashMap::new();
         let mut order = Vec::new();
 
@@ -38,12 +38,12 @@ impl VarCollection {
         }
 
         // 添加other的变量，同名会覆盖
-        for var in &other.vars {
+        for var in other.vars {
             let name = var.name().to_string();
             if !merged.contains_key(&name) {
                 order.push(name.clone());
             }
-            merged.insert(name, var.clone());
+            merged.insert(name, var);
         }
 
         // 按原始顺序重新排序
@@ -127,7 +127,7 @@ mod tests {
             VarDefinition::from(("d", 3.33)),
         ]);
 
-        let merged = vars1.merge(&vars2);
+        let merged = vars1.merge(vars2);
 
         // 验证合并后的变量数量
         assert_eq!(merged.vars().len(), 4);
