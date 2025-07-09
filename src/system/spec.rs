@@ -240,4 +240,28 @@ pub mod tests {
             .assert("localize");
         Ok(())
     }
+
+    #[tokio::test]
+    async fn build_example_sys_spec2() -> SpecResult<()> {
+        test_init();
+        let sys_name = "example_sys2";
+        let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT).join(sys_name);
+        make_clean_path(&spec_root)?;
+        ModProject::make_test_prj("redis_mock2")?;
+        ModProject::make_test_prj("mysql_mock2")?;
+        let spec =
+            make_sys_spec_test(sys_name, vec!["redis_mock2", "mysql_mock2"]).assert("make spec");
+        let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
+        let spec_path = spec_root.join(spec.name());
+        make_clean_path(&spec_path)?;
+        spec.save_to(&spec_root).assert("spec save");
+        let spec = SysModelSpec::load_from(&spec_root.join(spec.name())).assert("spec load");
+        spec.update_local(&UpdateOptions::for_test())
+            .await
+            .assert("update");
+        spec.localize(None, LocalizeOptions::for_test())
+            .await
+            .assert("localize");
+        Ok(())
+    }
 }

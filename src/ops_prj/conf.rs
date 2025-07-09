@@ -28,10 +28,16 @@ impl ProjectConf {
         }
     }
     pub fn for_test() -> Self {
-        let systems = vec![SysModelSpecRef::from(
-            "example_sys",
-            LocalAddr::from("./example/sys-model-spec/example_sys"),
-        )];
+        let systems = vec![
+            SysModelSpecRef::from(
+                "example_sys",
+                LocalAddr::from("./example/sys-model-spec/example_sys"),
+            ),
+            SysModelSpecRef::from(
+                "example_sys2",
+                LocalAddr::from("./example/sys-model-spec/example_sys2"),
+            ),
+        ];
         let work_envs = DependencySet::example();
         Self {
             name: "example_sys".to_string(),
