@@ -9,5 +9,5 @@ pub use std::path::Path;
 pub use std::path::PathBuf;
 
 pub use crate::error::SpecResult;
-pub use crate::types::ModUpdateValue;
+pub use crate::types::UnitUpdateValue;
 pub use async_trait::async_trait;

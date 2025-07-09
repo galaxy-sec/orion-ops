@@ -3,7 +3,7 @@ use crate::{predule::*, vars::EnvDict};
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
 
-use crate::{log_guard, types::AsyncUpdateable, vars::EnvEvalable};
+use crate::{log_guard, types::UnitUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
@@ -19,13 +19,13 @@ impl EnvEvalable<LocalAddr> for LocalAddr {
     }
 }
 #[async_trait]
-impl AsyncUpdateable for LocalAddr {
+impl UnitUpdateable for LocalAddr {
     //#[debug_ensures(matches!(*result, Ok(v) if v.exists()), "path not exists")]
     async fn update_local(
         &self,
         path: &Path,
         up_options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -60,7 +60,7 @@ impl AsyncUpdateable for LocalAddr {
                 .with(&ctx)?;
         }
         flag.flag_suc();
-        Ok(ModUpdateValue::from(dst))
+        Ok(UnitUpdateValue::from(dst))
     }
 
     async fn update_rename(
@@ -68,9 +68,9 @@ impl AsyncUpdateable for LocalAddr {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let target = self.update_local(path, options).await?;
-        Ok(ModUpdateValue::from(rename_path(target.position(), name)?))
+        Ok(UnitUpdateValue::from(rename_path(target.position(), name)?))
     }
 }
 

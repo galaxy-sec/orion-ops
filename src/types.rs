@@ -4,7 +4,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -16,18 +15,20 @@ use crate::{
     update::UpdateOptions,
     vars::{ValueDict, VarCollection},
 };
+use getset::{CloneGetters, CopyGetters, Getters, MutGetters, Setters, WithSetters};
 
 pub trait Persistable<T> {
     fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()>;
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
-#[derive(Clone)]
-pub struct ModUpdateValue {
+#[derive(Clone, Getters, Setters, WithSetters, MutGetters, CopyGetters, CloneGetters, Default)]
+pub struct UnitUpdateValue {
+    #[getset(get = "pub", set = "pub", get_mut, set_with)]
     pub position: PathBuf,
     pub vars: Option<VarCollection>,
 }
-impl ModUpdateValue {
+impl UnitUpdateValue {
     pub fn new(position: PathBuf, vars: VarCollection) -> Self {
         Self {
             position,
@@ -37,11 +38,8 @@ impl ModUpdateValue {
     pub fn vars(&self) -> Option<&VarCollection> {
         self.vars.as_ref()
     }
-    pub fn position(&self) -> &PathBuf {
-        &self.position
-    }
 }
-impl From<PathBuf> for ModUpdateValue {
+impl From<PathBuf> for UnitUpdateValue {
     fn from(value: PathBuf) -> Self {
         Self {
             vars: None,
@@ -64,26 +62,33 @@ impl SysUpdateValue {
 }
 
 #[async_trait]
-pub trait AsyncUpdateable {
+pub trait UnitUpdateable {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue>;
+    ) -> SpecResult<UnitUpdateValue>;
     async fn update_rename(
         &self,
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
-        let target = self.update_local(path, options).await?;
-        rename_path(target.position(), name);
+    ) -> SpecResult<UnitUpdateValue> {
+        let mut target = self.update_local(path, options).await?;
+        let path = rename_path(target.position(), name)?;
+        target.set_position(path);
         Ok(target)
     }
 }
 
+#[async_trait]
+pub trait SysUpdateable<T> {
+    async fn update_local(self, path: &Path, options: &UpdateOptions) -> SpecResult<T>;
+}
+
 #[derive(Clone, Debug, Getters)]
 pub struct ValuePath {
+    #[getset(get = "pub")]
     path: PathBuf,
 }
 impl ValuePath {

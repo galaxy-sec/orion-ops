@@ -24,7 +24,7 @@ use crate::{
     error::SpecResult,
     resource::CaculateResSpec,
     tools::get_sub_dirs,
-    types::{AsyncUpdateable, Persistable},
+    types::{Persistable, UnitUpdateable},
     workflow::act::ModWorkflows,
 };
 
@@ -78,17 +78,17 @@ impl ModuleSpec {
 }
 
 #[async_trait]
-impl AsyncUpdateable for ModuleSpec {
+impl UnitUpdateable for ModuleSpec {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         for (target, node) in &self.targets {
             node.update_local(&path.join(target.to_string()), options)
                 .await?;
         }
-        Ok(ModUpdateValue::from(path.to_path_buf()))
+        Ok(UnitUpdateValue::from(path.to_path_buf()))
     }
 }
 

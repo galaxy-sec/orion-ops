@@ -11,6 +11,9 @@ path = "app/ds-sys/main.rs"
 name = "ds-mod"
 path = "app/ds-mod/main.rs"
 
+[[bin]]
+name = "ds-work"
+path = "app/ds-work/main.rs"
 
 #[[bin]]
 #name = "ds-mcp"
@@ -73,6 +76,7 @@ derive_more = { version = "2.0", features = ["full"] }
 tokio-util = { version = "0.7", features = ["codec"] }
 bytes = "1.0"
 indexmap = { version = "2.10", features = ["serde"] }
+getset = "0.1.6"
 
 #actix-cors = "~0.7"
 #tracing-actix-web = "0.7.18"

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::{
     addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    types::AsyncUpdateable,
+    types::UnitUpdateable,
 };
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
@@ -100,18 +100,22 @@ impl Dependency {
 }
 
 #[async_trait]
-impl AsyncUpdateable for Dependency {
+impl UnitUpdateable for Dependency {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         self.addr.update_local(path, options).await
     }
 }
 
 impl Dependency {
-    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> SpecResult<ModUpdateValue> {
+    pub async fn update(
+        &self,
+        root: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<UnitUpdateValue> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {

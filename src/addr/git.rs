@@ -13,7 +13,7 @@ use crate::{
     error::SpecResult,
     log_guard,
     tools::{ensure_path, get_repo_name},
-    types::AsyncUpdateable,
+    types::UnitUpdateable,
     vars::EnvEvalable,
 };
 
@@ -249,12 +249,12 @@ impl GitAddr {
 }
 
 #[async_trait]
-impl AsyncUpdateable for GitAddr {
+impl UnitUpdateable for GitAddr {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         if let Some(postfix) = self
             .rev
@@ -329,7 +329,7 @@ impl AsyncUpdateable for GitAddr {
             .owe_res()
             .with(&ctx)?;
         flag.flag_suc();
-        Ok(ModUpdateValue::from(real_path))
+        Ok(UnitUpdateValue::from(real_path))
     }
 }
 

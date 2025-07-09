@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
 
-use crate::{types::AsyncUpdateable, vars::EnvEvalable};
+use crate::{types::UnitUpdateable, vars::EnvEvalable};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "http")]
@@ -167,15 +167,15 @@ impl HttpAddr {
 }
 
 #[async_trait]
-impl AsyncUpdateable for HttpAddr {
+impl UnitUpdateable for HttpAddr {
     async fn update_local(
         &self,
         dest_dir: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        Ok(ModUpdateValue::from(
+        Ok(UnitUpdateValue::from(
             self.download(&dest_path, options).await?,
         ))
     }

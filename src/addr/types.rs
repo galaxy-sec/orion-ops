@@ -2,7 +2,7 @@ use crate::{predule::*, vars::EnvDict};
 
 use derive_more::From;
 
-use crate::{types::AsyncUpdateable, vars::EnvEvalable};
+use crate::{types::UnitUpdateable, vars::EnvEvalable};
 
 use super::{GitAddr, HttpAddr, LocalAddr};
 
@@ -28,12 +28,12 @@ impl EnvEvalable<AddrType> for AddrType {
 }
 
 #[async_trait]
-impl AsyncUpdateable for AddrType {
+impl UnitUpdateable for AddrType {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_local(path, options).await,
@@ -47,7 +47,7 @@ impl AsyncUpdateable for AddrType {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,

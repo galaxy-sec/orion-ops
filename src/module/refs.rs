@@ -13,7 +13,7 @@ use crate::{
     error::SpecResult,
     module::model::ModModelSpec,
     tools::make_clean_path,
-    types::{AsyncUpdateable, Localizable, Persistable, ValuePath},
+    types::{Localizable, Persistable, UnitUpdateable, ValuePath},
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -76,7 +76,7 @@ impl ModuleSpecRef {
         &self,
         _sys_root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {
             let mut flag = log_guard!(

@@ -13,7 +13,7 @@ use crate::{
         spec::ModuleSpec,
     },
     tools::make_clean_path,
-    types::{AsyncUpdateable, Configable, Localizable, Persistable, ValuePath},
+    types::{Configable, Localizable, Persistable, UnitUpdateable, ValuePath},
     vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };

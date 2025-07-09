@@ -1,0 +1,7 @@
+extern mod setup { path = "./sys/workflows"; }
+
+mod main {
+    env default  {
+    }
+    flow setup : setup.stage1 ;
+}

@@ -9,7 +9,7 @@ use crate::{
     const_vars::CONFS_DIR,
     error::SpecResult,
     log_guard,
-    types::{AsyncUpdateable, Configable},
+    types::{Configable, UnitUpdateable},
 };
 use async_trait::async_trait;
 // 由于 `crate::tools::log_flag` 未定义，移除该导入
@@ -118,12 +118,12 @@ impl ConfSpec {
 }
 
 #[async_trait]
-impl AsyncUpdateable for ConfSpec {
+impl UnitUpdateable for ConfSpec {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = log_guard!(
@@ -142,7 +142,7 @@ impl AsyncUpdateable for ConfSpec {
                 return Ok(x);
             }
         }
-        Ok(ModUpdateValue::from(root))
+        Ok(UnitUpdateValue::from(root))
     }
 }
 

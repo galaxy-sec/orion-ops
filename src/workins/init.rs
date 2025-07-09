@@ -1,0 +1,43 @@
+use std::path::Path;
+
+use orion_error::{ErrorOwe, ErrorWith};
+
+use crate::{error::SpecResult, task::OperationType, workflow::gxl::GxlAction};
+
+const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");
+const SYS_UPDATE_GXL: &str = include_str!("init/workflows/update.gxl");
+const SYS_GITIGNORE: &str = include_str!("init/.gitignore");
+pub trait WorkOperatsIniter {
+    fn sys_setup_tpl() -> Self;
+    fn sys_update_tpl() -> Self;
+}
+pub trait SysPrjIniter {
+    fn spec_tpl() -> Self;
+}
+
+impl WorkOperatsIniter for GxlAction {
+    fn sys_setup_tpl() -> Self {
+        Self::new(
+            OperationType::Setup,
+            "setup.gxl".into(),
+            SYS_SETUP_GXL.to_string(),
+        )
+    }
+    fn sys_update_tpl() -> Self {
+        Self::new(
+            OperationType::Update,
+            "update.gxl".into(),
+            SYS_UPDATE_GXL.to_string(),
+        )
+    }
+}
+
+pub fn workins_init_gitignore(path: &Path) -> SpecResult<()> {
+    let ignore_path = path.join(".gitignore");
+    if !ignore_path.exists() {
+        std::fs::write(&ignore_path, SYS_GITIGNORE)
+            .owe_res()
+            .with(&ignore_path)?;
+    }
+    Ok(())
+}

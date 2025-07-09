@@ -30,7 +30,7 @@ use crate::{
     software::LogsSpec,
     tools::get_sub_dirs,
     types::{
-        AsyncUpdateable, Configable, JsonAble, Localizable, Persistable, ValueConfable, ValuePath,
+        Configable, JsonAble, Localizable, Persistable, UnitUpdateable, ValueConfable, ValuePath,
     },
     vars::{OriginDict, ValueDict, VarCollection},
     workflow::{act::ModWorkflows, prj::GxlProject},
@@ -97,15 +97,15 @@ impl ModModelSpec {
 }
 
 #[async_trait]
-impl AsyncUpdateable for ModModelSpec {
+impl UnitUpdateable for ModModelSpec {
     async fn update_local(
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<ModUpdateValue> {
+    ) -> SpecResult<UnitUpdateValue> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
-        Ok(ModUpdateValue::new(path.to_path_buf(), self.vars.clone()))
+        Ok(UnitUpdateValue::new(path.to_path_buf(), self.vars.clone()))
     }
 }
 impl ModModelSpec {
