@@ -1,4 +1,4 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{predule::*, types::ResourceUpload, vars::EnvDict};
 
 use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
@@ -179,6 +179,22 @@ impl AsyncUpdateable for HttpAddr {
     }
 }
 
+#[async_trait]
+impl ResourceUpload for HttpAddr {
+    async fn upload_from(&self, path: &Path, _: &UpdateOptions) -> SpecResult<UpdateValue> {
+        if !path.exists() {
+            return Err(StructError::from_res("path not exist".into()));
+        }
+        self.upload(path, "POST").await?;
+        if path.is_file() {
+            std::fs::remove_file(&path).owe_res()?;
+        } else {
+            std::fs::remove_dir_all(&path).owe_res()?;
+        }
+        Ok(UpdateValue::from(path.to_path_buf()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -340,5 +356,76 @@ mod tests2 {
     fn test_get_filename_with_encoded_characters() {
         let addr = HttpAddr::from("http://example.com/file%20name.txt");
         assert_eq!(addr.get_filename(), Some("file%20name.txt".to_string()));
+    }
+}
+
+#[cfg(test)]
+mod test3 {
+    use super::*;
+    use httpmock::MockServer;
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_upload_from_local() -> SpecResult<()> {
+        // 1. 配置模拟服务器
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(httpmock::Method::PUT)
+                .path("/upload_put");
+                // .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM="); // 移除content-type检查，PUT请求不使用multipart
+            then.status(200).body("upload success");
+        });
+
+        // 2. 创建临时测试文件
+        let temp_dir = tempfile::tempdir().owe_res()?;
+        let file_path = temp_dir.path().join("test_put.txt");
+        std::fs::write(&file_path, "test put content").unwrap();
+
+        // 3. 执行上传
+        let http_addr = HttpAddr::from(server.url("/upload_put"));
+
+        http_addr
+            .upload_from(&file_path, &UpdateOptions::default())
+            .await?;
+
+        // 4. 验证结果
+        mock.assert();
+        assert!(file_path.exists() == false);
+        Ok(())
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_http_upload_post() -> SpecResult<()> {
+        // 1. 配置模拟服务器
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(httpmock::Method::POST)
+                .path("/upload")
+                .header_exists("content-type")  // 检查 multipart 头
+                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");
+            then.status(200)
+                .body("upload success");
+        });
+
+        // 2. 创建临时测试文件
+        let temp_dir = tempfile::tempdir().owe_res()?;
+        let file_path = temp_dir.path().join("test.txt");
+        tokio::fs::write(&file_path, "test content")
+            .await
+            .owe_sys()?;
+
+        // 3. 执行上传
+        let http_addr = HttpAddr::from(server.url("/upload")).with_credentials(
+            "generic-1747535977632",
+            "5b2c9e9b7f111af52f0375c1fd9d35cd4d0dabc3",
+        );
+
+        http_addr
+            .upload_from(&file_path, &UpdateOptions::for_test())
+            .await?;
+
+        // 4. 验证结果
+        mock.assert();
+        assert!(file_path.exists() == false);
+        Ok(())
     }
 }

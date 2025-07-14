@@ -60,9 +60,14 @@ pub trait AsyncUpdateable {
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
-        rename_path(target.position(), name);
+        let _ = rename_path(target.position(), name);
         Ok(target)
     }
+}
+
+#[async_trait]
+pub trait ResourceUpload {
+    async fn upload_from(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue>;
 }
 
 #[derive(Clone, Debug, Getters)]

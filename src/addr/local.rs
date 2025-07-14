@@ -1,7 +1,7 @@
-use crate::{predule::*, vars::EnvDict};
-
+use crate::{predule::*, types::ResourceUpload, vars::EnvDict};
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
+use orion_error::UvsResFrom;
 
 use crate::{log_guard, types::AsyncUpdateable, vars::EnvEvalable};
 
@@ -71,6 +71,29 @@ impl AsyncUpdateable for LocalAddr {
     ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
         Ok(UpdateValue::from(rename_path(target.position(), name)?))
+    }
+}
+
+#[async_trait]
+impl ResourceUpload for LocalAddr {
+    async fn upload_from(&self, path: &Path, _: &UpdateOptions) -> SpecResult<UpdateValue> {
+        if !path.exists() {
+            return Err(StructError::from_res("path not exist".into()));
+        }
+        if path.is_file() {
+            let file_name = path
+                .file_name()
+                .and_then(|f| f.to_str())
+                .unwrap_or("UNKNOW");
+            let target_path = Path::new(self.path()).join(file_name);
+            std::fs::copy(path, target_path).owe_res()?;
+            std::fs::remove_file(&path).owe_res()?;
+        } else {
+            let copy_options = CopyOptions::new().overwrite(true).copy_inside(true);
+            fs_extra::dir::copy(path, self.path(), &copy_options).owe_res()?;
+            std::fs::remove_dir_all(&path).owe_res()?;
+        }
+        Ok(UpdateValue::from(path.to_path_buf()))
     }
 }
 
@@ -229,6 +252,50 @@ mod tests {
         assert!(renamed.join("source_file.txt").exists()); // 源目录内容应保留
         assert!(!renamed.join("existing_file.txt").exists()); // 原目标目录应被删除
         assert!(!src_dir.exists());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_upload_file_from_local() -> SpecResult<()> {
+        let target = tempdir().assert();
+        let target_dir = target.path();
+        let source = tempdir().assert();
+        let source_dir = source.path();
+
+        let file_path = source_dir.join("file.txt");
+        std::fs::write(&file_path, "source").assert();
+        let local_addr = LocalAddr::from(target_dir.to_str().unwrap_or("~/temp"));
+        local_addr
+            .upload_from(&file_path.as_path(), &UpdateOptions::for_test())
+            .await?;
+
+        assert!(target_dir.join("file.txt").exists());
+        assert!(file_path.exists() == false);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_upload_dir_from_local() -> SpecResult<()> {
+        let target = tempdir().assert();
+        let target_dir = target.path();
+        let source = tempdir().assert();
+        let source_dir = source.path();
+
+        let version_1 = target_dir.join("version_1");
+        let version_2 = source_dir.join("version_2");
+        std::fs::create_dir_all(&version_1).assert();
+        std::fs::create_dir_all(&version_2).assert();
+
+        std::fs::write(version_2.join("version_2.txt"), "version_2").assert();
+
+        let local_addr = LocalAddr::from(version_1.to_str().unwrap_or("~/temp"));
+        local_addr
+            .upload_from(&version_2, &UpdateOptions::for_test())
+            .await?;
+
+        assert!(version_1.join("version_2").exists());
+        assert!(version_1.join("version_2").join("version_2.txt").exists());
+        assert!(version_2.exists() == false);
         Ok(())
     }
 }
