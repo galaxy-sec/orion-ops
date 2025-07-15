@@ -1,16 +1,20 @@
-use crate::addr::LocalAddr;
+use crate::error::OpsReason;
 use crate::predule::*;
 
 use crate::system::refs::SysModelSpecRef;
 use crate::{
     error::SpecResult,
     module::depend::DependencySet,
-    types::{Configable, Localizable, ValuePath},
+    types::{Configable, Localizable},
 };
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
 use crate::types::{LocalizeOptions, SysUpdateable};
 use async_trait::async_trait;
+use orion_infra::auto_exit_log;
+use orion_x::addr::LocalAddr;
+use orion_x::types::ValuePath;
+use orion_x::update::UpdateOptions;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectConf {
@@ -66,7 +70,10 @@ impl SysUpdateable<ProjectConf> for ProjectConf {
                 "ins conf update from {} fail!", path.display()
             )
         );
-        self.work_envs.update(options).await?;
+        self.work_envs
+            .update(options)
+            .await
+            .owe(OpsReason::Update.into())?;
         let mut updated_sys = Vec::new();
         for sys in self.systems {
             updated_sys.push(sys.update_local(path, options).await?);

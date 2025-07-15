@@ -9,10 +9,9 @@ extern crate clap;
 
 use args::GInsCmd;
 use clap::Parser;
-use orion_syspec::{
-    error::{SpecResult, report_error},
-    vars::setup_start_env_vars,
-};
+use orion_error::ErrorOwe;
+use orion_syspec::error::{SpecResult, report_error};
+use orion_x::vars::setup_start_env_vars;
 use spec::do_ins_cmd;
 
 #[tokio::main]
@@ -30,7 +29,7 @@ async fn main() {
 pub struct GxOps {}
 impl GxOps {
     pub async fn run() -> SpecResult<()> {
-        setup_start_env_vars()?;
+        setup_start_env_vars().owe_res()?;
         let cmd = GInsCmd::parse();
         debug!("galaxy flow running .....");
         do_ins_cmd(cmd).await?;

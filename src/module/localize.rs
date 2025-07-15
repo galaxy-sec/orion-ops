@@ -6,10 +6,10 @@ use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, Wit
 use serde::Serialize;
 
 use crate::{
-    error::SpecResult,
+    error::{ModReason, SpecResult},
     module::setting::TemplatePath,
-    tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars},
 };
+use orion_x::tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars};
 
 use super::setting::TemplateConfig;
 
@@ -144,7 +144,8 @@ impl LocalizeTemplate<'_> {
         let template = self
             .cust_cover
             .convert(&CommentFmt::from(tpl_path.extension()), template)
-            .with(&err_ctx)?;
+            .with(&err_ctx)
+            .owe(ModReason::Localize.into())?;
         //let mut dst_file = File::create(dst_path).owe_conf()?;
 
         let rendered_data = self
@@ -153,7 +154,11 @@ impl LocalizeTemplate<'_> {
             .render_data(&template, data)
             .owe_biz()
             .with(&err_ctx)?;
-        let completed = self.cust_cover.restore(rendered_data).with(&err_ctx)?;
+        let completed = self
+            .cust_cover
+            .restore(rendered_data)
+            .with(&err_ctx)
+            .owe(ModReason::Localize.into())?;
         std::fs::write(dst_path, completed)
             .owe_conf()
             .with(dst_path)?;

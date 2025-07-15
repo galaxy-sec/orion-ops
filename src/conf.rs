@@ -198,7 +198,8 @@ mod tests {
         // 执行更新
         let _ = spec
             .update_local(&dst_dir, &UpdateOptions::for_test())
-            .await?;
+            .await
+            .owe_logic()?;
         assert!(dst_dir.join("confs/db.yml").exists());
 
         // 清理

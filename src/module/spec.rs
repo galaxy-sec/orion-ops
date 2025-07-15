@@ -1,13 +1,17 @@
-use crate::{predule::*, vars::VarDefinition};
+use super::prelude::*;
+use crate::{
+    artifact::Artifact,
+    conf::{ConfFile, ConfSpec},
+    predule::*,
+};
 use std::collections::HashMap;
 
 use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
-    types::{Localizable, ValuePath},
-    vars::VarCollection,
     workflow::prj::GxlProject,
 };
 use async_trait::async_trait;
+use orion_x::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
     CpuArch, ModelSTD, OsCPE, RunSPC,
@@ -17,16 +21,6 @@ use super::{
     setting::Setting,
 };
 use crate::types::LocalizeOptions;
-use crate::{
-    addr::{HttpAddr, path_file_name},
-    artifact::{Artifact, ArtifactPackage},
-    conf::{ConfFile, ConfSpec},
-    error::SpecResult,
-    resource::CaculateResSpec,
-    tools::get_sub_dirs,
-    types::{Persistable, UnitUpdateable},
-    workflow::act::ModWorkflows,
-};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
@@ -49,7 +43,7 @@ impl ModuleSpec {
     pub fn clean_other(&mut self, node: &ModelSTD) -> SpecResult<()> {
         if let Some(local) = &self.local {
             let src_path = local.join(MOD_DIR);
-            let subs = get_sub_dirs(&src_path)?;
+            let subs = get_sub_dirs(&src_path).owe_res()?;
             for sub in subs {
                 if !sub.ends_with(node.to_string().as_str()) {
                     Self::clean_path(&sub)?;
@@ -83,7 +77,7 @@ impl UnitUpdateable for ModuleSpec {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         for (target, node) in &self.targets {
             node.update_local(&path.join(target.to_string()), options)
                 .await?;
@@ -93,14 +87,14 @@ impl UnitUpdateable for ModuleSpec {
 }
 
 impl Persistable<ModuleSpec> for ModuleSpec {
-    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SerdeResult<()> {
         let mod_path = path.join(name.unwrap_or(self.name().clone()));
         let src_path = mod_path.join(MOD_DIR);
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
             .with(format!("path: {}", mod_path.display()))?;
 
-        mod_init_gitignore(&mod_path)?;
+        mod_init_gitignore(&mod_path).owe_res()?;
         for node in self.targets.values() {
             node.save_to(&src_path, None)?;
         }
@@ -108,15 +102,15 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         Ok(())
     }
 
-    fn load_from(path: &Path) -> SpecResult<Self> {
-        let name = path_file_name(path)?;
+    fn load_from(path: &Path) -> SerdeResult<Self> {
+        let name = path_file_name(path).owe_logic()?;
         let name_copy = name.clone();
         let mut flag = auto_exit_log!(
             info!(target: "mod/spec", "load mod-spec {} success!", name_copy ),
             error!(target: "mod/spec", "load mod-spec {} fail!", name_copy)
         );
         let src_path = path.join(MOD_DIR);
-        let subs = get_sub_dirs(&src_path)?;
+        let subs = get_sub_dirs(&src_path).owe_logic()?;
         let mut targets = HashMap::new();
         for sub in subs {
             let node = ModModelSpec::load_from(&sub).with(&sub)?;

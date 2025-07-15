@@ -3,6 +3,7 @@ pub mod init;
 pub mod localize;
 pub mod metrc;
 pub mod model;
+mod prelude;
 pub mod proj;
 pub mod refs;
 pub mod setting;

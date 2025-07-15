@@ -1,4 +1,5 @@
 use crate::const_vars::{VALUE_DIR, VALUE_FILE};
+use crate::error::SysReason;
 use crate::predule::*;
 
 use crate::{
@@ -17,6 +18,7 @@ use crate::types::{LocalizeOptions, ValueConfable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
 use orion_x::path::{ensure_path, make_clean_path};
+use orion_x::saveable::Persistable;
 use orion_x::types::ValuePath;
 use orion_x::update::UpdateOptions;
 use orion_x::vars::{ValueDict, ValueType};
@@ -71,8 +73,8 @@ impl SysProject {
         let root_local = root_local.to_path_buf();
         let sys_local = root_local.join("sys");
         let sys_spec = SysModelSpec::load_from(&sys_local)?;
-        let project = GxlProject::load_from(&root_local)?;
-        let value_root = ensure_path(root_local.join(VALUE_DIR))?;
+        let project = GxlProject::load_from(&root_local).owe(SysReason::Load.into())?;
+        let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         let val_dict = if value_file.exists() {
             ValueDict::from_conf(&value_file)?
@@ -102,9 +104,11 @@ impl SysProject {
         let conf_file = self.root_local().join("sys_prj.yml");
         self.conf.save_conf(&conf_file)?;
         self.sys_spec.save_local(self.root_local(), "sys")?;
-        self.project.save_to(self.root_local(), None)?;
+        self.project
+            .save_to(self.root_local(), None)
+            .owe(SysReason::Save.into())?;
 
-        let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
+        let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         self.val_dict.save_conf(&value_file)?;
         sys_init_gitignore(self.root_local())?;
@@ -115,7 +119,10 @@ impl SysProject {
 
 impl SysConf {
     pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
-        self.test_envs.update(options).await
+        self.test_envs
+            .update(options)
+            .await
+            .owe(SysReason::Update.into())
     }
 }
 
@@ -139,7 +146,7 @@ impl Localizable for SysConf {
 
 impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
-        let value_path = self.value_path().ensure_exist()?;
+        let value_path = self.value_path().ensure_exist().owe_res()?;
         let value_file = value_path.value_file();
         let dict = ValueDict::from_valconf(&value_file)?;
         let cur_opt = options.with_global(dict);
@@ -164,7 +171,7 @@ impl SysProject {
     }
     pub fn make_test_prj(name: &str, repo: &str) -> SpecResult<Self> {
         let prj_path = PathBuf::from(SYS_MODEL_SPC_ROOT).join(name);
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let proj = SysProject::make_new(&prj_path, name, repo)?;
         proj.save()?;
         Ok(proj)
@@ -175,7 +182,7 @@ impl SysProject {
 pub mod tests {
     use std::path::{Path, PathBuf};
 
-    use orion_error::TestAssertWithMsg;
+    use orion_error::{ErrorOwe, TestAssertWithMsg};
     use orion_x::{
         addr::{AddrType, GitAddr, types::EnvVarPath},
         path::make_clean_path,
@@ -194,7 +201,7 @@ pub mod tests {
     async fn test_mod_prj_new() -> SpecResult<()> {
         test_init();
         let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("sys_new");
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let proj = SysProject::make_new(&prj_path, "sys_new", "https://github.com")?;
         proj.save()?;
         Ok(())
@@ -205,7 +212,7 @@ pub mod tests {
         test_init();
 
         let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("example_sys2");
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let project = make_sys_prj_testins(&prj_path).assert("make cust");
         if prj_path.exists() {
             std::fs::remove_dir_all(&prj_path).assert("ok");

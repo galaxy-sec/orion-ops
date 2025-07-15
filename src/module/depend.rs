@@ -2,8 +2,8 @@ use crate::predule::*;
 
 use async_trait::async_trait;
 use orion_x::{
-    addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    types::UnitUpdateValue,
+    addr::{AddrResult, AddrType, GitAddr, LocalAddr, types::EnvVarPath},
+    types::{UnitUpdateValue, UnitUpdateable},
     update::UpdateOptions,
 };
 
@@ -58,7 +58,7 @@ impl DependencySet {
             dep_root: EnvVarPath::from("./depends".to_string()),
         }
     }
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> AddrResult<()> {
         //let options = UpdateOptions::for_depend();
         //options.
         for dep in self.deps().iter() {
@@ -106,7 +106,7 @@ impl UnitUpdateable for Dependency {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         self.addr.update_local(path, options).await
     }
 }
@@ -116,7 +116,7 @@ impl Dependency {
         &self,
         root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {

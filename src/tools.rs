@@ -1,12 +1,6 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
-use orion_error::{ErrorOwe, ErrorWith, UvsReason, UvsResFrom};
 use url::Url;
-
-use crate::error::{SpecReason, SpecResult, ToErr};
 
 #[derive(Default, Clone, Debug)]
 pub struct GitRepo {}

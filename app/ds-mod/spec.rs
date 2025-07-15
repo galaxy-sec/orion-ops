@@ -3,9 +3,10 @@ use orion_syspec::error::SpecResult;
 use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
-use orion_syspec::types::{Localizable, LocalizeOptions, Persistable};
-use orion_syspec::update::UpdateOptions;
-use orion_syspec::vars::ValueDict;
+use orion_syspec::types::{Localizable, LocalizeOptions};
+use orion_x::saveable::Persistable;
+use orion_x::update::UpdateOptions;
+use orion_x::vars::ValueDict;
 use std::path::PathBuf;
 
 use crate::args::{self};
@@ -15,7 +16,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
     match cmd {
         args::GxModCmd::Example => {
             let spec = make_mod_spec_example().err_conv()?;
-            spec.save_to(&PathBuf::from("./"), None).err_conv()?;
+            spec.save_to(&PathBuf::from("./"), None).owe_res()?;
         }
         args::GxModCmd::New(spec_args) => {
             let project_dir = current_dir.join(spec_args.name());

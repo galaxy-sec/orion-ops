@@ -1,20 +1,12 @@
-use crate::error::SpecError;
+use super::prelude::*;
+use crate::error::{ModReason, SpecError};
 use crate::predule::*;
 
-use async_trait::async_trait;
-use contracts::requires;
 use orion_error::UvsLogicFrom;
 
 use super::ModelSTD;
 use crate::types::LocalizeOptions;
-use crate::{
-    addr::AddrType,
-    const_vars::MOD_DIR,
-    error::SpecResult,
-    module::model::ModModelSpec,
-    tools::make_clean_path,
-    types::{Localizable, Persistable, UnitUpdateable, ValuePath},
-};
+use crate::{const_vars::MOD_DIR, error::SpecResult, module::model::ModModelSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
@@ -62,7 +54,9 @@ impl ModuleSpecRef {
                 let target_root = local.join(self.name());
                 let target_path = target_root.join(self.model().to_string());
                 if target_path.exists() {
-                    let spec = ModModelSpec::load_from(&target_path).with(&target_root)?;
+                    let spec = ModModelSpec::load_from(&target_path)
+                        .with(&target_root)
+                        .owe(SpecReason::from(ModReason::Load))?;
                     return Ok(Some(spec));
                 }
             }
@@ -88,10 +82,14 @@ impl ModuleSpecRef {
             let target_path = target_root.join(self.model().to_string());
             if !target_path.exists() || options.clean_exist_ref_mod() {
                 let tmp_name = "__mod";
-                let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
+                let prj_path = self
+                    .addr
+                    .update_rename(local, tmp_name, options)
+                    .await
+                    .owe(SpecReason::from(ModReason::Update))?;
                 let mod_path = prj_path.position().join(MOD_DIR);
                 let tmp_path = local.join(tmp_name);
-                make_clean_path(&target_root)?;
+                make_clean_path(&target_root).owe_res()?;
 
                 std::fs::rename(&mod_path, &target_root)
                     .owe_logic()
@@ -104,8 +102,13 @@ impl ModuleSpecRef {
 
             debug!(target: "mod/ref",  "update target success!" );
             //let target_path = target_root.join(self.node().to_string());
-            let spec = ModModelSpec::load_from(&target_path).with(&target_root)?;
-            let _x = spec.update_local(&target_path, options).await?;
+            let spec = ModModelSpec::load_from(&target_path)
+                .with(&target_root)
+                .owe(SpecReason::from(ModReason::Load))?;
+            let _x = spec
+                .update_local(&target_path, options)
+                .await
+                .owe(SpecReason::from(ModReason::Update))?;
             ModModelSpec::clean_other(&target_root, self.model())?;
             flag.mark_suc();
             return Ok(_x);
@@ -137,7 +140,8 @@ impl Localizable for ModuleSpecRef {
                 );
                 let mod_path = local.join(self.name.as_str());
                 let target_path = mod_path.join(self.model().to_string());
-                let spec = ModModelSpec::load_from(&target_path)?;
+                let spec =
+                    ModModelSpec::load_from(&target_path).owe(SpecReason::from(ModReason::Load))?;
                 //if let Some(dst) = &dst_path {
                 //    spec.save_main(dst.local(), None)?;
                 //}

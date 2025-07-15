@@ -1,20 +1,15 @@
+use super::prelude::*;
 use crate::const_vars::{VALUE_DIR, VALUE_FILE};
+use crate::error::ModReason;
 use crate::predule::*;
-use crate::tools::ensure_path;
-use crate::vars::EnvDict;
 
 use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
-use crate::types::{LocalizeOptions, ValueConfable};
 use crate::{
-    addr::{AddrType, GitAddr, types::EnvVarPath},
     const_vars::MODULES_SPC_ROOT,
     module::{
         depend::{Dependency, DependencySet},
         spec::ModuleSpec,
     },
-    tools::make_clean_path,
-    types::{Configable, Localizable, Persistable, UnitUpdateable, ValuePath},
-    vars::{ValueDict, ValueType},
     workflow::prj::GxlProject,
 };
 
@@ -64,8 +59,8 @@ impl ModProject {
         let conf_file = root_local.join("mod_prj.yml");
         let conf = ModConf::from_conf(&conf_file)?;
         let root_local = root_local.to_path_buf();
-        let mod_spec = ModuleSpec::load_from(&root_local)?;
-        let project = GxlProject::load_from(&root_local)?;
+        let mod_spec = ModuleSpec::load_from(&root_local).owe(ModReason::Load.into())?;
+        let project = GxlProject::load_from(&root_local).owe(ModReason::Load.into())?;
         flag.mark_suc();
         Ok(Self {
             conf,
@@ -88,8 +83,11 @@ impl ModProject {
         let conf_file = self.root_local().join("mod_prj.yml");
         self.conf.save_conf(&conf_file)?;
         self.mod_spec
-            .save_to(self.root_local(), Some("./".into()))?;
-        self.project.save_to(self.root_local(), None)?;
+            .save_to(self.root_local(), Some("./".into()))
+            .owe(ModReason::Save.into())?;
+        self.project
+            .save_to(self.root_local(), None)
+            .owe(ModReason::Save.into())?;
         mod_init_gitignore(self.root_local())?;
         flag.mark_suc();
         Ok(())
@@ -100,7 +98,7 @@ impl ModProject {
 }
 
 pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecResult<ValueDict> {
-    let value_root = ensure_path(root.join(VALUE_DIR))?;
+    let value_root = ensure_path(root.join(VALUE_DIR)).owe_logic()?;
     let value_file = if let Some(v_file) = options {
         PathBuf::from(v_file)
     } else {
@@ -112,13 +110,16 @@ pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecR
         }
         v_file
     };
-    let dict = ValueDict::eval_from_file(&EnvDict::default(), &value_file)?;
+    let dict = ValueDict::eval_from_file(&EnvDict::default(), &value_file).owe_logic()?;
     Ok(dict)
 }
 
 impl ModConf {
     pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
-        self.test_envs.update(options).await
+        self.test_envs
+            .update(options)
+            .await
+            .owe(ModReason::Update.into())
     }
 }
 
@@ -127,7 +128,8 @@ impl ModProject {
         self.conf.update(options).await?;
         self.mod_spec()
             .update_local(self.root_local(), options)
-            .await?;
+            .await
+            .owe(ModReason::Update.into())?;
         Ok(())
     }
 }
@@ -166,7 +168,7 @@ impl ModProject {
     }
     pub fn make_test_prj(name: &str) -> SpecResult<Self> {
         let prj_path = PathBuf::from(MODULES_SPC_ROOT).join(name);
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let proj = ModProject::make_new(&prj_path, name)?;
         proj.save()?;
         Ok(proj)
@@ -194,18 +196,18 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::TestAssertWithMsg;
+    use orion_x::{path::make_clean_path, tools::test_init, update::UpdateOptions};
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,
         module::proj::{ModProject, make_mod_prj_testins},
-        tools::{make_clean_path, test_init},
         types::Localizable,
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> SpecResult<()> {
         test_init();
         let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("mod-new");
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let proj = ModProject::make_new(&prj_path, "mod_new")?;
         proj.save()?;
         Ok(())

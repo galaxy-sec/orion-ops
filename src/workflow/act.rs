@@ -8,7 +8,6 @@ use orion_x::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
 use crate::const_vars::WORKFLOWS_DIR;
-use crate::error::SpecResult;
 
 #[derive(Getters, Clone, Debug, Default, Serialize)]
 pub struct Workflows {
@@ -98,7 +97,7 @@ impl Persistable<Workflow> for Workflow {
 
 #[cfg(test)]
 mod tests {
-    use crate::module::init::ModIniter;
+    use crate::{error::SpecResult, module::init::ModIniter};
 
     use super::*;
     use tempfile::TempDir;
@@ -126,9 +125,9 @@ mod tests {
 
         // 测试保存和加载
         let original = ModWorkflows::mod_host_tpl_init();
-        original.save_to(&path, None)?;
+        original.save_to(&path, None).owe_logic()?;
 
-        let loaded = ModWorkflows::load_from(&path)?;
+        let loaded = ModWorkflows::load_from(&path).owe_logic()?;
         assert_eq!(loaded.actions().len(), original.actions().len());
         Ok(())
     }

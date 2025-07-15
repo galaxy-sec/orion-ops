@@ -1,21 +1,20 @@
 use crate::const_vars::{VALUE_DIR, VALUE_FILE, WORKINS_PRJ_ROOT};
+use crate::error::OpsReason;
 use crate::predule::*;
 
-use crate::tools::ensure_path;
-use crate::{
-    error::SpecResult,
-    module::depend::DependencySet,
-    tools::make_clean_path,
-    types::{Configable, Localizable, Persistable, ValuePath},
-    vars::{ValueDict, ValueType},
-    workflow::prj::GxlProject,
-};
+use crate::{error::SpecResult, module::depend::DependencySet, workflow::prj::GxlProject};
 const OPS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
 const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
-use crate::types::{LocalizeOptions, SysUpdateable, ValueConfable};
+use crate::types::{Configable, Localizable, LocalizeOptions, SysUpdateable, ValueConfable};
 use async_trait::async_trait;
+use orion_infra::auto_exit_log;
+use orion_x::path::{ensure_path, make_clean_path};
+use orion_x::saveable::Persistable;
+use orion_x::types::ValuePath;
+use orion_x::update::UpdateOptions;
+use orion_x::vars::{ValueDict, ValueType};
 
 use super::conf::ProjectConf;
 use super::init::workins_init_gitignore;
@@ -52,8 +51,8 @@ impl OpsProject {
 
         let conf = ProjectConf::load(root_local)?;
         let root_local = root_local.to_path_buf();
-        let project = GxlProject::load_from(&root_local)?;
-        let value_root = ensure_path(root_local.join(VALUE_DIR))?;
+        let project = GxlProject::load_from(&root_local).owe(OpsReason::Load.into())?;
+        let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         let val_dict = if value_file.exists() {
             ValueDict::from_conf(&value_file)?
@@ -81,9 +80,9 @@ impl OpsProject {
         );
         let conf_file = self.root_local().join(OPS_PRJ_FILE);
         self.conf.save_conf(&conf_file)?;
-        self.project.save_to(self.root_local(), None)?;
+        self.project.save_to(self.root_local(), None).owe_logic()?;
 
-        let value_root = ensure_path(self.root_local().join(VALUE_DIR))?;
+        let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         self.val_dict.save_conf(&value_file)?;
         workins_init_gitignore(self.root_local())?;
@@ -110,7 +109,7 @@ impl OpsProject {
 
 impl OpsProject {
     pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
-        let value_path = self.value_path().ensure_exist()?;
+        let value_path = self.value_path().ensure_exist().owe_logic()?;
         let value_file = value_path.value_file();
         let dict = ValueDict::from_valconf(&value_file)?;
         let cur_opt = options.with_global(dict);
@@ -133,7 +132,7 @@ impl OpsProject {
     }
     pub fn for_test(name: &str) -> SpecResult<Self> {
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join(name);
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
 
         let conf = ProjectConf::for_test();
         let proj = OpsProject::new(conf, prj_path.to_path_buf());
@@ -145,22 +144,19 @@ impl OpsProject {
 pub mod tests {
     use std::path::PathBuf;
 
-    use orion_error::TestAssertWithMsg;
+    use orion_error::{ErrorOwe, TestAssertWithMsg};
+    use orion_x::{path::make_clean_path, tools::test_init, update::UpdateOptions};
 
     use crate::{
-        const_vars::WORKINS_PRJ_ROOT,
-        error::SpecResult,
-        ops_prj::proj::OpsProject,
-        tools::{make_clean_path, test_init},
+        const_vars::WORKINS_PRJ_ROOT, error::SpecResult, ops_prj::proj::OpsProject,
         types::LocalizeOptions,
-        update::UpdateOptions,
     };
 
     #[tokio::test]
     async fn test_workins_example() -> SpecResult<()> {
         test_init();
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join("workins_sys_1");
-        make_clean_path(&prj_path)?;
+        make_clean_path(&prj_path).owe_logic()?;
         let project = OpsProject::for_test("workins_sys_1".into()).assert("make workins");
         project.save().assert("save workins_prj");
         let mut project = OpsProject::load(&prj_path).assert("workins-prj");

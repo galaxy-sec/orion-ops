@@ -1,4 +1,4 @@
-use crate::{predule::*, types::Yamlable};
+use crate::{error::SysReason, predule::*, types::Yamlable};
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -13,6 +13,7 @@ use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_x::{
     addr::{GitAddr, LocalAddr},
+    saveable::Persistable,
     types::ValuePath,
     update::UpdateOptions,
 };
@@ -81,7 +82,9 @@ impl SysModelSpec {
         sys_init_gitignore(&root)?;
         self.mod_list.save_conf(paths.modlist_path())?;
 
-        self.workflow.save_to(paths.workflow_path(), None)?;
+        self.workflow
+            .save_to(paths.workflow_path(), None)
+            .owe_logic()?;
         flag.mark_suc();
         Ok(())
     }
@@ -104,7 +107,9 @@ impl SysModelSpec {
             .with("load mod-list".to_string())
             .with(&ctx)?;
         mod_list.set_mods_local(paths.spec_path().clone());
-        let workflow = SysWorkflows::load_from(paths.workflow_path()).with(&ctx)?;
+        let workflow = SysWorkflows::load_from(paths.workflow_path())
+            .with(&ctx)
+            .owe(SysReason::Load.into())?;
         flag.mark_suc();
         Ok(Self {
             name: name.to_string(),
@@ -223,14 +228,14 @@ pub mod tests {
         test_init();
         let sys_name = "example_sys";
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT).join(sys_name);
-        make_clean_path(&spec_root)?;
+        make_clean_path(&spec_root).owe_logic()?;
         ModProject::make_test_prj("redis_mock")?;
         ModProject::make_test_prj("mysql_mock")?;
         let spec =
             make_sys_spec_test(sys_name, vec!["redis_mock", "mysql_mock"]).assert("make spec");
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         let spec_path = spec_root.join(spec.name());
-        make_clean_path(&spec_path)?;
+        make_clean_path(&spec_path).owe_logic()?;
         spec.save_to(&spec_root).assert("spec save");
         let spec = SysModelSpec::load_from(&spec_root.join(spec.name())).assert("spec load");
         spec.update_local(&UpdateOptions::for_test())

@@ -10,6 +10,12 @@ pub enum SpecReason {
     Localize(LocalizeReason),
     #[error("element:{0}")]
     Element(ElementReason),
+    #[error("mod {0}")]
+    Mod(ModReason),
+    #[error("sys {0}")]
+    Sys(SysReason),
+    #[error("sys {0}")]
+    Ops(OpsReason),
     #[error("{0}")]
     Uvs(UvsReason),
 }
@@ -19,6 +25,47 @@ pub enum ElementReason {
     #[error("miss:{0}")]
     Miss(String),
 }
+#[derive(Clone, Debug, Serialize, PartialEq, Error)]
+pub enum ModReason {
+    #[error("miss:{0}")]
+    Miss(String),
+    #[error("load fail")]
+    Load,
+    #[error("save fail")]
+    Save,
+    #[error("update fail")]
+    Update,
+    #[error("localize fail")]
+    Localize,
+}
+#[derive(Clone, Debug, Serialize, PartialEq, Error)]
+pub enum SysReason {
+    #[error("miss:{0}")]
+    Miss(String),
+    #[error("load fail")]
+    Load,
+    #[error("save fail")]
+    Save,
+    #[error("update fail")]
+    Update,
+    #[error("localize fail")]
+    Localize,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Error)]
+pub enum OpsReason {
+    #[error("miss:{0}")]
+    Miss(String),
+    #[error("load fail")]
+    Load,
+    #[error("save fail")]
+    Save,
+    #[error("update fail")]
+    Update,
+    #[error("localize fail")]
+    Localize,
+}
+
 #[derive(Clone, Debug, Serialize, PartialEq, Error)]
 pub enum LocalizeReason {
     #[error("miss:{0}")]
@@ -39,6 +86,40 @@ impl ErrorCode for LocalizeReason {
         }
     }
 }
+impl ErrorCode for ModReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            Self::Miss(_) => 551,
+            ModReason::Load => 552,
+            ModReason::Save => 553,
+            ModReason::Update => 554,
+            ModReason::Localize => 555,
+        }
+    }
+}
+impl ErrorCode for SysReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            SysReason::Miss(_) => 561,
+            SysReason::Load => 562,
+            SysReason::Save => 563,
+            SysReason::Update => 564,
+            SysReason::Localize => 565,
+        }
+    }
+}
+
+impl ErrorCode for OpsReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            OpsReason::Miss(_) => 571,
+            OpsReason::Load => 572,
+            OpsReason::Save => 573,
+            OpsReason::Update => 574,
+            OpsReason::Localize => 575,
+        }
+    }
+}
 
 impl ErrorCode for SpecReason {
     fn error_code(&self) -> i32 {
@@ -47,6 +128,9 @@ impl ErrorCode for SpecReason {
             SpecReason::Uvs(r) => r.error_code(),
             SpecReason::Localize(r) => r.error_code(),
             SpecReason::Element(r) => r.error_code(),
+            SpecReason::Mod(r) => r.error_code(),
+            SpecReason::Sys(r) => r.error_code(),
+            SpecReason::Ops(r) => r.error_code(),
         }
     }
 }
@@ -118,6 +202,15 @@ pub fn report_error(e: StructError<SpecReason>) {
         }
         SpecReason::UnKnow => {
             println!("Unknow Error!\n");
+        }
+        SpecReason::Mod(e) => {
+            println!("Mod Error: \n{e} !");
+        }
+        SpecReason::Sys(e) => {
+            println!("Sys Error: \n{e}");
+        }
+        SpecReason::Ops(e) => {
+            println!("Operator Error: \n{e}");
         }
     }
     if let Some(pos) = e.position() {

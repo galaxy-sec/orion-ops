@@ -1,39 +1,19 @@
+use super::prelude::*;
 use crate::{
     const_vars::{
         DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_JSON, USED_READABLE_FILE,
         USER_VALUE_FILE, VALUE_DIR,
     },
+    error::ModReason,
     predule::*,
-    tools::ensure_path,
 };
 use std::{fs::read_to_string, str::FromStr};
-
-use async_trait::async_trait;
 
 use super::{
     ModelSTD,
     depend::DependencySet,
     localize::LocalizeTemplate,
     setting::{Setting, TemplateConfig},
-};
-use crate::tools::make_clean_path;
-use crate::types::LocalizeOptions;
-use crate::{
-    addr::path_file_name,
-    artifact::ArtifactPackage,
-    const_vars::{
-        ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML,
-        SPEC_DIR, VARS_YML,
-    },
-    error::{ElementReason, SpecReason, SpecResult, ToErr},
-    resource::CaculateResSpec,
-    software::LogsSpec,
-    tools::get_sub_dirs,
-    types::{
-        Configable, JsonAble, Localizable, Persistable, UnitUpdateable, ValueConfable, ValuePath,
-    },
-    vars::{OriginDict, ValueDict, VarCollection},
-    workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
 #[derive(Getters, Clone, Debug, Serialize)]
@@ -64,10 +44,10 @@ impl ModModelSpec {
         let mut used = OriginDict::from(options.global_value().clone());
         used.set_source("global");
         if value_paths.user_value_file().exists() && !options.use_default_value() {
-            let mut user_dict = OriginDict::from(ValueDict::eval_from_file(
-                &used.export_dict(),
-                value_paths.user_value_file(),
-            )?);
+            let mut user_dict = OriginDict::from(
+                ValueDict::eval_from_file(&used.export_dict(), value_paths.user_value_file())
+                    .owe(ModReason::Localize.into())?,
+            );
             user_dict.set_source("mod-cust");
             used.merge(&user_dict);
             info!( target:"mod/target", "use  model value : {}" , value_paths.user_value_file().display());
@@ -102,7 +82,7 @@ impl UnitUpdateable for ModModelSpec {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
         Ok(UnitUpdateValue::new(path.to_path_buf(), self.vars.clone()))
@@ -114,12 +94,12 @@ impl ModModelSpec {
         std::fs::create_dir_all(&target_path)
             .owe_conf()
             .with(format!("path: {}", target_path.display()))?;
-        self.workflow.save_to(&target_path, None)?;
+        self.workflow.save_to(&target_path, None).owe_logic()?;
         Ok(())
     }
 
     pub fn clean_other(root: &Path, node: &ModelSTD) -> SpecResult<()> {
-        let subs = get_sub_dirs(root)?;
+        let subs = get_sub_dirs(root).owe_logic()?;
         for sub in subs {
             if !sub.ends_with(node.to_string().as_str()) {
                 Self::clean_path(&sub)?;
@@ -187,7 +167,7 @@ impl From<&PathBuf> for TargetValuePaths {
 }
 
 impl Persistable<ModModelSpec> for ModModelSpec {
-    fn save_to(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, root: &Path, name: Option<String>) -> SerdeResult<()> {
         let target_path = root.join(name.unwrap_or(self.model().to_string()));
 
         let mut flag = auto_exit_log!(
@@ -200,22 +180,22 @@ impl Persistable<ModModelSpec> for ModModelSpec {
             .with(format!("path: {}", paths.spec_path().display()))?;
 
         if let Some(setting) = &self.setting {
-            setting.save_conf(paths.setting_path())?;
+            setting.save_conf(paths.setting_path()).owe_logic()?;
         }
         self.workflow.save_to(paths.workflow_path(), None)?;
-        self.artifact.save_conf(paths.artifact_path())?;
+        self.artifact.save_conf(paths.artifact_path()).owe_logic()?;
 
-        self.depends.save_conf(paths.depends_path())?;
-        self.logs_spec.save_conf(paths.logs_path())?;
+        self.depends.save_conf(paths.depends_path()).owe_logic()?;
+        self.logs_spec.save_conf(paths.logs_path()).owe_logic()?;
 
-        self.res_spec.save_conf(paths.res_path())?;
-        self.vars.save_conf(paths.vars_path())?;
+        self.res_spec.save_conf(paths.res_path()).owe_logic()?;
+        self.vars.save_conf(paths.vars_path()).owe_logic()?;
         self.gxl_prj.save_to(&paths.target_root, None)?;
         flag.mark_suc();
         Ok(())
     }
 
-    fn load_from(target_root: &Path) -> SpecResult<Self> {
+    fn load_from(target_root: &Path) -> SerdeResult<Self> {
         let mut ctx = WithContext::want("load target mod spec");
 
         let mut flag = auto_exit_log!(
@@ -224,31 +204,40 @@ impl Persistable<ModModelSpec> for ModModelSpec {
         );
         let paths = ModTargetPaths::from(&target_root.to_path_buf());
         ctx.with_path("root", target_root);
-        let target = ModelSTD::from_str(path_file_name(target_root)?.as_str())
+        let target = ModelSTD::from_str(path_file_name(target_root).owe_logic()?.as_str())
             .owe_res()
             .with(&ctx)?;
         let actions = ModWorkflows::load_from(paths.workflow_path()).with(&ctx)?;
 
         let setting = if paths.setting_path().exists() {
-            Some(Setting::from_conf(paths.setting_path())?)
+            Some(Setting::from_conf(paths.setting_path()).owe_logic()?)
         } else {
             None
         };
         ctx.with_path("artifact", paths.artifact_path());
-        let artifact = ArtifactPackage::from_conf(paths.artifact_path()).with(&ctx)?;
+        let artifact = ArtifactPackage::from_conf(paths.artifact_path())
+            .with(&ctx)
+            .owe_logic()?;
 
         //ctx.with_path("conf_spec", paths.conf_path());
         //let conf_spec = ConfSpec::from_conf(paths.conf_path()).with(&ctx)?;
         ctx.with_path("logs_spec", paths.logs_path());
-        let logs_spec = LogsSpec::from_conf(paths.logs_path()).with(&ctx)?;
+        let logs_spec = LogsSpec::from_conf(paths.logs_path())
+            .with(&ctx)
+            .owe_logic()?;
 
         ctx.with_path("depends", paths.depends_path());
-        let depends = DependencySet::from_conf(paths.depends_path()).with(&ctx)?;
+        let depends = DependencySet::from_conf(paths.depends_path())
+            .with(&ctx)
+            .owe_logic()?;
         ctx.with_path("res_spec", paths.res_path());
-        let res_spec = CaculateResSpec::from_conf(paths.res_path()).with(&ctx)?;
+        let res_spec = CaculateResSpec::from_conf(paths.res_path())
+            .with(&ctx)
+            .owe_logic()?;
         ctx.with_path("vars", paths.vars_path());
-        let vars =
-            VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path()).with(&ctx)?;
+        let vars = VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path())
+            .with(&ctx)
+            .owe_logic()?;
 
         let gxl_prj = GxlProject::load_from(paths.target_root()).with(&ctx)?;
         flag.mark_suc();
@@ -325,11 +314,11 @@ impl Localizable for ModModelSpec {
 
         let value_root = localize_path.path(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
-        let used_value_path = ensure_path(local.join(VALUE_DIR))?;
+        let used_value_path = ensure_path(local.join(VALUE_DIR)).owe_logic()?;
         let used_value_file = used_value_path.join(USED_JSON);
         let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
-        make_clean_path(&local_path)?;
+        make_clean_path(&local_path).owe_logic()?;
         ctx.with_path("dst", &local_path);
         self.crate_sample_value_file(&value_paths)?;
         debug!(target : "/mod/target/loc", "value export");
@@ -372,9 +361,13 @@ impl Localizable for ModModelSpec {
 pub mod test {
 
     use orion_error::TestAssert;
+    use orion_x::{
+        addr::HttpAddr,
+        tools::test_init,
+        vars::{OriginValue, ValueType, VarDefinition},
+    };
 
     use crate::{
-        addr::HttpAddr,
         artifact::Artifact,
         const_vars::TARGET_SPC_ROOT,
         error::SpecResult,
@@ -382,8 +375,6 @@ pub mod test {
             CpuArch, OsCPE, RunSPC,
             init::{ModIniter, ModPrjIniter},
         },
-        tools::{make_clean_path, test_init},
-        vars::{OriginValue, ValueType, VarDefinition},
     };
 
     use super::*;
@@ -437,7 +428,7 @@ pub mod test {
         test_init();
         let spec = make_mod_k8s_4test().assert();
         let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());
-        make_clean_path(&spec_path)?;
+        make_clean_path(&spec_path).owe_logic()?;
         spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
         let loaded =
             ModModelSpec::load_from(&PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string()))
@@ -454,7 +445,7 @@ pub mod test {
         test_init();
         let spec = make_mod_host_4test().assert();
         let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());
-        make_clean_path(&spec_path)?;
+        make_clean_path(&spec_path).owe_logic()?;
         spec.save_to(&PathBuf::from(TARGET_SPC_ROOT), None).assert();
         let loaded =
             ModModelSpec::load_from(&PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string()))

@@ -5,7 +5,7 @@ use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use orion_x::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
-use crate::{error::SpecResult, task::OperationType};
+use crate::task::OperationType;
 
 #[derive(Getters, Clone, Debug, PartialEq, Serialize)]
 pub struct GxlAction {
