@@ -10,8 +10,8 @@ const OPS_PRJ_FILE: &str = "ops-prj.yml";
 use crate::types::{Configable, Localizable, LocalizeOptions, SysUpdateable, ValueConfable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
-use orion_variate::path::{ensure_path, make_clean_path};
-use orion_variate::saveable::Persistable;
+use orion_infra::path::{ensure_path, make_clean_path};
+use orion_common::serde::Persistable;
 use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType};
@@ -145,7 +145,8 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::{ErrorOwe, TestAssertWithMsg};
-    use orion_variate::{path::make_clean_path, tools::test_init, update::UpdateOptions};
+    use orion_infra::path::make_clean_path;
+    use orion_variate::{tools::test_init, update::UpdateOptions};
 
     use crate::{
         const_vars::WORKINS_PRJ_ROOT, error::SpecResult, ops_prj::proj::OpsProject,

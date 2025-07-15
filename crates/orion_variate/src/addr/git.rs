@@ -1,5 +1,5 @@
 use crate::{
-    path::ensure_path, predule::*, tools::get_repo_name, types::UnitUpdateable,
+    predule::*, tools::get_repo_name, types::UnitUpdateable,
     update::UpdateOptions, vars::EnvDict,
 };
 use async_trait::async_trait;
@@ -12,7 +12,7 @@ use home::home_dir;
 use log::warn;
 use orion_error::UvsResFrom;
 use orion_infra::auto_exit_log;
-
+use orion_infra::path::ensure_path;
 use crate::vars::EnvEvalable;
 
 use super::AddrResult;

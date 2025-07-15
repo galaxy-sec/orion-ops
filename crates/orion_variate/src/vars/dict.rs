@@ -5,8 +5,8 @@ use derive_more::{Deref, From};
 use indexmap::IndexMap;
 use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
-
-use crate::{saveable::Yamlable, tpl::TplResult};
+use orion_common::serde::Yamlable;
+use crate::tpl::TplResult;
 
 use super::{
     types::{EnvEvalable, ValueType},

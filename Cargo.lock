@@ -2217,8 +2217,15 @@ dependencies = [
  "anyhow",
  "chrono",
  "derive-getters",
+ "derive_more",
  "ipnet",
+ "orion-error",
  "serde",
+ "serde_derive",
+ "serde_ini",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 2.0.12",
  "toml",
  "wildmatch",
 ]
@@ -2228,8 +2235,10 @@ name = "orion_infra"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more",
  "flexi_logger",
  "log",
+ "orion-error",
  "rstest",
  "scopeguard",
  "serde",

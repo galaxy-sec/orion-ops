@@ -2,7 +2,7 @@ use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
-use orion_variate::saveable::{Persistable, SerdeResult};
+use orion_common::serde::{Persistable, SerdeResult};
 use serde::Serialize;
 
 use crate::task::OperationType;

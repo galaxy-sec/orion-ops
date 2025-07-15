@@ -4,3 +4,4 @@ pub mod config;
 pub mod logging;
 pub mod traits;
 mod types;
+pub mod path;

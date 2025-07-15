@@ -20,4 +20,4 @@ impl ErrorCode for VarsReason {
 }
 
 pub type VarsResult<T> = Result<T, StructError<VarsReason>>;
-pub type VarsError = StructError<VarsReason>;
+//pub type VarsError = StructError<VarsReason>;

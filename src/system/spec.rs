@@ -2,7 +2,7 @@ use crate::{error::SysReason, predule::*, types::Yamlable};
 use std::path::{Path, PathBuf};
 
 use crate::{
-    const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
+    const_vars::{MODULES_SPC_ROOT, MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
     types::Localizable,
@@ -10,22 +10,22 @@ use crate::{
 };
 use async_trait::async_trait;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
+use orion_common::serde::Persistable;
 use orion_infra::auto_exit_log;
 use orion_variate::{
     addr::{GitAddr, LocalAddr},
-    saveable::Persistable,
     types::ValuePath,
     update::UpdateOptions,
 };
 
 use super::{
+    init::{sys_init_gitignore, SysIniter},
     ModulesList,
-    init::{SysIniter, sys_init_gitignore},
 };
 use crate::types::LocalizeOptions;
 use crate::{
     error::{SpecReason, SpecResult, ToErr},
-    module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
+    module::{refs::ModuleSpecRef, spec::ModuleSpec, CpuArch, ModelSTD, OsCPE, RunSPC},
     types::Configable,
 };
 #[derive(Getters, Clone, Debug)]
@@ -217,7 +217,8 @@ pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysMod
 pub mod tests {
 
     use orion_error::TestAssertWithMsg;
-    use orion_variate::{path::make_clean_path, tools::test_init};
+    use orion_infra::path::make_clean_path;
+    use orion_variate::tools::test_init;
 
     use crate::{const_vars::SYS_MODEL_SPC_ROOT, module::proj::ModProject};
 

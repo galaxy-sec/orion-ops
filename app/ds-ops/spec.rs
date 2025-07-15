@@ -4,7 +4,7 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::load_project_global_value;
 use orion_syspec::ops_prj::proj::OpsProject;
 use orion_syspec::types::LocalizeOptions;
-use orion_variate::path::make_new_path;
+use orion_infra::path::make_new_path;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 

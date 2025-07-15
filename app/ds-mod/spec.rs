@@ -4,7 +4,7 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::ModProject;
 use orion_syspec::module::spec::make_mod_spec_example;
 use orion_syspec::types::{Localizable, LocalizeOptions};
-use orion_variate::saveable::Persistable;
+use orion_common::serde::Persistable;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 use std::path::PathBuf;

@@ -4,7 +4,7 @@ use derive_getters::Getters;
 use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::saveable::Yamlable;
+use orion_common::serde::Yamlable;
 
 use super::{error::VarsResult, EnvDict, EnvEvalable, ValueDict, VarDefinition};
 
