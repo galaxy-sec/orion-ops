@@ -1,9 +1,12 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{predule::*, update::UpdateOptions, vars::EnvDict};
 
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
+use orion_infra::auto_exit_log;
 
-use crate::{auto_exit_log, types::UnitUpdateable, vars::EnvEvalable};
+use crate::{types::UnitUpdateable, vars::EnvEvalable};
+
+use super::AddrResult;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "local")]
@@ -25,7 +28,7 @@ impl UnitUpdateable for LocalAddr {
         &self,
         path: &Path,
         up_options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -68,13 +71,13 @@ impl UnitUpdateable for LocalAddr {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let target = self.update_local(path, options).await?;
         Ok(UnitUpdateValue::from(rename_path(target.position(), name)?))
     }
 }
 
-pub fn path_file_name(path: &Path) -> SpecResult<String> {
+pub fn path_file_name(path: &Path) -> AddrResult<String> {
     let file_name = path
         .file_name()
         .and_then(|f| f.to_str())
@@ -82,7 +85,7 @@ pub fn path_file_name(path: &Path) -> SpecResult<String> {
     Ok(file_name.to_string())
 }
 #[debug_requires(local.exists(), "local need exists")]
-pub fn rename_path(local: &Path, name: &str) -> SpecResult<PathBuf> {
+pub fn rename_path(local: &Path, name: &str) -> AddrResult<PathBuf> {
     let mut ctx = WithContext::want("rename path");
     let dst_path = local
         .parent()
@@ -125,12 +128,14 @@ impl LocalAddr {
 #[cfg(test)]
 mod tests {
 
+    use crate::{addr::AddrResult, update::UpdateOptions};
+
     use super::*;
     use orion_error::TestAssert;
     use tempfile::tempdir;
 
     #[tokio::test]
-    async fn test_local() -> SpecResult<()> {
+    async fn test_local() -> AddrResult<()> {
         let path = PathBuf::from("./test/temp/local");
         if path.exists() {
             std::fs::remove_dir_all(&path).owe_conf()?;
@@ -150,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_file_new_model() -> SpecResult<()> {
+    fn test_rename_path_file_new_model() -> AddrResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().assert();
         let src_path = temp_dir.path().join("source.txt");
@@ -167,7 +172,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_file_overwrite_existing_file() -> SpecResult<()> {
+    fn test_rename_path_file_overwrite_existing_file() -> AddrResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().assert();
         let src_path = temp_dir.path().join("source.txt");
@@ -186,7 +191,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_dir_new_model() -> SpecResult<()> {
+    fn test_rename_path_dir_new_model() -> AddrResult<()> {
         // 创建临时目录
         let temp_dir = PathBuf::from("./test/temp/rename_test");
         if temp_dir.exists() {
@@ -211,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_path_dir_overwrite_existing_dir() -> SpecResult<()> {
+    fn test_rename_path_dir_overwrite_existing_dir() -> AddrResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().assert();
         let src_dir = temp_dir.path().join("source_dir");

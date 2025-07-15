@@ -1,11 +1,12 @@
 use std::{collections::HashMap, path::Path};
 
 use derive_getters::Getters;
+use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, types::Yamlable};
+use crate::saveable::Yamlable;
 
-use super::{EnvDict, EnvEvalable, ValueDict, VarDefinition};
+use super::{error::VarsResult, EnvDict, EnvEvalable, ValueDict, VarDefinition};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 //#[serde(transparent)]
@@ -56,9 +57,9 @@ impl VarCollection {
 
         Self { vars: result }
     }
-    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> SpecResult<Self> {
+    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> VarsResult<Self> {
         let mut cur_dict = dict.clone();
-        let ins = VarCollection::from_yml(file_path)?;
+        let ins = VarCollection::from_yml(file_path).owe_res()?;
         Ok(ins.eval_import(&mut cur_dict))
     }
 

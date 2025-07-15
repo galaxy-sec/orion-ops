@@ -1,16 +1,16 @@
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
 use winnow::{
-    ModalResult, Parser,
     ascii::{line_ending, till_line_ending},
     combinator::{fail, opt},
     error::{StrContext, StrContextValue},
     token::{literal, take_till, take_until, take_while},
+    ModalResult, Parser,
 };
 
-use crate::error::{LocalizeReason, SpecReason, SpecResult};
+use crate::tpl::{TplReason, TplResult};
 
-use super::super::error::{WinnowErrorEx, err_code_prompt};
+use super::super::error::{err_code_prompt, WinnowErrorEx};
 
 #[derive(Debug, Clone, Getters)]
 pub struct CommentLabel {
@@ -29,7 +29,7 @@ impl CommentLabel {
 }
 pub struct CStyleComment {}
 impl CStyleComment {
-    pub fn remove(code: &str) -> SpecResult<String> {
+    pub fn remove(code: &str) -> TplResult<String> {
         remove_comment(code, &CommentLabel::c_style())
     }
 }
@@ -133,13 +133,11 @@ pub fn wn_desc(desc: &'static str) -> StrContext {
     StrContext::Expected(StrContextValue::Description(desc))
 }
 
-pub fn remove_comment(code: &str, comment: &CommentLabel) -> SpecResult<String> {
+pub fn remove_comment(code: &str, comment: &CommentLabel) -> TplResult<String> {
     let mut xcode = code;
     let pure_code = ignore_comment(&mut xcode, comment)
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::from(LocalizeReason::Templatize(
-            "c style comment error".into(),
-        )))
+        .owe(TplReason::Brief("c style comment error".into()))
         .position(err_code_prompt(code))
         .want("remove comment");
     match pure_code {

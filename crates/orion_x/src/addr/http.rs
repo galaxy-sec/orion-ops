@@ -1,4 +1,4 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{predule::*, update::UpdateOptions, vars::EnvDict};
 
 use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
@@ -6,6 +6,8 @@ use tracing::info;
 use url::Url;
 
 use crate::{types::UnitUpdateable, vars::EnvEvalable};
+
+use super::AddrResult;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "http")]
@@ -56,7 +58,7 @@ impl HttpAddr {
 }
 
 impl HttpAddr {
-    pub async fn upload<P: AsRef<Path>>(&self, file_path: P, method: &str) -> SpecResult<()> {
+    pub async fn upload<P: AsRef<Path>>(&self, file_path: P, method: &str) -> AddrResult<()> {
         use indicatif::{ProgressBar, ProgressStyle};
         let mut ctx = WithContext::want("upload url");
 
@@ -111,7 +113,7 @@ impl HttpAddr {
         Ok(())
     }
 
-    pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    pub async fn download(&self, dest_path: &Path, options: &UpdateOptions) -> AddrResult<PathBuf> {
         use indicatif::{ProgressBar, ProgressStyle};
 
         if dest_path.exists() && options.reuse_remote_file() {
@@ -172,7 +174,7 @@ impl UnitUpdateable for HttpAddr {
         &self,
         dest_dir: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
         Ok(UnitUpdateValue::from(
@@ -183,11 +185,13 @@ impl UnitUpdateable for HttpAddr {
 
 #[cfg(test)]
 mod tests {
+    use crate::{addr::AddrResult, update::UpdateOptions};
+
     use super::*;
     use httpmock::{Method::GET, MockServer};
 
     #[tokio::test(flavor = "current_thread")]
-    async fn test_http_auth_download() -> SpecResult<()> {
+    async fn test_http_auth_download() -> AddrResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
@@ -216,7 +220,7 @@ mod tests {
     }
     #[ignore = "need more time"]
     #[tokio::test(flavor = "current_thread")]
-    async fn test_http_addr() -> SpecResult<()> {
+    async fn test_http_addr() -> AddrResult<()> {
         let path = PathBuf::from("/tmp");
         let addr = HttpAddr::from("https://dy-sec-generic.pkg.coding.net/sec-hub/generic/warp-flow/wpflow?version=1.0.89-alpha")
             .with_credentials(
@@ -228,7 +232,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn test_http_upload_post() -> SpecResult<()> {
+    async fn test_http_upload_post() -> AddrResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
@@ -261,7 +265,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn test_http_upload_put() -> SpecResult<()> {
+    async fn test_http_upload_put() -> AddrResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();
         let mock = server.mock(|when, then| {

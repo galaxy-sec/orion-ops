@@ -4,10 +4,11 @@ use super::gxl::GxlAction;
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
+use orion_x::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
 use crate::const_vars::WORKFLOWS_DIR;
-use crate::{error::SpecResult, types::Persistable};
+use crate::error::SpecResult;
 
 #[derive(Getters, Clone, Debug, Default, Serialize)]
 pub struct Workflows {
@@ -25,7 +26,7 @@ impl Workflows {
 }
 
 impl Persistable<Workflows> for Workflows {
-    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SerdeResult<()> {
         let action_path = path.join(WORKFLOWS_DIR);
         std::fs::create_dir_all(&action_path)
             .owe_res()
@@ -37,7 +38,7 @@ impl Persistable<Workflows> for Workflows {
     }
 
     //加载 path 目录的文件
-    fn load_from(path: &Path) -> SpecResult<Self> {
+    fn load_from(path: &Path) -> SerdeResult<Self> {
         let mut actions = Vec::new();
         let actions_path = path.join(WORKFLOWS_DIR);
         for entry in std::fs::read_dir(&actions_path)
@@ -71,13 +72,13 @@ pub enum Workflow {
 }
 
 impl Persistable<Workflow> for Workflow {
-    fn save_to(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SerdeResult<()> {
         match self {
             Workflow::Gxl(act) => act.save_to(path, name),
         }
     }
 
-    fn load_from(path: &Path) -> SpecResult<Workflow> {
+    fn load_from(path: &Path) -> SerdeResult<Workflow> {
         // 首先检查文件是否存在且是普通文件
         if !path.exists() {
             return Err(StructError::from_conf("path not exists".into())).with(path);

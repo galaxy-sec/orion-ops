@@ -1,14 +1,11 @@
 use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::predule::*;
 
-use crate::tools::ensure_path;
 use crate::{
     const_vars::SYS_MODEL_SPC_ROOT,
     error::SpecResult,
     module::depend::DependencySet,
-    tools::make_clean_path,
-    types::{Configable, Localizable, Persistable, ValuePath},
-    vars::{ValueDict, ValueType},
+    types::{Configable, Localizable},
     workflow::prj::GxlProject,
 };
 
@@ -18,6 +15,11 @@ use super::{
 };
 use crate::types::{LocalizeOptions, ValueConfable};
 use async_trait::async_trait;
+use orion_infra::auto_exit_log;
+use orion_x::path::{ensure_path, make_clean_path};
+use orion_x::types::ValuePath;
+use orion_x::update::UpdateOptions;
+use orion_x::vars::{ValueDict, ValueType};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 struct SysConf {
@@ -174,16 +176,19 @@ pub mod tests {
     use std::path::{Path, PathBuf};
 
     use orion_error::TestAssertWithMsg;
+    use orion_x::{
+        addr::{AddrType, GitAddr, types::EnvVarPath},
+        path::make_clean_path,
+        tools::test_init,
+        update::UpdateOptions,
+    };
 
     use crate::{
-        addr::{AddrType, GitAddr, types::EnvVarPath},
         const_vars::SYS_MODEL_PRJ_ROOT,
         error::SpecResult,
         module::depend::{Dependency, DependencySet},
         system::{proj::SysProject, spec::SysModelSpec},
-        tools::{make_clean_path, test_init},
         types::LocalizeOptions,
-        update::UpdateOptions,
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> SpecResult<()> {

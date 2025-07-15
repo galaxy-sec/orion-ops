@@ -2,9 +2,10 @@ use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, StructError, UvsConfFrom};
+use orion_x::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
-use crate::{error::SpecResult, task::OperationType, types::Persistable};
+use crate::{error::SpecResult, task::OperationType};
 
 #[derive(Getters, Clone, Debug, PartialEq, Serialize)]
 pub struct GxlAction {
@@ -28,13 +29,13 @@ impl GxlAction {
     }
 }
 impl Persistable<GxlAction> for GxlAction {
-    fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, _name: Option<String>) -> SerdeResult<()> {
         let path_file = path.join(self.file());
         std::fs::write(path_file, self.code.as_str()).owe_res()?;
         Ok(())
     }
 
-    fn load_from(path: &Path) -> SpecResult<GxlAction> {
+    fn load_from(path: &Path) -> SerdeResult<GxlAction> {
         let file_name = path
             .file_name()
             .and_then(|f| f.to_str())

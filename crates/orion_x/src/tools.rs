@@ -1,12 +1,5 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
-
-use orion_error::{ErrorOwe, ErrorWith, UvsReason, UvsResFrom};
+use crate::predule::*;
 use url::Url;
-
-use crate::error::{SpecReason, SpecResult, ToErr};
 
 #[derive(Default, Clone, Debug)]
 pub struct GitRepo {}
@@ -39,4 +32,8 @@ pub fn get_repo_name(url_str: &str) -> Option<String> {
     let url = Url::parse(url_str).ok()?;
     let last = url.path_segments()?.rev().find(|s| !s.is_empty());
     last.map(String::from)
+}
+
+pub fn test_init() {
+    let _ = env_logger::builder().is_test(true).try_init();
 }

@@ -1,16 +1,15 @@
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
 use winnow::{
-    ModalResult, Parser,
     ascii::{line_ending, till_line_ending},
     combinator::opt,
+    ModalResult, Parser,
 };
-
-use crate::error::{LocalizeReason, SpecReason, SpecResult};
 
 use super::{
     comment::CommentFmt,
-    error::{WinnowErrorEx, err_code_prompt},
+    error::{err_code_prompt, WinnowErrorEx},
+    TplReason, TplResult,
 };
 
 const PROTECTED_BEG: &str = "!<!";
@@ -32,14 +31,14 @@ impl LabelCoverter {
             target_label_end: target.1.into(),
         }
     }
-    fn remvoe_comment(&self, cfmt: &CommentFmt, code: &str) -> SpecResult<String> {
+    fn remvoe_comment(&self, cfmt: &CommentFmt, code: &str) -> TplResult<String> {
         let xcode = code;
         let pure_code = cfmt.remove(xcode).want("remove comment")?;
         Ok(pure_code)
     }
 
     //code 为多行的数据， 注释不进行转换, 注释的类型有行和块两种
-    pub fn convert(&self, cfmt: &CommentFmt, code: String) -> SpecResult<String> {
+    pub fn convert(&self, cfmt: &CommentFmt, code: String) -> TplResult<String> {
         let pure_code = self.remvoe_comment(cfmt, code.as_str())?;
         let coverted = convert_label(
             &mut pure_code.as_str(),
@@ -51,14 +50,12 @@ impl LabelCoverter {
             ],
         )
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::from(LocalizeReason::Templatize(
-            "covert".into(),
-        )))
+        .owe(TplReason::Brief("covert".into()))
         .position(err_code_prompt(pure_code.as_str()))
         .want("covert tpl label")?;
         Ok(coverted)
     }
-    pub fn restore(&self, code: String) -> SpecResult<String> {
+    pub fn restore(&self, code: String) -> TplResult<String> {
         let coverted = convert_label(
             &mut code.as_str(),
             vec![
@@ -69,9 +66,7 @@ impl LabelCoverter {
             ],
         )
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::from(LocalizeReason::Templatize(
-            "restore!".into(),
-        )))
+        .owe(TplReason::Brief("restore!".into()))
         .position(err_code_prompt(code.as_str()))
         .want("covert tpl label")?;
         Ok(coverted)

@@ -1,21 +1,21 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{
+    path::ensure_path, predule::*, tools::get_repo_name, types::UnitUpdateable,
+    update::UpdateOptions, vars::EnvDict,
+};
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
-    BranchType, FetchOptions, MergeOptions, RemoteUpdateFlags, Repository, ResetType,
     build::{CheckoutBuilder, RepoBuilder},
+    BranchType, FetchOptions, MergeOptions, RemoteUpdateFlags, Repository, ResetType,
 };
 use home::home_dir;
 use log::warn;
 use orion_error::UvsResFrom;
+use orion_infra::auto_exit_log;
 
-use crate::{
-    auto_exit_log,
-    error::SpecResult,
-    tools::{ensure_path, get_repo_name},
-    types::UnitUpdateable,
-    vars::EnvEvalable,
-};
+use crate::vars::EnvEvalable;
+
+use super::AddrResult;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default, Getters)]
 #[serde(rename = "git")]
@@ -254,7 +254,7 @@ impl UnitUpdateable for GitAddr {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         if let Some(postfix) = self
             .rev
@@ -267,7 +267,7 @@ impl UnitUpdateable for GitAddr {
         let cache_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".cache/galaxy");
-        ensure_path(&cache_local)?;
+        ensure_path(&cache_local).owe_logic()?;
         let mut git_local = cache_local.join(name.clone());
         let mut ctx = WithContext::want("update repository");
 
@@ -370,7 +370,7 @@ impl GitAddr {
 
         // 准备认证回调
         let callbacks = self.build_remote_callbacks(); // 使用构建的回调
-        // 配置获取选项
+                                                       // 配置获取选项
         let mut fetch_options = FetchOptions::new();
         fetch_options.remote_callbacks(callbacks);
 
@@ -482,7 +482,8 @@ fn find_default_ssh_key() -> Option<PathBuf> {
 }
 #[cfg(test)]
 mod tests {
-    use crate::{error::SpecResult, tools::test_init};
+
+    use crate::{addr::AddrResult, tools::test_init};
 
     use super::*;
     use orion_error::{ErrorOwe, TestAssert};
@@ -492,7 +493,7 @@ mod tests {
 
     #[ignore = "need more time"]
     #[tokio::test]
-    async fn test_git_addr_update_local() -> SpecResult<()> {
+    async fn test_git_addr_update_local() -> AddrResult<()> {
         // 创建临时目录
         let temp_dir = tempdir().owe_res()?;
         let dest_path = temp_dir.path().to_path_buf();
@@ -519,7 +520,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_git_addr_update_local_sub() -> SpecResult<()> {
+    async fn test_git_addr_update_local_sub() -> AddrResult<()> {
         // 创建临时目录
         test_init();
         let dest_path = PathBuf::from("./test/temp/git");
@@ -543,7 +544,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_git_addr_pull_2() -> SpecResult<()> {
+    async fn test_git_addr_pull_2() -> AddrResult<()> {
         // 创建临时目录
         test_init();
         let dest_path = PathBuf::from("./test/temp/git2");
@@ -567,7 +568,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_checkout_specific_branch() -> SpecResult<()> {
+    async fn test_checkout_specific_branch() -> AddrResult<()> {
         test_init();
         let dest_path = PathBuf::from("./test/temp/git_branch_test");
         if dest_path.exists() {

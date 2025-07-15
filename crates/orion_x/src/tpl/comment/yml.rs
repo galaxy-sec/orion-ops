@@ -1,22 +1,22 @@
 use orion_error::{ErrorOwe, ErrorWith};
 use winnow::{
-    ModalResult, Parser,
     ascii::{line_ending, till_line_ending},
     combinator::{fail, opt},
     error::{StrContext, StrContextValue},
     token::{literal, take_till, take_while},
+    ModalResult, Parser,
 };
-
-use crate::error::{LocalizeReason, SpecReason, SpecResult};
 
 pub struct YmlComment {}
 impl YmlComment {
-    pub fn remove(code: &str) -> SpecResult<String> {
+    pub fn remove(code: &str) -> TplResult<String> {
         remove_comment(code)
     }
 }
 
-use super::super::error::{WinnowErrorEx, err_code_prompt};
+use crate::tpl::{TplReason, TplResult};
+
+use super::super::error::{err_code_prompt, WinnowErrorEx};
 #[derive(Debug)]
 pub enum YmlStatus {
     Comment,
@@ -132,13 +132,11 @@ pub fn wn_desc(desc: &'static str) -> StrContext {
     StrContext::Expected(StrContextValue::Description(desc))
 }
 
-pub fn remove_comment(code: &str) -> SpecResult<String> {
+pub fn remove_comment(code: &str) -> TplResult<String> {
     let mut xcode = code;
     let pure_code = ignore_comment(&mut xcode)
         .map_err(WinnowErrorEx::from)
-        .owe(SpecReason::from(LocalizeReason::Templatize(
-            "yml comment error".into(),
-        )))
+        .owe(TplReason::Brief("yml comment error".into()))
         .position(err_code_prompt(code))
         .want("remove comment");
     match pure_code {

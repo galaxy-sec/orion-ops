@@ -20,7 +20,7 @@ path = "app/ds-ops/main.rs"
 #path = "app/ds-mcp/main.rs"
 
 [workspace]
-members = [".", "crates/orion_common", "crates/orion_infra"]
+members = [".", "crates/orion_common", "crates/orion_infra", "crates/orion_x"]
 
 [workspace.package]
 #name = "orion-syspec"
@@ -31,6 +31,7 @@ license = "Apache-2.0"
 [dependencies]
 orion_common = { path = "crates/orion_common" }
 orion_infra = { path = "crates/orion_infra" }
+orion_x = { path = "crates/orion_x" }
 
 glob = "0.3"
 orion-error = "0.3"

@@ -1,10 +1,10 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{predule::*, update::UpdateOptions, vars::EnvDict};
 
 use derive_more::From;
 
 use crate::{types::UnitUpdateable, vars::EnvEvalable};
 
-use super::{GitAddr, HttpAddr, LocalAddr};
+use super::{AddrResult, GitAddr, HttpAddr, LocalAddr};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -33,7 +33,7 @@ impl UnitUpdateable for AddrType {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_local(path, options).await,
@@ -47,7 +47,7 @@ impl UnitUpdateable for AddrType {
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         let ins = self.clone().env_eval(options.values());
         match ins {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,

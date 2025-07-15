@@ -5,10 +5,12 @@ pub mod spec;
 use crate::predule::*;
 use std::{net::Ipv4Addr, path::PathBuf};
 
-use crate::types::{Localizable, LocalizeOptions, SysUpdateValue, ValuePath};
-use crate::vars::{ValueDict, ValueType, VarCollection};
+use crate::types::{Localizable, LocalizeOptions, SysUpdateValue};
 use async_trait::async_trait;
 use derive_more::Deref;
+use orion_x::types::ValuePath;
+use orion_x::update::UpdateOptions;
+use orion_x::vars::{ValueDict, ValueType, VarCollection};
 
 use crate::module::refs::ModuleSpecRef;
 use crate::module::spec::ModuleSpec;

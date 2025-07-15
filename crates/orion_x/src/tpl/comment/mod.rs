@@ -3,7 +3,7 @@ use std::ffi::OsStr;
 use rust::CStyleComment;
 use yml::YmlComment;
 
-use crate::error::SpecResult;
+use super::TplResult;
 
 mod rust;
 mod yml;
@@ -16,7 +16,7 @@ pub enum CommentFmt {
 }
 
 impl CommentFmt {
-    pub fn remove(&self, code: &str) -> SpecResult<String> {
+    pub fn remove(&self, code: &str) -> TplResult<String> {
         match self {
             CommentFmt::CStyle => CStyleComment::remove(code),
             CommentFmt::Yml => YmlComment::remove(code),

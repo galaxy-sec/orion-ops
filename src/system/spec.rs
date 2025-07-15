@@ -2,15 +2,20 @@ use crate::{predule::*, types::Yamlable};
 use std::path::{Path, PathBuf};
 
 use crate::{
-    addr::LocalAddr,
     const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
-    types::{Localizable, ValuePath},
+    types::Localizable,
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
+use orion_infra::auto_exit_log;
+use orion_x::{
+    addr::{GitAddr, LocalAddr},
+    types::ValuePath,
+    update::UpdateOptions,
+};
 
 use super::{
     ModulesList,
@@ -18,10 +23,9 @@ use super::{
 };
 use crate::types::LocalizeOptions;
 use crate::{
-    addr::GitAddr,
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
-    types::{Configable, Persistable},
+    types::Configable,
 };
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
@@ -208,12 +212,9 @@ pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysMod
 pub mod tests {
 
     use orion_error::TestAssertWithMsg;
+    use orion_x::{path::make_clean_path, tools::test_init};
 
-    use crate::{
-        const_vars::SYS_MODEL_SPC_ROOT,
-        module::proj::ModProject,
-        tools::{make_clean_path, test_init},
-    };
+    use crate::{const_vars::SYS_MODEL_SPC_ROOT, module::proj::ModProject};
 
     use super::*;
 

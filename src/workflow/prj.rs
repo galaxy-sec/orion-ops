@@ -2,9 +2,10 @@ use std::path::Path;
 
 use derive_getters::Getters;
 use orion_error::{ErrorOwe, ErrorWith};
+use orion_x::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
-use crate::{const_vars::ADM_GXL, error::SpecResult, types::Persistable};
+use crate::const_vars::ADM_GXL;
 
 #[derive(Getters, Clone, Debug, Default, Serialize)]
 pub struct GxlProject {
@@ -30,7 +31,7 @@ impl From<(&str, &str)> for GxlProject {
 }
 
 impl Persistable<GxlProject> for GxlProject {
-    fn save_to(&self, path: &Path, _name: Option<String>) -> SpecResult<()> {
+    fn save_to(&self, path: &Path, _name: Option<String>) -> SerdeResult<()> {
         let gal_path = path.join("_gal");
         std::fs::create_dir_all(&gal_path)
             .owe_res()
@@ -52,7 +53,7 @@ impl Persistable<GxlProject> for GxlProject {
         Ok(())
     }
 
-    fn load_from(path: &Path) -> SpecResult<GxlProject> {
+    fn load_from(path: &Path) -> SerdeResult<GxlProject> {
         let work_path = path.join("_gal/work.gxl");
         let adm_path = path.join("_gal/adm.gxl");
         let work = std::fs::read_to_string(work_path).owe_res()?;

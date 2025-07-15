@@ -3,13 +3,14 @@ use std::path::Path;
 use derive_getters::Getters;
 use derive_more::{Deref, From};
 use indexmap::IndexMap;
+use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::SpecResult, types::Yamlable};
+use crate::{saveable::Yamlable, tpl::TplResult};
 
 use super::{
-    EnvDict,
     types::{EnvEvalable, ValueType},
+    EnvDict,
 };
 
 //pub type ValueMap = HashMap<String, ValueType>;
@@ -56,9 +57,9 @@ impl ValueDict {
         }
         Self { dict: map }
     }
-    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> SpecResult<Self> {
+    pub fn eval_from_file(dict: &EnvDict, file_path: &Path) -> TplResult<Self> {
         let mut cur_dict = dict.clone();
-        let ins = ValueDict::from_yml(file_path)?;
+        let ins = ValueDict::from_yml(file_path).owe_res()?;
         Ok(ins.eval_import(&mut cur_dict))
     }
 

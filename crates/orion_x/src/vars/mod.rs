@@ -3,6 +3,7 @@ mod constraint;
 mod definition;
 mod dict;
 mod env_eval;
+mod error;
 mod global;
 mod origin;
 mod types;

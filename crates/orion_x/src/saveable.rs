@@ -1,111 +1,67 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use crate::predule::*;
+use serde::de::DeserializeOwned;
+use serde_derive::Serialize;
+use std::{fs, path::Path};
+use thiserror::Error;
 
-use async_trait::async_trait;
 use orion_error::{ErrorOwe, ErrorWith, WithContext};
-use orion_x::{
-    types::ValuePath,
-    update::UpdateOptions,
-    vars::{ValueDict, VarCollection},
-};
-use serde::{Serialize, de::DeserializeOwned};
-
-use crate::error::SpecResult;
-
-#[derive(Clone)]
-pub struct SysUpdateValue {
-    pub vars: VarCollection,
-}
-impl SysUpdateValue {
-    pub fn new(vars: VarCollection) -> Self {
-        Self { vars }
-    }
-    pub fn vars(&self) -> &VarCollection {
-        &self.vars
-    }
+#[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
+pub enum SerdeReason {
+    #[error("brief {0}")]
+    Brief(String),
+    #[error("{0}")]
+    Uvs(UvsReason),
 }
 
-#[async_trait]
-pub trait SysUpdateable<T> {
-    //pub type UpdateObj = T;
-    async fn update_local(self, path: &Path, options: &UpdateOptions) -> SpecResult<T>;
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct LocalizeOptions {
-    global_dict: ValueDict,
-    use_default_value: bool,
-}
-impl LocalizeOptions {
-    pub fn new(global_dict: ValueDict, mod_user_value: bool) -> Self {
-        Self {
-            global_dict,
-            use_default_value: mod_user_value,
-        }
-    }
-    pub fn global_value(&self) -> &ValueDict {
-        &self.global_dict
-    }
-    pub fn with_global(mut self, value: ValueDict) -> Self {
-        self.global_dict = value;
-        self
-    }
-    pub fn use_default_value(&self) -> bool {
-        self.use_default_value
-    }
-
-    pub fn for_test() -> Self {
-        Self {
-            global_dict: ValueDict::new(),
-            use_default_value: false,
+impl ErrorCode for SerdeReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            SerdeReason::Brief(_) => 500,
+            SerdeReason::Uvs(r) => r.error_code(),
         }
     }
 }
 
-#[async_trait]
-pub trait Localizable {
-    async fn localize(
-        &self,
-        dst_path: Option<ValuePath>,
-        options: LocalizeOptions,
-    ) -> SpecResult<()>;
+pub type SerdeResult<T> = Result<T, StructError<SerdeReason>>;
+pub type SerdeError = StructError<SerdeReason>;
+pub trait Persistable<T> {
+    fn save_to(&self, path: &Path, name: Option<String>) -> SerdeResult<()>;
+    fn load_from(path: &Path) -> SerdeResult<T>;
 }
 
 pub trait Configable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_conf(path: &Path) -> SpecResult<T>;
-    fn save_conf(&self, path: &Path) -> SpecResult<()>;
+    fn from_conf(path: &Path) -> SerdeResult<T>;
+    fn save_conf(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> Configable<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_conf(path: &Path) -> SpecResult<T> {
+    fn from_conf(path: &Path) -> SerdeResult<T> {
         T::from_yml(path)
     }
-    fn save_conf(&self, path: &Path) -> SpecResult<()> {
+    fn save_conf(&self, path: &Path) -> SerdeResult<()> {
         self.save_yml(path)
     }
 }
 
 pub trait IniAble<T>
 where
-    T: DeserializeOwned + Serialize,
+    T: DeserializeOwned + serde::Serialize,
 {
-    fn from_ini(path: &Path) -> SpecResult<T>;
-    fn save_ini(&self, path: &Path) -> SpecResult<()>;
+    fn from_ini(path: &Path) -> SerdeResult<T>;
+    fn save_ini(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> IniAble<T> for T
 where
-    T: DeserializeOwned + Serialize,
+    T: DeserializeOwned + serde::Serialize,
 {
-    fn from_ini(path: &Path) -> SpecResult<T> {
+    fn from_ini(path: &Path) -> SerdeResult<T> {
         let mut ctx = WithContext::want("load object from ini");
         ctx.with("path", format!("path: {}", path.display()));
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
@@ -114,7 +70,7 @@ where
             .with(&ctx)?;
         Ok(loaded)
     }
-    fn save_ini(&self, path: &Path) -> SpecResult<()> {
+    fn save_ini(&self, path: &Path) -> SerdeResult<()> {
         let mut ctx = WithContext::want("load conf spec");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = serde_ini::ser::to_string(self).owe_data().with(&ctx)?;
@@ -127,15 +83,15 @@ pub trait JsonAble<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_json(path: &Path) -> SpecResult<T>;
-    fn save_json(&self, path: &Path) -> SpecResult<()>;
+    fn from_json(path: &Path) -> SerdeResult<T>;
+    fn save_json(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> JsonAble<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_json(path: &Path) -> SpecResult<T> {
+    fn from_json(path: &Path) -> SerdeResult<T> {
         let mut ctx = WithContext::want("load object from json");
         ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
@@ -144,7 +100,7 @@ where
             .with(&ctx)?;
         Ok(loaded)
     }
-    fn save_json(&self, path: &Path) -> SpecResult<()> {
+    fn save_json(&self, path: &Path) -> SerdeResult<()> {
         let mut ctx = WithContext::want("save json");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = serde_json::to_string(self).owe_data().with(&ctx)?;
@@ -157,22 +113,22 @@ pub trait Tomlable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_toml(path: &Path) -> SpecResult<T>;
-    fn save_toml(&self, path: &Path) -> SpecResult<()>;
+    fn from_toml(path: &Path) -> SerdeResult<T>;
+    fn save_toml(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> Tomlable<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_toml(path: &Path) -> SpecResult<T> {
+    fn from_toml(path: &Path) -> SerdeResult<T> {
         let mut ctx = WithContext::want("load object from toml");
         ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
         let loaded: T = toml::from_str(file_content.as_str()).owe_res().with(&ctx)?;
         Ok(loaded)
     }
-    fn save_toml(&self, path: &Path) -> SpecResult<()> {
+    fn save_toml(&self, path: &Path) -> SerdeResult<()> {
         let mut ctx = WithContext::want("save object to toml");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = toml::to_string(self).owe_data().with(&ctx)?;
@@ -185,18 +141,18 @@ pub trait ValueConfable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_valconf(path: &Path) -> SpecResult<T>;
-    fn save_valconf(&self, path: &Path) -> SpecResult<()>;
+    fn from_valconf(path: &Path) -> SerdeResult<T>;
+    fn save_valconf(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> ValueConfable<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_valconf(path: &Path) -> SpecResult<T> {
+    fn from_valconf(path: &Path) -> SerdeResult<T> {
         T::from_yml(path)
     }
-    fn save_valconf(&self, path: &Path) -> SpecResult<()> {
+    fn save_valconf(&self, path: &Path) -> SerdeResult<()> {
         T::save_yml(self, path)
     }
 }
@@ -205,15 +161,15 @@ pub trait Yamlable<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_yml(path: &Path) -> SpecResult<T>;
-    fn save_yml(&self, path: &Path) -> SpecResult<()>;
+    fn from_yml(path: &Path) -> SerdeResult<T>;
+    fn save_yml(&self, path: &Path) -> SerdeResult<()>;
 }
 
 impl<T> Yamlable<T> for T
 where
     T: serde::de::DeserializeOwned + serde::Serialize,
 {
-    fn from_yml(path: &Path) -> SpecResult<T> {
+    fn from_yml(path: &Path) -> SerdeResult<T> {
         let mut ctx = WithContext::want("load object from yml");
         ctx.with_path("path", path);
         let file_content = fs::read_to_string(path).owe_res().with(&ctx)?;
@@ -223,7 +179,7 @@ where
             .with(&ctx)?;
         Ok(loaded)
     }
-    fn save_yml(&self, path: &Path) -> SpecResult<()> {
+    fn save_yml(&self, path: &Path) -> SerdeResult<()> {
         let mut ctx = WithContext::want("save object fo yml");
         ctx.with_path("path", path);
         let data_content = serde_yaml::to_string(self).owe_data().with(&ctx)?;

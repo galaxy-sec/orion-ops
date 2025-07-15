@@ -1,11 +1,12 @@
 use crate::predule::*;
 
 use async_trait::async_trait;
-
-use crate::{
+use orion_x::{
     addr::{AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    types::UnitUpdateable,
+    types::UnitUpdateValue,
+    update::UpdateOptions,
 };
+
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
     addr: AddrType,
@@ -134,12 +135,12 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::TestAssertWithMsg;
-
-    use crate::{
+    use orion_x::{
         addr::{AddrType, LocalAddr},
-        module::depend::{Dependency, DependencySet, EnvVarPath},
         update::UpdateOptions,
     };
+
+    use crate::module::depend::{Dependency, DependencySet, EnvVarPath};
 
     #[tokio::test]
     async fn test_depend() {

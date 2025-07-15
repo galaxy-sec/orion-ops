@@ -64,3 +64,27 @@ pub fn err_code_prompt(code: &str) -> String {
     }
     "".to_string()
 }
+
+use derive_more::From;
+use orion_error::{ErrorCode, StructError, UvsReason};
+use serde_derive::Serialize;
+use thiserror::Error;
+#[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
+pub enum TplReason {
+    #[error("brief:{0}")]
+    Brief(String),
+    #[error("{0}")]
+    Uvs(UvsReason),
+}
+
+impl ErrorCode for TplReason {
+    fn error_code(&self) -> i32 {
+        match self {
+            TplReason::Brief(_) => 500,
+            TplReason::Uvs(r) => r.error_code(),
+        }
+    }
+}
+
+pub type TplResult<T> = Result<T, StructError<TplReason>>;
+pub type TplError = StructError<TplReason>;

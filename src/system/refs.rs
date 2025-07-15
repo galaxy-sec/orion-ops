@@ -1,13 +1,15 @@
 use crate::{
     error::{SpecReason, ToErr},
     predule::*,
-    types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath},
+    types::{Localizable, LocalizeOptions, SysUpdateable},
 };
 
 use async_trait::async_trait;
 use orion_error::{UvsLogicFrom, UvsReason};
+use orion_infra::auto_exit_log;
+use orion_x::{addr::AddrType, types::ValuePath, update::UpdateOptions};
 
-use crate::{addr::AddrType, error::SpecResult, types::UnitUpdateable};
+use crate::error::SpecResult;
 
 use super::spec::SysModelSpec;
 

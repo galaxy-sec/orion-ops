@@ -8,3 +8,5 @@ pub use comment::CommentFmt;
 pub use covert::LabelCoverter;
 pub use export::CustTmplLabel;
 pub use handlebars::TplHandleBars;
+
+pub use error::{TplError, TplReason, TplResult};

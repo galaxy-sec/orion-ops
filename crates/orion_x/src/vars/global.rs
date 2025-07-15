@@ -6,9 +6,9 @@ use std::{
 use log::info;
 use orion_error::{ErrorOwe, ErrorWith};
 
-use crate::error::SpecResult;
+use super::error::VarsResult;
 
-pub fn setup_start_env_vars() -> SpecResult<()> {
+pub fn setup_start_env_vars() -> VarsResult<()> {
     unsafe { std::env::set_var("GXL_OS_SYS", format_os_sys().as_str()) };
     let start_root = current_dir().owe_sys().want("get current dir")?;
     unsafe { std::env::set_var("GXL_START_ROOT", start_root.display().to_string()) };
@@ -87,7 +87,7 @@ mod tests {
 
     use tempfile::TempDir;
 
-    use crate::vars::global::{WorkDir, find_project_define};
+    use crate::vars::global::{find_project_define, WorkDir};
 
     #[ignore = "change work dir"]
     #[test]

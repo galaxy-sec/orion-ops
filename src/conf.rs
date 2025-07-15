@@ -4,14 +4,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{
-    addr::{AddrType, path_file_name},
-    auto_exit_log,
-    const_vars::CONFS_DIR,
-    error::SpecResult,
-    types::{Configable, UnitUpdateable},
-};
+use crate::{const_vars::CONFS_DIR, error::SpecResult, types::Configable};
 use async_trait::async_trait;
+use orion_infra::auto_exit_log;
+use orion_x::{
+    addr::{AddrResult, AddrType, path_file_name},
+    types::{UnitUpdateValue, UnitUpdateable},
+    update::UpdateOptions,
+};
 // 由于 `crate::tools::log_flag` 未定义，移除该导入
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]
 pub struct ConfSpec {
@@ -123,7 +123,7 @@ impl UnitUpdateable for ConfSpec {
         &self,
         path: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> AddrResult<UnitUpdateValue> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = auto_exit_log!(
@@ -148,14 +148,14 @@ impl UnitUpdateable for ConfSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        addr::{GitAddr, HttpAddr, LocalAddr},
-        tools::test_init,
-    };
 
     use super::*;
     use httpmock::{Method::GET, MockServer};
     use orion_error::TestAssert;
+    use orion_x::{
+        addr::{GitAddr, HttpAddr, LocalAddr},
+        tools::test_init,
+    };
     use tokio::fs;
 
     #[test]
