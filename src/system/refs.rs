@@ -7,7 +7,7 @@ use crate::{
 use async_trait::async_trait;
 use orion_error::{UvsLogicFrom, UvsReason};
 use orion_infra::auto_exit_log;
-use orion_x::{
+use orion_variate::{
     addr::AddrType,
     types::{UnitUpdateable, ValuePath},
     update::UpdateOptions,

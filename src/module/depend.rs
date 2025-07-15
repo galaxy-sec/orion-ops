@@ -1,7 +1,7 @@
 use crate::predule::*;
 
 use async_trait::async_trait;
-use orion_x::{
+use orion_variate::{
     addr::{AddrResult, AddrType, GitAddr, LocalAddr, types::EnvVarPath},
     types::{UnitUpdateValue, UnitUpdateable},
     update::UpdateOptions,
@@ -135,7 +135,7 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::TestAssertWithMsg;
-    use orion_x::{
+    use orion_variate::{
         addr::{AddrType, LocalAddr},
         update::UpdateOptions,
     };

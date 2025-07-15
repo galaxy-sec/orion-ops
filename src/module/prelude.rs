@@ -1,6 +1,6 @@
 pub use async_trait::async_trait;
 pub use orion_infra::auto_exit_log;
-pub use orion_x::{
+pub use orion_variate::{
     addr::{AddrResult, path_file_name},
     path::{ensure_path, get_sub_dirs, make_clean_path},
     saveable::{Persistable, SerdeResult},
@@ -23,6 +23,6 @@ pub use crate::{
     workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
-pub use orion_x::addr::types::EnvVarPath;
-pub use orion_x::addr::{AddrType, GitAddr};
-pub use orion_x::vars::{EnvDict, ValueType};
+pub use orion_variate::addr::types::EnvVarPath;
+pub use orion_variate::addr::{AddrType, GitAddr};
+pub use orion_variate::vars::{EnvDict, ValueType};

@@ -17,11 +17,11 @@ use super::{
 use crate::types::{LocalizeOptions, ValueConfable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
-use orion_x::path::{ensure_path, make_clean_path};
-use orion_x::saveable::Persistable;
-use orion_x::types::ValuePath;
-use orion_x::update::UpdateOptions;
-use orion_x::vars::{ValueDict, ValueType};
+use orion_variate::path::{ensure_path, make_clean_path};
+use orion_variate::saveable::Persistable;
+use orion_variate::types::ValuePath;
+use orion_variate::update::UpdateOptions;
+use orion_variate::vars::{ValueDict, ValueType};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 struct SysConf {
@@ -183,7 +183,7 @@ pub mod tests {
     use std::path::{Path, PathBuf};
 
     use orion_error::{ErrorOwe, TestAssertWithMsg};
-    use orion_x::{
+    use orion_variate::{
         addr::{AddrType, GitAddr, types::EnvVarPath},
         path::make_clean_path,
         tools::test_init,

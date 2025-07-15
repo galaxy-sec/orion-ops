@@ -361,7 +361,7 @@ impl Localizable for ModModelSpec {
 pub mod test {
 
     use orion_error::TestAssert;
-    use orion_x::{
+    use orion_variate::{
         addr::HttpAddr,
         tools::test_init,
         vars::{OriginValue, ValueType, VarDefinition},

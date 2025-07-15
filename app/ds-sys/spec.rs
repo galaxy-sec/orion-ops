@@ -4,9 +4,9 @@ use orion_syspec::infra::configure_dfx_logging;
 use orion_syspec::module::proj::load_project_global_value;
 use orion_syspec::system::proj::SysProject;
 use orion_syspec::types::LocalizeOptions;
-use orion_x::path::make_new_path;
-use orion_x::update::UpdateOptions;
-use orion_x::vars::ValueDict;
+use orion_variate::path::make_new_path;
+use orion_variate::update::UpdateOptions;
+use orion_variate::vars::ValueDict;
 
 use crate::args::GSysCmd;
 

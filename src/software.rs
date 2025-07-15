@@ -82,7 +82,7 @@ mod tests {
     use std::path::PathBuf;
 
     use orion_error::ErrorOwe;
-    use orion_x::addr::LocalAddr;
+    use orion_variate::addr::LocalAddr;
     use tempfile::env::temp_dir;
 
     use crate::{

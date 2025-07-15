@@ -7,7 +7,7 @@ use std::{
 use crate::{const_vars::CONFS_DIR, error::SpecResult, types::Configable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
-use orion_x::{
+use orion_variate::{
     addr::{AddrResult, AddrType, path_file_name},
     types::{UnitUpdateValue, UnitUpdateable},
     update::UpdateOptions,
@@ -152,7 +152,7 @@ mod tests {
     use super::*;
     use httpmock::{Method::GET, MockServer};
     use orion_error::TestAssert;
-    use orion_x::{
+    use orion_variate::{
         addr::{GitAddr, HttpAddr, LocalAddr},
         tools::test_init,
     };

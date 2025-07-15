@@ -2186,7 +2186,7 @@ dependencies = [
  "orion-error",
  "orion_common",
  "orion_infra",
- "orion_x",
+ "orion_variate",
  "os_info",
  "regex",
  "reqwest",
@@ -2240,7 +2240,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "orion_x"
+name = "orion_variate"
 version = "0.1.0"
 dependencies = [
  "anyhow",

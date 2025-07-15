@@ -12,9 +12,9 @@ const OPS_PRJ_FILE: &str = "ops-prj.yml";
 use crate::types::{LocalizeOptions, SysUpdateable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
-use orion_x::addr::LocalAddr;
-use orion_x::types::ValuePath;
-use orion_x::update::UpdateOptions;
+use orion_variate::addr::LocalAddr;
+use orion_variate::types::ValuePath;
+use orion_variate::update::UpdateOptions;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectConf {

@@ -11,7 +11,7 @@ use crate::{
     workflow::prj::GxlProject,
 };
 use async_trait::async_trait;
-use orion_x::{addr::HttpAddr, vars::VarDefinition};
+use orion_variate::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
     CpuArch, ModelSTD, OsCPE, RunSPC,

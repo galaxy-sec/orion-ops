@@ -11,7 +11,7 @@ use crate::{
 use async_trait::async_trait;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_infra::auto_exit_log;
-use orion_x::{
+use orion_variate::{
     addr::{GitAddr, LocalAddr},
     saveable::Persistable,
     types::ValuePath,
@@ -217,7 +217,7 @@ pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysMod
 pub mod tests {
 
     use orion_error::TestAssertWithMsg;
-    use orion_x::{path::make_clean_path, tools::test_init};
+    use orion_variate::{path::make_clean_path, tools::test_init};
 
     use crate::{const_vars::SYS_MODEL_SPC_ROOT, module::proj::ModProject};
 

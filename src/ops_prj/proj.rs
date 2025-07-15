@@ -10,11 +10,11 @@ const OPS_PRJ_FILE: &str = "ops-prj.yml";
 use crate::types::{Configable, Localizable, LocalizeOptions, SysUpdateable, ValueConfable};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
-use orion_x::path::{ensure_path, make_clean_path};
-use orion_x::saveable::Persistable;
-use orion_x::types::ValuePath;
-use orion_x::update::UpdateOptions;
-use orion_x::vars::{ValueDict, ValueType};
+use orion_variate::path::{ensure_path, make_clean_path};
+use orion_variate::saveable::Persistable;
+use orion_variate::types::ValuePath;
+use orion_variate::update::UpdateOptions;
+use orion_variate::vars::{ValueDict, ValueType};
 
 use super::conf::ProjectConf;
 use super::init::workins_init_gitignore;
@@ -145,7 +145,7 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::{ErrorOwe, TestAssertWithMsg};
-    use orion_x::{path::make_clean_path, tools::test_init, update::UpdateOptions};
+    use orion_variate::{path::make_clean_path, tools::test_init, update::UpdateOptions};
 
     use crate::{
         const_vars::WORKINS_PRJ_ROOT, error::SpecResult, ops_prj::proj::OpsProject,

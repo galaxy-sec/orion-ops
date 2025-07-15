@@ -9,7 +9,7 @@ use crate::{
     error::{ModReason, SpecResult},
     module::setting::TemplatePath,
 };
-use orion_x::tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars};
+use orion_variate::tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars};
 
 use super::setting::TemplateConfig;
 

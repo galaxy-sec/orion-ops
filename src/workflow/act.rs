@@ -4,7 +4,7 @@ use super::gxl::GxlAction;
 use derive_getters::Getters;
 use log::warn;
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom};
-use orion_x::saveable::{Persistable, SerdeResult};
+use orion_variate::saveable::{Persistable, SerdeResult};
 use serde::Serialize;
 
 use crate::const_vars::WORKFLOWS_DIR;

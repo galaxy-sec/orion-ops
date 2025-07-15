@@ -1,6 +1,6 @@
 use derive_getters::Getters;
 use derive_more::From;
-use orion_x::addr::AddrType;
+use orion_variate::addr::AddrType;
 use serde_derive::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::ops::DerefMut;

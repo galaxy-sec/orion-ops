@@ -196,7 +196,7 @@ pub mod tests {
     use std::path::PathBuf;
 
     use orion_error::TestAssertWithMsg;
-    use orion_x::{path::make_clean_path, tools::test_init, update::UpdateOptions};
+    use orion_variate::{path::make_clean_path, tools::test_init, update::UpdateOptions};
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,

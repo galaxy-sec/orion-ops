@@ -1,5 +1,5 @@
 [package]
-name = "orion_x"
+name = "orion_variate"
 authors = ["wukong<sec-wukong@outlook.com>"]
 edition = "2021"
 version = "0.1.0"
