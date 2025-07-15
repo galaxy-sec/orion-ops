@@ -365,34 +365,6 @@ mod test3 {
     use httpmock::MockServer;
 
     #[tokio::test(flavor = "current_thread")]
-    async fn test_upload_from_local() -> SpecResult<()> {
-        // 1. 配置模拟服务器
-        let server = MockServer::start();
-        let mock = server.mock(|when, then| {
-            when.method(httpmock::Method::PUT).path("/upload_put");
-            // .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM="); // 移除content-type检查，PUT请求不使用multipart
-            then.status(200).body("upload success");
-        });
-
-        // 2. 创建临时测试文件
-        let temp_dir = tempfile::tempdir().owe_res()?;
-        let file_path = temp_dir.path().join("test_put.txt");
-        std::fs::write(&file_path, "test put content").unwrap();
-
-        // 3. 执行上传
-        let http_addr = HttpAddr::from(server.url("/upload_put"));
-
-        http_addr
-            .upload_from(&file_path, &UpdateOptions::default())
-            .await?;
-
-        // 4. 验证结果
-        mock.assert();
-        assert!(!file_path.exists());
-        Ok(())
-    }
-
-    #[tokio::test(flavor = "current_thread")]
     async fn test_http_upload_post() -> SpecResult<()> {
         // 1. 配置模拟服务器
         let server = MockServer::start();

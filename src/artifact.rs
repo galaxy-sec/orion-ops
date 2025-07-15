@@ -105,14 +105,14 @@ impl Artifact {
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
         if let Some(AddrType::Local(local)) = self.transit_storage() {
-            let path = Path::new(local.path());
+            let path = Path::new(local.path()).join(self.name());
             if !path.exists() {
                 return Err(StructError::from_res(format!(
                     "{} path not exist",
                     local.path()
                 )));
             }
-            let result = self.deployment_repo.upload_from(path, options).await?;
+            let result = self.deployment_repo.upload_from(&path, options).await?;
             // 上传成功后删除原始内容
             let remove_status = if path.is_file() {
                 std::fs::remove_file(path)
@@ -175,7 +175,7 @@ mod tests {
     #[tokio::test]
     async fn test_http_artifact_v2() -> SpecResult<()> {
         let home_dir = home_dir().assert();
-        let transit_path = home_dir.join(".cache").join("transit");
+        let transit_path = home_dir.join("transit");
 
         let release_type = AddrType::Http(HttpAddr::from(
             "https://dy-sec-generic.pkg.coding.net/galaxy-open/generic/galaxy-init.sh?version=latest",
