@@ -1,6 +1,6 @@
 use crate::addr::AddrType;
 use crate::predule::SpecResult;
-use crate::predule::{debug, info};
+use crate::predule::{error, info};
 use crate::types::AsyncUpdateable;
 use crate::types::ResourceUpload;
 use crate::types::UpdateValue;
@@ -8,6 +8,8 @@ use crate::update::UpdateOptions;
 use derive_getters::Getters;
 use derive_more::From;
 use orion_error::ErrorOwe;
+use orion_error::StructError;
+use orion_error::UvsResFrom;
 use serde_derive::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -62,44 +64,69 @@ impl Artifact {
         }
     }
 
-    pub async fn update_rename(
-        self,
+    // 直接从远程仓库下载
+    pub async fn save_deployment(
+        &self,
         dest_path: &Path,
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
-        let result;
-        if let (Some(AddrType::Local(local)), Some(release)) =
-            (self.transit_storage, self.release_repo)
-        {
-            std::fs::create_dir_all(&local.path()).owe_res()?;
-            // 从release repo下载到 transit storage
-            release
-                .update_rename(Path::new(local.path()), &self.name, options)
-                .await?;
-            let transit_path = Path::new(local.path()).join(self.name);
-            //  从 transit storage上传到 deployment repo
-            let deployment_status = self
-                .deployment_repo
-                .upload_from(&transit_path, options)
-                .await?;
-            let remove_result = if transit_path.is_file() {
-                std::fs::remove_file(transit_path)
-            } else {
-                std::fs::remove_dir_all(transit_path)
-            };
-            match remove_result {
-                Ok(_) => info!("remove file success"),
-                Err(e) => debug!("remove file failed: {}", e),
-            }
-            result = deployment_status;
-        } else {
-            std::fs::create_dir_all(&dest_path).owe_res()?;
-            result = self
-                .deployment_repo
-                .update_rename(dest_path, &self.name, options)
-                .await?;
-        }
+        std::fs::create_dir_all(dest_path).owe_res()?;
+        let result = self
+            .deployment_repo
+            .update_rename(dest_path, &self.name, options)
+            .await?;
         Ok(result)
+    }
+
+    // 将 release_repo 上的资源下载到 transit_storage
+    pub async fn save_release_to_transit(
+        &self,
+        options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
+        if let Some(AddrType::Local(local)) = self.transit_storage() {
+            let local_path = Path::new(local.path());
+            std::fs::create_dir_all(local_path).owe_res()?;
+            let result = if let Some(release) = self.release_repo() {
+                release
+                    .update_rename(local_path, &self.name, options)
+                    .await?
+            } else {
+                UpdateValue::from(local_path.to_path_buf())
+            };
+            Ok(result)
+        } else {
+            Err(StructError::from_res("Unsupported Transit type".into()))
+        }
+    }
+
+    // 将 transit_storage 上的资源上传到 deployment_repo
+    pub async fn upload_transit_to_deployment(
+        &self,
+        options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
+        if let Some(AddrType::Local(local)) = self.transit_storage() {
+            let path = Path::new(local.path());
+            if !path.exists() {
+                return Err(StructError::from_res(format!(
+                    "{} path not exist",
+                    local.path()
+                )));
+            }
+            let result = self.deployment_repo.upload_from(path, options).await?;
+            // 上传成功后删除原始内容
+            let remove_status = if path.is_file() {
+                std::fs::remove_file(path)
+            } else {
+                std::fs::remove_dir_all(path)
+            };
+            match remove_status {
+                Ok(_) => info!("{} local file delete Success!", local.path()),
+                Err(e) => error!("{} local file delete Failed, {}", local.path(), e),
+            }
+            Ok(result)
+        } else {
+            Err(StructError::from_res("Unsupported Transit type".into()))
+        }
     }
 }
 
@@ -127,68 +154,48 @@ mod tests {
     #[tokio::test]
     async fn test_http_artifact_v1() -> SpecResult<()> {
         let artifact = Artifact::new(
-            "specGitTest",
-            HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
-            "postgresql-17.4.tar.gz",
+            "galaxy-init",
+            HttpAddr::from(
+                "https://dy-sec-generic.pkg.coding.net/galaxy-open/generic/galaxy-init.sh?version=latest",
+            ),
+            "galaxy-init",
         );
         let path = home_dir()
             .unwrap_or("UNKOWN".into())
             .join(".cache")
             .join("v1");
         artifact
-            .update_rename(&path, &UpdateOptions::default())
+            .save_deployment(&path, &UpdateOptions::default())
             .await?;
+
+        assert!(path.join("galaxy-init").exists());
         Ok(())
     }
 
     #[tokio::test]
     async fn test_http_artifact_v2() -> SpecResult<()> {
         let home_dir = home_dir().assert();
-        let path = home_dir.join(".cache").join("v2");
         let transit_path = home_dir.join(".cache").join("transit");
 
         let release_type = AddrType::Http(HttpAddr::from(
-            "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
+            "https://dy-sec-generic.pkg.coding.net/galaxy-open/generic/galaxy-init.sh?version=latest",
         ));
         let transit_type = AddrType::Local(LocalAddr::from(transit_path.to_str().assert()));
         let deploy_type = AddrType::Git(GitAddr::from(
             "git@e.coding.net:dy-sec/practice/spec_git_test.git",
         ));
         let artifact = Artifact {
-            name: "postgresql-17.4.tar".to_string(),
+            name: "galaxy-init".to_string(),
             deployment_repo: deploy_type,
             transit_storage: Some(transit_type),
             release_repo: Some(release_type),
-            local: "postgresql-17.4.tar.gz".to_string(),
+            local: "galaxy-init".to_string(),
         };
         artifact
-            .update_rename(&path, &UpdateOptions::default())
+            .save_release_to_transit(&UpdateOptions::default())
             .await?;
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_http_artifact_v3() -> SpecResult<()> {
-        let home_dir = home_dir().assert();
-        let path = home_dir.join(".cache").join("v2");
-        let transit_path = home_dir.join(".cache").join("transit");
-
-        let release_type = AddrType::Http(HttpAddr::from(
-            "https://dy-sec-generic.pkg.coding.net/galaxy-open/ubuntu22/fluent-bit?version=4.0.2",
-        ));
-        let transit_type = AddrType::Local(LocalAddr::from(transit_path.to_str().assert()));
-        let deploy_type = AddrType::Git(
-            GitAddr::from("git@e.coding.net:dy-sec/practice/spec_git_test.git").branch("master"),
-        );
-        let artifact = Artifact {
-            name: "fluent-bit".to_string(),
-            deployment_repo: deploy_type,
-            transit_storage: Some(transit_type),
-            release_repo: Some(release_type),
-            local: "fluent-bit".to_string(),
-        };
         artifact
-            .update_rename(&path, &UpdateOptions::default())
+            .upload_transit_to_deployment(&UpdateOptions::default())
             .await?;
         Ok(())
     }

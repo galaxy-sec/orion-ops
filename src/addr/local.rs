@@ -87,11 +87,11 @@ impl ResourceUpload for LocalAddr {
                 .unwrap_or("UNKNOW");
             let target_path = Path::new(self.path()).join(file_name);
             std::fs::copy(path, target_path).owe_res()?;
-            std::fs::remove_file(&path).owe_res()?;
+            std::fs::remove_file(path).owe_res()?;
         } else {
             let copy_options = CopyOptions::new().overwrite(true).copy_inside(true);
             fs_extra::dir::copy(path, self.path(), &copy_options).owe_res()?;
-            std::fs::remove_dir_all(&path).owe_res()?;
+            std::fs::remove_dir_all(path).owe_res()?;
         }
         Ok(UpdateValue::from(path.to_path_buf()))
     }
@@ -266,11 +266,11 @@ mod tests {
         std::fs::write(&file_path, "source").assert();
         let local_addr = LocalAddr::from(target_dir.to_str().unwrap_or("~/temp"));
         local_addr
-            .upload_from(&file_path.as_path(), &UpdateOptions::for_test())
+            .upload_from(file_path.as_path(), &UpdateOptions::for_test())
             .await?;
 
         assert!(target_dir.join("file.txt").exists());
-        assert!(file_path.exists() == false);
+        assert!(!file_path.exists());
         Ok(())
     }
 
@@ -295,7 +295,7 @@ mod tests {
 
         assert!(version_1.join("version_2").exists());
         assert!(version_1.join("version_2").join("version_2.txt").exists());
-        assert!(version_2.exists() == false);
+        assert!(!version_2.exists());
         Ok(())
     }
 }

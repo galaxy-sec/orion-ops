@@ -187,9 +187,9 @@ impl ResourceUpload for HttpAddr {
         }
         self.upload(path, "POST").await?;
         if path.is_file() {
-            std::fs::remove_file(&path).owe_res()?;
+            std::fs::remove_file(path).owe_res()?;
         } else {
-            std::fs::remove_dir_all(&path).owe_res()?;
+            std::fs::remove_dir_all(path).owe_res()?;
         }
         Ok(UpdateValue::from(path.to_path_buf()))
     }
@@ -369,9 +369,8 @@ mod test3 {
         // 1. 配置模拟服务器
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
-            when.method(httpmock::Method::PUT)
-                .path("/upload_put");
-                // .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM="); // 移除content-type检查，PUT请求不使用multipart
+            when.method(httpmock::Method::PUT).path("/upload_put");
+            // .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM="); // 移除content-type检查，PUT请求不使用multipart
             then.status(200).body("upload success");
         });
 
@@ -389,7 +388,7 @@ mod test3 {
 
         // 4. 验证结果
         mock.assert();
-        assert!(file_path.exists() == false);
+        assert!(!file_path.exists());
         Ok(())
     }
 
@@ -425,7 +424,7 @@ mod test3 {
 
         // 4. 验证结果
         mock.assert();
-        assert!(file_path.exists() == false);
+        assert!(!file_path.exists());
         Ok(())
     }
 }

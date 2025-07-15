@@ -353,11 +353,11 @@ impl ResourceUpload for GitAddr {
                 .and_then(|name| name.to_str())
                 .unwrap_or("UNKONW");
             std::fs::copy(path, target_repo_in_local_path.join(filename)).owe_res()?;
-            std::fs::remove_file(&path).owe_res()?;
+            std::fs::remove_file(path).owe_res()?;
         } else {
             let copy_options = CopyOptions::new().overwrite(true).copy_inside(true);
             fs_extra::copy_items(&[path], target_repo_in_local_path, &copy_options).owe_res()?;
-            std::fs::remove_dir_all(&path).owe_res()?;
+            std::fs::remove_dir_all(path).owe_res()?;
         }
         match Repository::open(target_repo_in_local_path) {
             Ok(repo) => {
@@ -552,7 +552,7 @@ impl GitAddr {
             &[&format!("{}:{}", branch_path, branch_path)],
             Some(&mut push_options),
         )?;
-        info!("upload complete");
+        info!("push complete");
         Ok(())
     }
 }
