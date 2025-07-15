@@ -3,7 +3,7 @@ pub use orion_common::serde::{Persistable, SerdeResult};
 pub use orion_infra::auto_exit_log;
 pub use orion_infra::path::{ensure_path, get_sub_dirs, make_clean_path};
 pub use orion_variate::{
-    addr::{path_file_name, AddrResult},
+    addr::{AddrResult, path_file_name},
     types::{UnitUpdateValue, UnitUpdateable, ValuePath},
     update::UpdateOptions,
     vars::{OriginDict, ValueDict, VarCollection},

@@ -1,6 +1,6 @@
+use crate::vars::EnvEvalable;
 use crate::{
-    predule::*, tools::get_repo_name, types::UnitUpdateable,
-    update::UpdateOptions, vars::EnvDict,
+    predule::*, tools::get_repo_name, types::UnitUpdateable, update::UpdateOptions, vars::EnvDict,
 };
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
@@ -13,7 +13,6 @@ use log::warn;
 use orion_error::UvsResFrom;
 use orion_infra::auto_exit_log;
 use orion_infra::path::ensure_path;
-use crate::vars::EnvEvalable;
 
 use super::AddrResult;
 
@@ -495,6 +494,7 @@ mod tests {
     #[tokio::test]
     async fn test_git_addr_update_local() -> AddrResult<()> {
         // 创建临时目录
+
         let temp_dir = tempdir().owe_res()?;
         let dest_path = temp_dir.path().to_path_buf();
 

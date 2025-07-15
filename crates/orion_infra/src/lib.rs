@@ -2,6 +2,6 @@
 
 pub mod config;
 pub mod logging;
+pub mod path;
 pub mod traits;
 mod types;
-pub mod path;

@@ -9,9 +9,9 @@ const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
 use crate::types::{Configable, Localizable, LocalizeOptions, SysUpdateable, ValueConfable};
 use async_trait::async_trait;
+use orion_common::serde::Persistable;
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_common::serde::Persistable;
 use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType};

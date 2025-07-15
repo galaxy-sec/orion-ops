@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use derive_getters::Getters;
-use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use orion_common::serde::{Persistable, SerdeResult};
+use orion_error::{ErrorOwe, StructError, UvsConfFrom};
 use serde::Serialize;
 
 use crate::task::OperationType;

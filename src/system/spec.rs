@@ -2,15 +2,15 @@ use crate::{error::SysReason, predule::*, types::Yamlable};
 use std::path::{Path, PathBuf};
 
 use crate::{
-    const_vars::{MODULES_SPC_ROOT, MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, VARS_YML},
+    const_vars::{MOD_LIST_YML, MODULES_SPC_ROOT, NET_RES_YML, RESOURCE_YML, VARS_YML},
     error::ElementReason,
     module::proj::ModProject,
     types::Localizable,
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_common::serde::Persistable;
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_variate::{
     addr::{GitAddr, LocalAddr},
@@ -19,13 +19,13 @@ use orion_variate::{
 };
 
 use super::{
-    init::{sys_init_gitignore, SysIniter},
     ModulesList,
+    init::{SysIniter, sys_init_gitignore},
 };
 use crate::types::LocalizeOptions;
 use crate::{
     error::{SpecReason, SpecResult, ToErr},
-    module::{refs::ModuleSpecRef, spec::ModuleSpec, CpuArch, ModelSTD, OsCPE, RunSPC},
+    module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
     types::Configable,
 };
 #[derive(Getters, Clone, Debug)]

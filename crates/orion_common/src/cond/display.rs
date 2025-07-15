@@ -13,7 +13,7 @@ where
             match left.as_ref() {
                 ExpressEnum::Logic(v) => match v.op() {
                     LogicOP::Not => {
-                        write!(f, "{} ", v)?;
+                        write!(f, "{v} ")?;
                     }
                     _ => {
                         write!(f, "({}) ", v)?;

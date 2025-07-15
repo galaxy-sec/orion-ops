@@ -63,7 +63,7 @@ mod tests {
 
     use crate::{
         tools::get_repo_name,
-        vars::{EnvDict, ValueType, env_eval::expand_env_vars},
+        vars::{env_eval::expand_env_vars, EnvDict, ValueType},
     };
 
     #[test]

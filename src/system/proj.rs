@@ -11,14 +11,14 @@ use crate::{
 };
 
 use super::{
-    init::{sys_init_gitignore, SYS_PRJ_ADM, SYS_PRJ_WORK},
+    init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
 };
 use crate::types::{LocalizeOptions, ValueConfable};
 use async_trait::async_trait;
+use orion_common::serde::Persistable;
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_common::serde::Persistable;
 use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType};
@@ -185,7 +185,7 @@ pub mod tests {
     use orion_error::{ErrorOwe, TestAssertWithMsg};
     use orion_infra::path::make_clean_path;
     use orion_variate::{
-        addr::{types::EnvVarPath, AddrType, GitAddr},
+        addr::{AddrType, GitAddr, types::EnvVarPath},
         tools::test_init,
         update::UpdateOptions,
     };

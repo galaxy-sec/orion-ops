@@ -2196,6 +2196,7 @@ dependencies = [
  "serde_ini",
  "serde_json",
  "serde_yaml",
+ "spin",
  "strfmt",
  "tempfile",
  "thiserror 2.0.12",
@@ -2267,6 +2268,7 @@ dependencies = [
  "httpmock",
  "indexmap",
  "indicatif",
+ "lazy_static",
  "log",
  "orion-error",
  "orion_common",
@@ -3097,6 +3099,15 @@ checksum = "e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "spin"
+version = "0.9.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+dependencies = [
+ "lock_api",
 ]
 
 [[package]]

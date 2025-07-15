@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-use super::{ValueDict, env_eval::expand_env_vars};
+use super::{env_eval::expand_env_vars, ValueDict};
 use derive_more::Display;
 use serde_derive::{Deserialize, Serialize};
 
