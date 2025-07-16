@@ -60,8 +60,8 @@ pub trait AsyncUpdateable {
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
-        let _ = rename_path(target.position(), name);
-        Ok(target)
+        let rename_path = rename_path(target.position(), name)?;
+        Ok(UpdateValue::from(rename_path))
     }
 }
 

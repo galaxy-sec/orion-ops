@@ -1,0 +1,6 @@
+        tunable:
+        log_segment_size_min: 16777216 
+        log_segment_size_max: 268435456 
+        compacted_log_segment_size: 67108864 
+        max_compacted_log_segment_size: 536870912 
+        kafka_connection_rate_limit: 1000

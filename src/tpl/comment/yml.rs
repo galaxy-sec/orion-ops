@@ -323,7 +323,25 @@ kafka_connection_rate_limit: 1000
     }
     #[test]
     fn test_file_case1() {
-        let val_file = PathBuf::from("./test/data/yml/values.yaml");
+        let base_path = PathBuf::from("./test/data/yml");
+        std::fs::create_dir_all(&base_path).assert();
+
+        let val_file = base_path.join("values.yaml");
+        let data = r#"
+        tunable:
+        # -- See the [property reference documentation](https://docs.redpanda.com/docs/reference/cluster-
+        log_segment_size_min: 16777216 # 16 mb
+        # -- See the property reference documentation.
+        log_segment_size_max: 268435456 # 256 mb
+        # -- See the property reference documentation.
+        compacted_log_segment_size: 67108864 # 64 mb
+        # -- See the property reference documentation.
+        max_compacted_log_segment_size: 536870912 # 512 mb
+        # -- See the property reference documentation.
+        kafka_connection_rate_limit: 1000
+                   "#;
+        std::fs::write(&val_file, data).assert();
+
         let out_file = PathBuf::from("./test/data/yml/_values.yaml");
         let yml = read_to_string(&val_file).assert();
         let codes = remove_comment(yml.as_str()).assert();
