@@ -65,7 +65,7 @@ impl Artifact {
     }
 
     // 直接从远程仓库下载
-    pub async fn save_deployment(
+    pub async fn deploy_repo_to_local(
         &self,
         dest_path: &Path,
         options: &UpdateOptions,
@@ -79,7 +79,7 @@ impl Artifact {
     }
 
     // 将 release_repo 上的资源下载到 transit_storage
-    pub async fn save_release_to_transit(
+    pub async fn release_repo_to_transit(
         &self,
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
@@ -100,7 +100,7 @@ impl Artifact {
     }
 
     // 将 transit_storage 上的资源上传到 deployment_repo
-    pub async fn upload_transit_to_deployment(
+    pub async fn transit_to_deploy_repo(
         &self,
         options: &UpdateOptions,
     ) -> SpecResult<UpdateValue> {
@@ -154,21 +154,21 @@ mod tests {
     #[tokio::test]
     async fn test_http_artifact_v1() -> SpecResult<()> {
         let artifact = Artifact::new(
-            "galaxy-init",
+            "hello-word",
             HttpAddr::from(
-                "https://dy-sec-generic.pkg.coding.net/galaxy-open/generic/galaxy-init.sh?version=latest",
+                "https://github.com/galaxy-sec/hello-word.git",
             ),
-            "galaxy-init",
+            "hello-word",
         );
         let path = home_dir()
             .unwrap_or("UNKOWN".into())
             .join(".cache")
             .join("v1");
         artifact
-            .save_deployment(&path, &UpdateOptions::default())
+            .deploy_repo_to_local(&path, &UpdateOptions::default())
             .await?;
 
-        assert!(path.join("galaxy-init").exists());
+        assert!(path.join("hello-word").exists());
         Ok(())
     }
 
@@ -182,8 +182,8 @@ mod tests {
         ));
         let transit_type = AddrType::Local(LocalAddr::from(transit_path.to_str().assert()));
         let deploy_type = AddrType::Git(GitAddr::from(
-            "git@e.coding.net:dy-sec/practice/spec_git_test.git",
-        ));
+            "git@github.com:galaxy-sec/spec_test.git",
+        ).branch("main"));
         let artifact = Artifact {
             name: "galaxy-init".to_string(),
             deployment_repo: deploy_type,
@@ -192,10 +192,10 @@ mod tests {
             local: "galaxy-init".to_string(),
         };
         artifact
-            .save_release_to_transit(&UpdateOptions::default())
+            .release_repo_to_transit(&UpdateOptions::default())
             .await?;
         artifact
-            .upload_transit_to_deployment(&UpdateOptions::default())
+            .transit_to_deploy_repo(&UpdateOptions::default())
             .await?;
         Ok(())
     }

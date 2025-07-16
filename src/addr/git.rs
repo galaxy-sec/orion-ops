@@ -339,9 +339,7 @@ impl ResourceUpload for GitAddr {
         if !path.exists() {
             return Err(StructError::from_res("path not exist".into()));
         }
-        let temp_path = home_dir()
-            .unwrap_or(PathBuf::from("~/"))
-            .join(".cache/temp");
+        let temp_path = home_dir().unwrap_or(PathBuf::from("~/")).join(".temp");
         ensure_path(&temp_path)?;
 
         let target_repo = self.update_local(&temp_path, options).await?;
@@ -704,8 +702,7 @@ mod git_test {
         std::fs::create_dir_all(&dir).assert();
         std::fs::write(&file, "spec upload local dir to git repo.").assert();
 
-        let git_addr =
-            GitAddr::from("git@e.coding.net:dy-sec/practice/spec_git_test.git").branch("master"); // 替换为实际测试分支
+        let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").branch("main");
 
         let git_up = git_addr
             .upload_from(&dir, &UpdateOptions::default())
@@ -721,8 +718,7 @@ mod git_test {
 
         std::fs::write(&file, "spec upload local file to git repo.").assert();
 
-        let git_addr =
-            GitAddr::from("git@e.coding.net:dy-sec/practice/spec_git_test.git").branch("master"); // 替换为实际测试分支
+        let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").branch("main");
 
         let git_up = git_addr
             .upload_from(&file, &UpdateOptions::default())
