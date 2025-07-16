@@ -119,7 +119,7 @@ impl ConfSpec {
 
 #[async_trait]
 impl AsyncUpdateable for ConfSpec {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = log_guard!(
@@ -138,7 +138,7 @@ impl AsyncUpdateable for ConfSpec {
                 return Ok(x);
             }
         }
-        Ok(root)
+        Ok(UpdateValue::from(root))
     }
 }
 
@@ -225,17 +225,20 @@ mod tests {
         }
         std::fs::create_dir_all(&temp_dir).assert();
 
-        let updated_path = conf
+        let updated_v = conf
             .update_local(&temp_dir, &UpdateOptions::for_test())
             .await
             .assert();
 
-        assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("remote.yml"));
+        assert_eq!(
+            updated_v.position(),
+            &temp_dir.join(CONFS_DIR).join("remote.yml")
+        );
         // 验证下载的文件
-        let content = fs::read_to_string(updated_path.clone())
+        let content = fs::read_to_string(updated_v.position())
             .await
             .owe_res()
-            .with(format!("path: {}", updated_path.display()))?;
+            .with(format!("path: {}", updated_v.position().display()))?;
         assert!(content.contains("env=\"test\""));
         //fs::remove_dir_all(dst_dir).await.owe_res()?;
         Ok(())
@@ -257,11 +260,14 @@ mod tests {
             std::fs::remove_dir_all(&temp_dir).assert();
         }
         std::fs::create_dir_all(&temp_dir).assert();
-        let updated_path = conf
+        let updated_v = conf
             .update_local(&temp_dir, &UpdateOptions::for_test())
             .await
             .assert();
-        assert_eq!(updated_path, temp_dir.join(CONFS_DIR).join("bitnami"));
+        assert_eq!(
+            updated_v.position(),
+            &temp_dir.join(CONFS_DIR).join("bitnami")
+        );
 
         Ok(())
     }

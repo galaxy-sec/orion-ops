@@ -1,4 +1,4 @@
-use crate::{predule::*, vars::EnvDict};
+use crate::{predule::*, types::ResourceUpload, vars::EnvDict};
 
 use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
@@ -168,10 +168,30 @@ impl HttpAddr {
 
 #[async_trait]
 impl AsyncUpdateable for HttpAddr {
-    async fn update_local(&self, dest_dir: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    async fn update_local(
+        &self,
+        dest_dir: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        self.download(&dest_path, options).await
+        Ok(UpdateValue::from(self.download(&dest_path, options).await?))
+    }
+}
+
+#[async_trait]
+impl ResourceUpload for HttpAddr {
+    async fn upload_from(&self, path: &Path, _: &UpdateOptions) -> SpecResult<UpdateValue> {
+        if !path.exists() {
+            return Err(StructError::from_res("path not exist".into()));
+        }
+        self.upload(path, "POST").await?;
+        if path.is_file() {
+            std::fs::remove_file(path).owe_res()?;
+        } else {
+            std::fs::remove_dir_all(path).owe_res()?;
+        }
+        Ok(UpdateValue::from(path.to_path_buf()))
     }
 }
 
@@ -336,5 +356,47 @@ mod tests2 {
     fn test_get_filename_with_encoded_characters() {
         let addr = HttpAddr::from("http://example.com/file%20name.txt");
         assert_eq!(addr.get_filename(), Some("file%20name.txt".to_string()));
+    }
+}
+
+#[cfg(test)]
+mod test3 {
+    use super::*;
+    use httpmock::MockServer;
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_http_upload_post() -> SpecResult<()> {
+        // 1. 配置模拟服务器
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(httpmock::Method::POST)
+                .path("/upload")
+                .header_exists("content-type")  // 检查 multipart 头
+                .header("Authorization", "Basic Z2VuZXJpYy0xNzQ3NTM1OTc3NjMyOjViMmM5ZTliN2YxMTFhZjUyZjAzNzVjMWZkOWQzNWNkNGQwZGFiYzM=");
+            then.status(200)
+                .body("upload success");
+        });
+
+        // 2. 创建临时测试文件
+        let temp_dir = tempfile::tempdir().owe_res()?;
+        let file_path = temp_dir.path().join("test.txt");
+        tokio::fs::write(&file_path, "test content")
+            .await
+            .owe_sys()?;
+
+        // 3. 执行上传
+        let http_addr = HttpAddr::from(server.url("/upload")).with_credentials(
+            "generic-1747535977632",
+            "5b2c9e9b7f111af52f0375c1fd9d35cd4d0dabc3",
+        );
+
+        http_addr
+            .upload_from(&file_path, &UpdateOptions::for_test())
+            .await?;
+
+        // 4. 验证结果
+        mock.assert();
+        assert!(!file_path.exists());
+        Ok(())
     }
 }

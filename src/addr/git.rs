@@ -1,14 +1,3 @@
-use crate::{predule::*, vars::EnvDict};
-use async_trait::async_trait;
-use fs_extra::dir::CopyOptions;
-use git2::{
-    BranchType, FetchOptions, MergeOptions, RemoteUpdateFlags, Repository, ResetType,
-    build::{CheckoutBuilder, RepoBuilder},
-};
-use home::home_dir;
-use log::warn;
-use orion_error::UvsResFrom;
-
 use crate::{
     error::SpecResult,
     log_guard,
@@ -16,6 +5,15 @@ use crate::{
     types::AsyncUpdateable,
     vars::EnvEvalable,
 };
+use crate::{predule::*, types::ResourceUpload, vars::EnvDict};
+use fs_extra::dir::CopyOptions;
+use git2::{
+    BranchType, FetchOptions, MergeOptions, PushOptions, RemoteUpdateFlags, Repository, ResetType,
+    build::{CheckoutBuilder, RepoBuilder},
+};
+use home::home_dir;
+use log::warn;
+use orion_error::UvsResFrom;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename = "git")]
@@ -246,11 +244,8 @@ impl GitAddr {
         let statuses = repo.statuses(Some(&mut options))?;
         Ok(statuses.is_empty())
     }
-}
 
-#[async_trait]
-impl AsyncUpdateable for GitAddr {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf> {
+    fn get_local_repo_name(&self) -> String {
         let mut name = get_repo_name(self.repo.as_str()).unwrap_or("unknow".into());
         if let Some(postfix) = self
             .rev
@@ -260,6 +255,14 @@ impl AsyncUpdateable for GitAddr {
         {
             name = format!("{}_{}", name, postfix);
         }
+        name
+    }
+}
+
+#[async_trait]
+impl AsyncUpdateable for GitAddr {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
+        let name = self.get_local_repo_name();
         let cache_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
             .join(".cache/galaxy");
@@ -325,7 +328,49 @@ impl AsyncUpdateable for GitAddr {
             .owe_res()
             .with(&ctx)?;
         flag.flag_suc();
-        Ok(real_path)
+        Ok(UpdateValue::from(real_path))
+    }
+}
+
+#[async_trait]
+impl ResourceUpload for GitAddr {
+    async fn upload_from(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue> {
+        let ctx = WithContext::want("upload to repository");
+        if !path.exists() {
+            return Err(StructError::from_res("path not exist".into()));
+        }
+        let temp_path = home_dir().unwrap_or(PathBuf::from("~/")).join(".temp");
+        ensure_path(&temp_path)?;
+
+        let target_repo = self.update_local(&temp_path, options).await?;
+        // 仓库地址
+        let target_repo_in_local_path = &target_repo.position;
+        if path.is_file() {
+            let filename = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("UNKONW");
+            std::fs::copy(path, target_repo_in_local_path.join(filename)).owe_res()?;
+            std::fs::remove_file(path).owe_res()?;
+        } else {
+            let copy_options = CopyOptions::new().overwrite(true).copy_inside(true);
+            fs_extra::copy_items(&[path], target_repo_in_local_path, &copy_options).owe_res()?;
+            std::fs::remove_dir_all(path).owe_res()?;
+        }
+        match Repository::open(target_repo_in_local_path) {
+            Ok(repo) => {
+                let branch = self.branch.clone();
+                self.submit(&repo, branch.unwrap_or("master".into()).as_str())
+                    .owe_data()
+                    .with(&ctx)?;
+            }
+            Err(e) => {
+                debug!(target :"spec", "Open Local repo : {} is failed! error: {}", self.repo, e)
+            }
+        }
+        let name = self.get_local_repo_name();
+        std::fs::remove_dir_all(temp_path.join(name)).owe_res()?;
+        Ok(UpdateValue::from(path.to_path_buf()))
     }
 }
 
@@ -451,6 +496,63 @@ impl GitAddr {
 
         Err(git2::Error::from_str(&format!("分支 '{}' 不存在", branch)))
     }
+
+    /// 提交
+    fn submit(&self, repo: &Repository, branch: &str) -> Result<(), git2::Error> {
+        info!("git push origin {}", &branch);
+        let branch_path = format!("refs/heads/{}", branch);
+        // 拉取远程进行更新
+        self.fetch_updates(repo)?;
+        // 合并远程更新
+        let fetch_head = repo.find_annotated_commit(repo.refname_to_id("FETCH_HEAD")?)?;
+        let (analysis, _) = repo.merge_analysis(&[&fetch_head])?;
+
+        if analysis.is_fast_forward() {
+            let mut reference = repo.find_reference(&branch_path)?;
+            reference.set_target(fetch_head.id(), "Fast-forward")?;
+            repo.set_head(&branch_path)?;
+            repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
+        } else if analysis.is_normal() {
+            // 出现合并冲突问题
+            return Err(git2::Error::from_str("Merge conflicts detected"));
+        }
+        // 检查是否有修改
+        let mut status_option = git2::StatusOptions::new();
+        status_option.include_untracked(true);
+        status_option.include_ignored(false);
+        let local_repo_status = repo.statuses(Some(&mut status_option))?;
+        if local_repo_status.is_empty() {
+            return Ok(());
+        }
+        let mut origin = repo.find_remote("origin")?;
+
+        // git add 操作
+        let mut index = repo.index()?;
+        index.add_all(["*"].iter(), git2::IndexAddOption::DEFAULT, None)?;
+        index.write()?;
+
+        let tree = repo.find_tree(index.write_tree()?)?;
+        let head = repo.head()?.resolve()?;
+        let parent_commit = repo.find_commit(head.target().unwrap())?;
+        let signature = git2::Signature::now("dayu-spec", "dayu-sec-spec@dy-sec.com")?;
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            "spec:auto commit",
+            &tree,
+            &[&parent_commit],
+        )?;
+        // 设置认证信息
+        let mut push_options = PushOptions::new();
+        push_options.remote_callbacks(self.build_remote_callbacks());
+        origin.push(
+            &[&format!("{}:{}", branch_path, branch_path)],
+            Some(&mut push_options),
+        )?;
+        info!("push complete");
+        Ok(())
+    }
 }
 
 fn find_default_ssh_key() -> Option<PathBuf> {
@@ -498,16 +600,16 @@ mod tests {
             GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("master"); // 替换为实际测试分支
 
         // 执行克隆
-        let cloned_path = git_addr
+        let cloned_v = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await?;
 
         // 验证克隆结果
-        assert!(cloned_path.exists());
-        assert!(cloned_path.join(".git").exists());
+        assert!(cloned_v.position().exists());
+        assert!(cloned_v.position().join(".git").exists());
 
         // 验证分支/标签是否正确检出
-        let repo = git2::Repository::open(&cloned_path).owe_res()?;
+        let repo = git2::Repository::open(cloned_v.position()).owe_res()?;
         let head = repo.head().owe_res()?;
         assert!(head.is_branch() || head.is_tag());
 
@@ -530,11 +632,11 @@ mod tests {
             .path("postgresql/x86-ubt22-k8s"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(real_path, dest_path.join("x86-ubt22-k8s"));
+        assert_eq!(git_up.position(), &dest_path.join("x86-ubt22-k8s"));
         Ok(())
     }
 
@@ -554,11 +656,11 @@ mod tests {
         //;
 
         // 执行克隆
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(real_path, dest_path.join("modspec.git_master"));
+        assert_eq!(git_up.position(), &dest_path.join("modspec.git_master"));
         Ok(())
     }
 
@@ -574,12 +676,54 @@ mod tests {
         let git_addr =
             GitAddr::from("https://github.com/galaxy-sec/hello-word.git").branch("develop"); // 替换为实际测试分支
 
-        let real_path = git_addr
+        let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await?;
-        let repo = git2::Repository::open(real_path).assert();
+        let repo = git2::Repository::open(git_up.position().clone()).assert();
         let head = repo.head().assert();
         assert!(head.shorthand().unwrap_or("").contains("develop"));
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod git_test {
+
+    use crate::types::ResourceUpload;
+    use crate::{addr::GitAddr, error::SpecResult, update::UpdateOptions};
+    use orion_error::TestAssert;
+    use tempfile::tempdir;
+
+    #[tokio::test]
+    async fn test_dir_upload_to_remote_repo() -> SpecResult<()> {
+        let temp_dir = tempdir().assert();
+        let dir = temp_dir.path().join("version_1");
+        let file = dir.join("test.txt");
+        std::fs::create_dir_all(&dir).assert();
+        std::fs::write(&file, "spec upload local dir to git repo.").assert();
+
+        let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").branch("main");
+
+        let git_up = git_addr
+            .upload_from(&dir, &UpdateOptions::default())
+            .await?;
+        println!("{:?}", git_up.position);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_file_upload_to_remote_repo() -> SpecResult<()> {
+        let temp_dir = tempdir().assert();
+        let file = temp_dir.path().join("test.txt");
+
+        std::fs::write(&file, "spec upload local file to git repo.").assert();
+
+        let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").branch("main");
+
+        let git_up = git_addr
+            .upload_from(&file, &UpdateOptions::default())
+            .await?;
+        println!("{:?}", git_up.position);
         Ok(())
     }
 }

@@ -1,6 +1,9 @@
+use crate::error::SpecError;
 use crate::predule::*;
 
 use async_trait::async_trait;
+use contracts::requires;
+use orion_error::UvsLogicFrom;
 
 use super::ModelSTD;
 use crate::types::LocalizeOptions;
@@ -68,42 +71,49 @@ impl ModuleSpecRef {
     }
 }
 impl ModuleSpecRef {
-    pub async fn update(&self, _sys_root: &Path, options: &UpdateOptions) -> SpecResult<()> {
+    #[requires(self.local.is_some())]
+    pub async fn update(
+        &self,
+        _sys_root: &Path,
+        options: &UpdateOptions,
+    ) -> SpecResult<UpdateValue> {
         //trace!(target: "spec/mod/",  "{:?}",self );
-        if self.is_enable() {
-            if let Some(local) = &self.local {
-                let mut flag = log_guard!(
-                    info!(target: "/mod/ref",  "update mod ref {} success!", self.name ),
-                    error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
-                );
-                std::fs::create_dir_all(local).owe_res().with(local)?;
-                let target_root = local.join(self.name());
-                let target_path = target_root.join(self.model().to_string());
-                if !target_path.exists() || options.clean_exist_ref_mod() {
-                    let tmp_name = "__mod";
-                    let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
-                    let mod_path = prj_path.join(MOD_DIR);
-                    let tmp_path = local.join(tmp_name);
-                    make_clean_path(&target_root)?;
+        if let Some(local) = &self.local {
+            let mut flag = log_guard!(
+                info!(target: "/mod/ref",  "update mod ref {} success!", self.name ),
+                error!(target: "/mod/ref", "update mod ref {} fail!", self.name )
+            );
+            std::fs::create_dir_all(local).owe_res().with(local)?;
+            let target_root = local.join(self.name());
+            let target_path = target_root.join(self.model().to_string());
+            if !target_path.exists() || options.clean_exist_ref_mod() {
+                let tmp_name = "__mod";
+                let prj_path = self.addr.update_rename(local, tmp_name, options).await?;
+                let mod_path = prj_path.position().join(MOD_DIR);
+                let tmp_path = local.join(tmp_name);
+                make_clean_path(&target_root)?;
 
-                    std::fs::rename(&mod_path, &target_root)
-                        .owe_logic()
-                        .with(("from", &mod_path))
-                        .with(("to", &target_root))?;
-                    if tmp_path.exists() {
-                        std::fs::remove_dir_all(tmp_path).owe_sys()?;
-                    }
+                std::fs::rename(&mod_path, &target_root)
+                    .owe_logic()
+                    .with(("from", &mod_path))
+                    .with(("to", &target_root))?;
+                if tmp_path.exists() {
+                    std::fs::remove_dir_all(tmp_path).owe_sys()?;
                 }
-
-                debug!(target: "mod/ref",  "update target success!" );
-                //let target_path = target_root.join(self.node().to_string());
-                let spec = ModModelSpec::load_from(&target_path).with(&target_root)?;
-                let _x = spec.update_local(&target_path, options).await?;
-                ModModelSpec::clean_other(&target_root, self.model())?;
-                flag.flag_suc();
             }
+
+            debug!(target: "mod/ref",  "update target success!" );
+            //let target_path = target_root.join(self.node().to_string());
+            let spec = ModModelSpec::load_from(&target_path).with(&target_root)?;
+            let _x = spec.update_local(&target_path, options).await?;
+            ModModelSpec::clean_other(&target_root, self.model())?;
+            flag.flag_suc();
+            return Ok(_x);
+        } else {
+            Err(SpecError::from_logic(
+                "no local value in ModuleSpecRef ".into(),
+            ))
         }
-        Ok(())
     }
 
     pub fn spec_value_path(&self, parent: ValuePath) -> ValuePath {

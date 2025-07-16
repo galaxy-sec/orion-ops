@@ -9,8 +9,12 @@ use orion_error::{ErrorOwe, ErrorWith, WithContext};
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
-    addr::rename_path, const_vars::VALUE_FILE, error::SpecResult, tools::ensure_path,
-    update::UpdateOptions, vars::ValueDict,
+    addr::rename_path,
+    const_vars::VALUE_FILE,
+    error::SpecResult,
+    tools::ensure_path,
+    update::UpdateOptions,
+    vars::{ValueDict, VarCollection},
 };
 
 pub trait Persistable<T> {
@@ -18,18 +22,52 @@ pub trait Persistable<T> {
     fn load_from(path: &Path) -> SpecResult<T>;
 }
 
+#[derive(Clone)]
+pub struct UpdateValue {
+    pub position: PathBuf,
+    pub vars: Option<VarCollection>,
+}
+impl UpdateValue {
+    pub fn new(position: PathBuf, vars: VarCollection) -> Self {
+        Self {
+            position,
+            vars: Some(vars),
+        }
+    }
+    pub fn vars(&self) -> Option<&VarCollection> {
+        self.vars.as_ref()
+    }
+    pub fn position(&self) -> &PathBuf {
+        &self.position
+    }
+}
+impl From<PathBuf> for UpdateValue {
+    fn from(value: PathBuf) -> Self {
+        Self {
+            vars: None,
+            position: value,
+        }
+    }
+}
+
 #[async_trait]
 pub trait AsyncUpdateable {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<PathBuf>;
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue>;
     async fn update_rename(
         &self,
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> SpecResult<PathBuf> {
+    ) -> SpecResult<UpdateValue> {
         let target = self.update_local(path, options).await?;
-        rename_path(&target, name)
+        let rename_path = rename_path(target.position(), name)?;
+        Ok(UpdateValue::from(rename_path))
     }
+}
+
+#[async_trait]
+pub trait ResourceUpload {
+    async fn upload_from(&self, path: &Path, options: &UpdateOptions) -> SpecResult<UpdateValue>;
 }
 
 #[derive(Clone, Debug, Getters)]
