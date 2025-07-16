@@ -175,7 +175,7 @@ mod tests {
     #[tokio::test]
     async fn test_http_artifact_v2() -> SpecResult<()> {
         let home_dir = home_dir().assert();
-        let transit_path = home_dir.join("transit");
+        let transit_path = home_dir.join(".cache").join("transit");
 
         let release_type = AddrType::Http(HttpAddr::from(
             "https://dy-sec-generic.pkg.coding.net/galaxy-open/generic/galaxy-init.sh?version=latest",
