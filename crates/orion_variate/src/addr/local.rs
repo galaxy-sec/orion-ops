@@ -151,7 +151,6 @@ impl LocalAddr {
 
 #[cfg(test)]
 mod tests {
-
     use crate::{addr::AddrResult, update::UpdateOptions};
 
     use super::*;

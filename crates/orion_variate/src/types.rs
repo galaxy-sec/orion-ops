@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 
 use crate::{
-    addr::{AddrResult, rename_path},
+    addr::{rename_path, AddrResult},
     update::UpdateOptions,
     vars::VarCollection,
 };
 use getset::{CloneGetters, CopyGetters, Getters, MutGetters, Setters, WithSetters};
-use orion_infra::path::{PathResult, ensure_path};
+use orion_infra::path::{ensure_path, PathResult};
 
 #[derive(Clone, Getters, Setters, WithSetters, MutGetters, CopyGetters, CloneGetters, Default)]
 pub struct UnitUpdateValue {

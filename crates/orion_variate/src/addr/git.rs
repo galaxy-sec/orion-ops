@@ -6,8 +6,8 @@ use crate::{
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
-    BranchType, FetchOptions, MergeOptions, PushOptions, RemoteUpdateFlags, Repository, ResetType,
-    build::{CheckoutBuilder, RepoBuilder},
+    build::{CheckoutBuilder, RepoBuilder}, BranchType, FetchOptions, MergeOptions, PushOptions, RemoteUpdateFlags, Repository,
+    ResetType,
 };
 use home::home_dir;
 use log::warn;
@@ -590,7 +590,6 @@ fn find_default_ssh_key() -> Option<PathBuf> {
 }
 #[cfg(test)]
 mod tests {
-
     use crate::{addr::AddrResult, tools::test_init};
 
     use super::*;

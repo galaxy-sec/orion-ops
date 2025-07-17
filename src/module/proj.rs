@@ -3,7 +3,7 @@ use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::error::ModReason;
 use crate::predule::*;
 
-use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
+use super::init::{mod_init_gitignore, MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL};
 use crate::{
     const_vars::MODULES_SPC_ROOT,
     module::{
@@ -201,7 +201,7 @@ pub mod tests {
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,
-        module::proj::{ModProject, make_mod_prj_testins},
+        module::proj::{make_mod_prj_testins, ModProject},
         types::Localizable,
     };
     #[tokio::test]

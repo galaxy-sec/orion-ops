@@ -259,8 +259,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::cond::{cmp_is_true, Condition, ExpressEnum, LogicExpress, LogicOP, ValueGet};
     use crate::cond::{CmpOP, RustSymbol};
-    use crate::cond::{Condition, ExpressEnum, LogicExpress, LogicOP, ValueGet, cmp_is_true};
     use std::collections::HashMap;
 
     type CompareExpress<T> = crate::cond::CompareExpress<T, RustSymbol>;

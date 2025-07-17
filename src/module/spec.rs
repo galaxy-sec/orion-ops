@@ -14,11 +14,11 @@ use indexmap::IndexMap;
 use orion_variate::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
-    CpuArch, ModelSTD, OsCPE, RunSPC,
-    depend::DependencySet,
-    init::{ModIniter, ModPrjIniter, mod_init_gitignore},
-    model::ModModelSpec,
-    setting::Setting,
+    depend::DependencySet, init::{mod_init_gitignore, ModIniter, ModPrjIniter}, model::ModModelSpec, setting::Setting,
+    CpuArch,
+    ModelSTD,
+    OsCPE,
+    RunSPC,
 };
 use crate::types::LocalizeOptions;
 
