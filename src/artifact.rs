@@ -8,8 +8,6 @@ pub enum OsType {
     Ubuntu,
 }
 
-
-
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
 pub struct DockImage {
     cep: String,
