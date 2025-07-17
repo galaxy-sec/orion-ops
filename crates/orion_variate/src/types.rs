@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 
 use crate::{
-    addr::{rename_path, AddrResult},
+    addr::{AddrResult, rename_path},
     update::UpdateOptions,
     vars::VarCollection,
 };
 use getset::{CloneGetters, CopyGetters, Getters, MutGetters, Setters, WithSetters};
-use orion_infra::path::{ensure_path, PathResult};
+use orion_infra::path::{PathResult, ensure_path};
 
 #[derive(Clone, Getters, Setters, WithSetters, MutGetters, CopyGetters, CloneGetters, Default)]
 pub struct UnitUpdateValue {
@@ -49,6 +49,14 @@ impl SysUpdateValue {
     }
 }
 
+#[async_trait]
+pub trait ResourceUpload {
+    async fn upload_from(
+        &self,
+        path: &Path,
+        options: &UpdateOptions,
+    ) -> AddrResult<UnitUpdateValue>;
+}
 #[async_trait]
 pub trait UnitUpdateable {
     async fn update_local(

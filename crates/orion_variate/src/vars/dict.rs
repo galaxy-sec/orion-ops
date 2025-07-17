@@ -13,7 +13,6 @@ use super::{
     EnvDict,
 };
 
-//pub type ValueMap = HashMap<String, ValueType>;
 pub type ValueMap = IndexMap<String, ValueType>;
 
 impl EnvEvalable<ValueMap> for ValueMap {

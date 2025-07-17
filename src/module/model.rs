@@ -324,7 +324,6 @@ impl Localizable for ModModelSpec {
         debug!(target : "/mod/target/loc", "value export");
         let used = self.build_used_value(options, &value_paths)?;
         used.export_origin()
-            //.env_eval()
             .save_valconf(value_paths.used_readable())?;
         used.export_value().save_json(&used_value_file)?;
 

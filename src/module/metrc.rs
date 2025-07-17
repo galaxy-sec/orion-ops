@@ -1,14 +1,13 @@
-use std::collections::HashMap;
-
 use derive_getters::Getters;
+use indexmap::IndexMap;
 
 #[derive(Getters, Clone, Debug)]
 pub struct WorkLoad {
-    metrics: HashMap<String, bool>,
+    metrics: IndexMap<String, bool>,
 }
 impl WorkLoad {
     pub fn tpl_init() -> Self {
-        let mut metrics = HashMap::new();
+        let mut metrics = IndexMap::new();
         metrics.insert("request".to_string(), true);
         Self { metrics }
     }

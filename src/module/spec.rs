@@ -1,16 +1,16 @@
 use super::prelude::*;
+use crate::predule::*;
 use crate::{
     artifact::Artifact,
     conf::{ConfFile, ConfSpec},
-    predule::*,
 };
-use std::collections::HashMap;
 
 use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
     workflow::prj::GxlProject,
 };
 use async_trait::async_trait;
+use indexmap::IndexMap;
 use orion_variate::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
@@ -25,12 +25,12 @@ use crate::types::LocalizeOptions;
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
     name: String,
-    targets: HashMap<ModelSTD, ModModelSpec>,
+    targets: IndexMap<ModelSTD, ModModelSpec>,
     local: Option<PathBuf>,
 }
 impl ModuleSpec {
     pub fn init<S: Into<String>>(name: S, target_vec: Vec<ModModelSpec>) -> ModuleSpec {
-        let mut targets = HashMap::new();
+        let mut targets = IndexMap::new();
         for node in target_vec {
             targets.insert(node.model().clone(), node);
         }
@@ -111,7 +111,7 @@ impl Persistable<ModuleSpec> for ModuleSpec {
         );
         let src_path = path.join(MOD_DIR);
         let subs = get_sub_dirs(&src_path).owe_logic()?;
-        let mut targets = HashMap::new();
+        let mut targets = IndexMap::new();
         for sub in subs {
             let node = ModModelSpec::load_from(&sub).with(&sub)?;
             targets.insert(node.model().clone(), node);

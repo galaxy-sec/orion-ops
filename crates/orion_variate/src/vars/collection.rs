@@ -1,12 +1,13 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use derive_getters::Getters;
+use indexmap::IndexMap;
 use orion_error::ErrorOwe;
 use serde_derive::{Deserialize, Serialize};
 
 use orion_common::serde::Yamlable;
 
-use super::{error::VarsResult, EnvDict, EnvEvalable, ValueDict, VarDefinition};
+use super::{EnvDict, EnvEvalable, ValueDict, VarDefinition, error::VarsResult};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 //#[serde(transparent)]
@@ -20,13 +21,13 @@ impl VarCollection {
     pub fn value_dict(&self) -> ValueDict {
         let mut dict = ValueDict::new();
         for var in &self.vars {
-            dict.insert(var.name().to_string(), var.var_value()); // 可能需要 into() 转换
+            dict.insert(var.name().to_string(), var.value()); // 可能需要 into() 转换
         }
         dict
     }
     // 基于VarType的name进行合并，相同的name会被覆盖
     pub fn merge(&self, other: VarCollection) -> Self {
-        let mut merged = HashMap::new();
+        let mut merged = IndexMap::new();
         let mut order = Vec::new();
 
         // 先添加self的变量并记录顺序
@@ -66,7 +67,7 @@ impl VarCollection {
     fn eval_import(self, dict: &mut ValueDict) -> Self {
         let mut vars = Vec::new();
         for v in self.vars {
-            let e_v = v.var_value().env_eval(dict);
+            let e_v = v.value().env_eval(dict);
             dict.insert(v.name(), e_v.clone());
             vars.push(VarDefinition::from((v.name(), e_v)));
         }
@@ -110,9 +111,9 @@ mod tests {
         // 验证结果
         assert_eq!(result.vars().len(), 2);
         assert_eq!(result.vars()[0].name(), "username");
-        assert_eq!(result.vars()[0].var_value(), ValueType::from("admin"));
+        assert_eq!(result.vars()[0].value(), ValueType::from("admin"));
         assert_eq!(result.vars()[1].name(), "account");
-        assert_eq!(result.vars()[1].var_value(), ValueType::from("admin"));
+        assert_eq!(result.vars()[1].value(), ValueType::from("admin"));
     }
 
     #[test]
@@ -138,7 +139,7 @@ mod tests {
         assert_eq!(names, vec!["a", "b", "c", "d"]);
 
         // 验证变量b被正确覆盖
-        if let ValueType::Bool(var) = &merged.vars()[1].var_value() {
+        if let ValueType::Bool(var) = &merged.vars()[1].value() {
             assert_eq!(var, &false);
         } else {
             panic!("变量b类型错误");

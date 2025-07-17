@@ -1,5 +1,5 @@
+use crate::types::ResourceUpload;
 use crate::{predule::*, update::UpdateOptions, vars::EnvDict};
-
 use derive_more::From;
 
 use crate::{types::UnitUpdateable, vars::EnvEvalable};
@@ -53,6 +53,22 @@ impl UnitUpdateable for AddrType {
             AddrType::Git(addr) => addr.update_rename(path, name, options).await,
             AddrType::Http(addr) => addr.update_rename(path, name, options).await,
             AddrType::Local(addr) => addr.update_rename(path, name, options).await,
+        }
+    }
+}
+
+#[async_trait]
+impl ResourceUpload for AddrType {
+    async fn upload_from(
+        &self,
+        path: &Path,
+        options: &UpdateOptions,
+    ) -> AddrResult<UnitUpdateValue> {
+        let ins = self.clone().env_eval(options.values());
+        match ins {
+            AddrType::Git(addr) => addr.upload_from(path, options).await,
+            AddrType::Http(addr) => addr.upload_from(path, options).await,
+            AddrType::Local(addr) => addr.upload_from(path, options).await,
         }
     }
 }

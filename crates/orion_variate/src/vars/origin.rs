@@ -1,16 +1,15 @@
-use std::collections::HashMap;
-
 use derive_getters::Getters;
 use derive_more::Deref;
+use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 
 use super::{dict::ValueMap, types::ValueType, EnvDict, EnvEvalable, ValueDict};
 
-pub type OriginMap = HashMap<String, OriginValue>;
+pub type OriginMap = IndexMap<String, OriginValue>;
 
 impl EnvEvalable<OriginMap> for OriginMap {
     fn env_eval(self, edict: &EnvDict) -> OriginMap {
-        let mut origins = HashMap::new();
+        let mut origins = OriginMap::new();
         for (k, v) in self {
             let e_v = v.env_eval(edict);
             origins.insert(k, e_v);
@@ -36,7 +35,7 @@ impl EnvEvalable<OriginValue> for OriginValue {
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, PartialEq, Deref, Default)]
 pub struct OriginDict {
-    dict: HashMap<String, OriginValue>,
+    dict: OriginMap,
 }
 
 impl From<ValueType> for OriginValue {
@@ -64,7 +63,7 @@ impl OriginValue {
 
 impl From<ValueDict> for OriginDict {
     fn from(value: ValueDict) -> Self {
-        let mut dict = HashMap::new();
+        let mut dict = OriginMap::new();
         for (k, v) in value.dict() {
             dict.insert(k.clone(), OriginValue::from(v.clone()));
         }
@@ -75,7 +74,7 @@ impl From<ValueDict> for OriginDict {
 impl OriginDict {
     pub fn new() -> Self {
         Self {
-            dict: HashMap::new(),
+            dict: OriginMap::new(),
         }
     }
 
