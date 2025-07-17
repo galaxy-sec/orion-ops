@@ -1,11 +1,11 @@
 use crate::update::UpdateOptions;
-use crate::{predule::*, types::ResourceUpload, vars::EnvDict};
+use crate::{predule::*, types::RemoteUpdate, vars::EnvDict};
 use contracts::debug_requires;
 use fs_extra::dir::CopyOptions;
 use orion_error::UvsResFrom;
 use orion_infra::auto_exit_log;
 
-use crate::{types::UnitUpdateable, vars::EnvEvalable};
+use crate::{types::LocalUpdate, vars::EnvEvalable};
 
 use super::AddrResult;
 
@@ -23,13 +23,13 @@ impl EnvEvalable<LocalAddr> for LocalAddr {
     }
 }
 #[async_trait]
-impl UnitUpdateable for LocalAddr {
+impl LocalUpdate for LocalAddr {
     //#[debug_ensures(matches!(*result, Ok(v) if v.exists()), "path not exists")]
     async fn update_local(
         &self,
         path: &Path,
         up_options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+    ) -> AddrResult<UpdateUnit> {
         let mut ctx = WithContext::want("update local addr");
         ctx.with("src", self.path.as_str());
         ctx.with_path("dst", path);
@@ -64,23 +64,23 @@ impl UnitUpdateable for LocalAddr {
                 .with(&ctx)?;
         }
         flag.mark_suc();
-        Ok(UnitUpdateValue::from(dst))
+        Ok(UpdateUnit::from(dst))
     }
 
-    async fn update_rename(
+    async fn update_local_rename(
         &self,
         path: &Path,
         name: &str,
         options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+    ) -> AddrResult<UpdateUnit> {
         let target = self.update_local(path, options).await?;
-        Ok(UnitUpdateValue::from(rename_path(target.position(), name)?))
+        Ok(UpdateUnit::from(rename_path(target.position(), name)?))
     }
 }
 
 #[async_trait]
-impl ResourceUpload for LocalAddr {
-    async fn upload_from(&self, path: &Path, _: &UpdateOptions) -> AddrResult<UnitUpdateValue> {
+impl RemoteUpdate for LocalAddr {
+    async fn update_remote(&self, path: &Path, _: &UpdateOptions) -> AddrResult<UpdateUnit> {
         if !path.exists() {
             return Err(StructError::from_res("path not exist".into()));
         }
@@ -97,7 +97,7 @@ impl ResourceUpload for LocalAddr {
             fs_extra::dir::copy(path, self.path(), &copy_options).owe_res()?;
             std::fs::remove_dir_all(path).owe_res()?;
         }
-        Ok(UnitUpdateValue::from(path.to_path_buf()))
+        Ok(UpdateUnit::from(path.to_path_buf()))
     }
 }
 
@@ -166,7 +166,7 @@ mod tests {
         std::fs::create_dir_all(&path).owe_conf()?;
         let local = LocalAddr::from("./test/data/sys-1");
         local
-            .update_rename(&path, "sys-2", &UpdateOptions::for_test())
+            .update_local_rename(&path, "sys-2", &UpdateOptions::for_test())
             .await?;
         local
             .update_local(&path, &UpdateOptions::for_test())
@@ -271,7 +271,7 @@ mod tests {
         std::fs::write(&file_path, "source").assert();
         let local_addr = LocalAddr::from(target_dir.to_str().unwrap_or("~/temp"));
         local_addr
-            .upload_from(file_path.as_path(), &UpdateOptions::for_test())
+            .update_remote(file_path.as_path(), &UpdateOptions::for_test())
             .await?;
 
         assert!(target_dir.join("file.txt").exists());
@@ -295,7 +295,7 @@ mod tests {
 
         let local_addr = LocalAddr::from(version_1.to_str().unwrap_or("~/temp"));
         local_addr
-            .upload_from(&version_2, &UpdateOptions::for_test())
+            .update_remote(&version_2, &UpdateOptions::for_test())
             .await?;
 
         assert!(version_1.join("version_2").exists());

@@ -5,7 +5,7 @@ use crate::predule::*;
 use orion_error::UvsLogicFrom;
 
 use super::ModelSTD;
-use crate::types::LocalizeOptions;
+use crate::types::{Localizable, LocalizeOptions, ValuePath};
 use crate::{const_vars::MOD_DIR, error::SpecResult, module::model::ModModelSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -70,7 +70,7 @@ impl ModuleSpecRef {
         &self,
         _sys_root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UnitUpdateValue> {
+    ) -> SpecResult<UpdateUnit> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {
             let mut flag = auto_exit_log!(
@@ -84,7 +84,7 @@ impl ModuleSpecRef {
                 let tmp_name = "__mod";
                 let prj_path = self
                     .addr
-                    .update_rename(local, tmp_name, options)
+                    .update_local_rename(local, tmp_name, options)
                     .await
                     .owe(SpecReason::from(ModReason::Update))?;
                 let mod_path = prj_path.position().join(MOD_DIR);

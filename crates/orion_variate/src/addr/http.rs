@@ -1,11 +1,11 @@
-use crate::{predule::*, types::ResourceUpload, update::UpdateOptions, vars::EnvDict};
+use crate::{predule::*, types::RemoteUpdate, update::UpdateOptions, vars::EnvDict};
 
 use orion_error::UvsResFrom;
 use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
 
-use crate::{types::UnitUpdateable, vars::EnvEvalable};
+use crate::{types::LocalUpdate, vars::EnvEvalable};
 
 use super::AddrResult;
 
@@ -169,23 +169,21 @@ impl HttpAddr {
 }
 
 #[async_trait]
-impl UnitUpdateable for HttpAddr {
+impl LocalUpdate for HttpAddr {
     async fn update_local(
         &self,
         dest_dir: &Path,
         options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+    ) -> AddrResult<UpdateUnit> {
         let file = self.get_filename();
         let dest_path = dest_dir.join(file.unwrap_or("file.tmp".into()));
-        Ok(UnitUpdateValue::from(
-            self.download(&dest_path, options).await?,
-        ))
+        Ok(UpdateUnit::from(self.download(&dest_path, options).await?))
     }
 }
 
 #[async_trait]
-impl ResourceUpload for HttpAddr {
-    async fn upload_from(&self, path: &Path, _: &UpdateOptions) -> AddrResult<UnitUpdateValue> {
+impl RemoteUpdate for HttpAddr {
+    async fn update_remote(&self, path: &Path, _: &UpdateOptions) -> AddrResult<UpdateUnit> {
         if !path.exists() {
             return Err(StructError::from_res("path not exist".into()));
         }
@@ -195,7 +193,7 @@ impl ResourceUpload for HttpAddr {
         } else {
             std::fs::remove_dir_all(path).owe_res()?;
         }
-        Ok(UnitUpdateValue::from(path.to_path_buf()))
+        Ok(UpdateUnit::from(path.to_path_buf()))
     }
 }
 
@@ -397,7 +395,7 @@ mod test3 {
         );
 
         http_addr
-            .upload_from(&file_path, &UpdateOptions::for_test())
+            .update_remote(&file_path, &UpdateOptions::for_test())
             .await?;
 
         // 4. 验证结果

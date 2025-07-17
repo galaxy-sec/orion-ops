@@ -1,17 +1,13 @@
 use crate::{
     error::{SpecReason, SysReason, ToErr},
     predule::*,
-    types::{Localizable, LocalizeOptions, SysUpdateable},
+    types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath},
 };
 
 use async_trait::async_trait;
 use orion_error::{UvsLogicFrom, UvsReason};
 use orion_infra::auto_exit_log;
-use orion_variate::{
-    addr::AddrType,
-    types::{UnitUpdateable, ValuePath},
-    update::UpdateOptions,
-};
+use orion_variate::{addr::AddrType, types::LocalUpdate, update::UpdateOptions};
 
 use crate::error::SpecResult;
 
@@ -84,7 +80,7 @@ impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
         );
         let spec_addr = convert_syspec_addr(self.addr.clone());
         let update_v = spec_addr
-            .update_rename(path, self.name.as_str(), options)
+            .update_local_rename(path, self.name.as_str(), options)
             .await
             .owe(SysReason::Update.into())?;
         let spec = SysModelSpec::load_from(update_v.position())?;

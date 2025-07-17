@@ -6,6 +6,7 @@ use crate::{
     },
     error::ModReason,
     predule::*,
+    types::{Localizable, ValuePath},
 };
 use std::{fs::read_to_string, str::FromStr};
 
@@ -69,7 +70,9 @@ impl ModModelSpec {
                 .parent()
                 .map(std::fs::create_dir_all);
             let vars_dict = self.vars.value_dict();
-            vars_dict.save_valconf(value_paths.sample_value_file())?;
+            vars_dict
+                .save_valconf(value_paths.sample_value_file())
+                .owe_res()?;
             info!( target:"mod/target", "crate  value.yml at : {}" ,value_paths.sample_value_file().display() );
         }
         Ok(())
@@ -77,15 +80,11 @@ impl ModModelSpec {
 }
 
 #[async_trait]
-impl UnitUpdateable for ModModelSpec {
-    async fn update_local(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl LocalUpdate for ModModelSpec {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
-        Ok(UnitUpdateValue::new(path.to_path_buf(), self.vars.clone()))
+        Ok(UpdateUnit::new(path.to_path_buf(), self.vars.clone()))
     }
 }
 impl ModModelSpec {
@@ -324,8 +323,9 @@ impl Localizable for ModModelSpec {
         debug!(target : "/mod/target/loc", "value export");
         let used = self.build_used_value(options, &value_paths)?;
         used.export_origin()
-            .save_valconf(value_paths.used_readable())?;
-        used.export_value().save_json(&used_value_file)?;
+            .save_valconf(value_paths.used_readable())
+            .owe_res()?;
+        used.export_value().save_json(&used_value_file).owe_res()?;
 
         debug!(target : "/mod/target/loc", "use value: {}", used_value_file.display());
         let tpl_path_opt = self
@@ -362,12 +362,12 @@ pub mod test {
     use orion_error::TestAssert;
     use orion_variate::{
         addr::HttpAddr,
+        ext::Artifact,
         tools::test_init,
         vars::{OriginValue, ValueType, VarDefinition},
     };
 
     use crate::{
-        artifact::Artifact,
         const_vars::TARGET_SPC_ROOT,
         error::SpecResult,
         module::{

@@ -3,7 +3,7 @@ use crate::predule::*;
 use async_trait::async_trait;
 use orion_variate::{
     addr::{AddrResult, AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    types::{UnitUpdateValue, UnitUpdateable},
+    types::{LocalUpdate, UpdateUnit},
     update::UpdateOptions,
 };
 
@@ -101,26 +101,18 @@ impl Dependency {
 }
 
 #[async_trait]
-impl UnitUpdateable for Dependency {
-    async fn update_local(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl LocalUpdate for Dependency {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         self.addr.update_local(path, options).await
     }
 }
 
 impl Dependency {
-    pub async fn update(
-        &self,
-        root: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {
-            self.update_rename(&path, rename, options).await
+            self.update_local_rename(&path, rename, options).await
         } else {
             self.update_local(&path, options).await
         }

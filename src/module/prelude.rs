@@ -4,7 +4,7 @@ pub use orion_infra::auto_exit_log;
 pub use orion_infra::path::{ensure_path, get_sub_dirs, make_clean_path};
 pub use orion_variate::{
     addr::{AddrResult, path_file_name},
-    types::{UnitUpdateValue, UnitUpdateable, ValuePath},
+    types::{LocalUpdate, UpdateUnit},
     update::UpdateOptions,
     vars::{OriginDict, ValueDict, VarCollection},
 };
@@ -19,10 +19,11 @@ pub use crate::{
     error::{ElementReason, SpecReason, SpecResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
-    types::{Configable, JsonAble, Localizable, ValueConfable},
     workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
 pub use orion_variate::addr::types::EnvVarPath;
 pub use orion_variate::addr::{AddrType, GitAddr};
 pub use orion_variate::vars::{EnvDict, ValueType};
+
+pub use orion_common::serde::{Configable, JsonAble, ValueConfable};

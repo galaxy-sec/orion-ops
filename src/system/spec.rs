@@ -1,4 +1,4 @@
-use crate::{error::SysReason, predule::*, types::Yamlable};
+use crate::{error::SysReason, predule::*, types::ValuePath};
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -9,12 +9,11 @@ use crate::{
     workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
-use orion_common::serde::Persistable;
+use orion_common::serde::{Configable, Persistable, Yamlable};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_variate::{
     addr::{GitAddr, LocalAddr},
-    types::ValuePath,
     update::UpdateOptions,
 };
 
@@ -26,7 +25,6 @@ use crate::types::LocalizeOptions;
 use crate::{
     error::{SpecReason, SpecResult, ToErr},
     module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
-    types::Configable,
 };
 #[derive(Getters, Clone, Debug)]
 pub struct SysModelSpec {
@@ -80,7 +78,7 @@ impl SysModelSpec {
         let paths = SysTargetPaths::from(&root);
         std::fs::create_dir_all(paths.spec_path()).owe_conf()?;
         sys_init_gitignore(&root)?;
-        self.mod_list.save_conf(paths.modlist_path())?;
+        self.mod_list.save_conf(paths.modlist_path()).owe_res()?;
 
         self.workflow
             .save_to(paths.workflow_path(), None)
@@ -105,7 +103,8 @@ impl SysModelSpec {
         ctx.with_path("mod_list", paths.modlist_path());
         let mut mod_list = ModulesList::from_conf(paths.modlist_path())
             .with("load mod-list".to_string())
-            .with(&ctx)?;
+            .with(&ctx)
+            .owe_data()?;
         mod_list.set_mods_local(paths.spec_path().clone());
         let workflow = SysWorkflows::load_from(paths.workflow_path())
             .with(&ctx)
@@ -135,7 +134,7 @@ impl SysModelSpec {
             if path.exists() {
                 std::fs::remove_file(&path).owe_sys()?;
             }
-            value.vars.save_yml(&path)?;
+            value.vars.save_yml(&path).owe_res()?;
             Ok(())
         } else {
             SpecReason::from(ElementReason::Miss("local path".into())).err_result()

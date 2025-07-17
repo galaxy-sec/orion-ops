@@ -1,5 +1,6 @@
-use crate::{artifact::Artifact, conf::ConfSpecRef, spec::WorkSpec};
+use crate::{conf::ConfSpecRef, spec::WorkSpec};
 use derive_getters::Getters;
+use orion_variate::ext::Artifact;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]
@@ -81,6 +82,7 @@ pub enum Constraint {
 mod tests {
     use std::path::PathBuf;
 
+    use orion_common::serde::Configable;
     use orion_error::ErrorOwe;
     use orion_variate::addr::LocalAddr;
     use tempfile::env::temp_dir;
@@ -89,7 +91,6 @@ mod tests {
         conf::{ConfFile, ConfSpec},
         const_vars::CONFS_DIR,
         error::SpecResult,
-        types::Configable,
     };
 
     use super::*;
@@ -146,9 +147,9 @@ mod tests {
         );
 
         let path = root_path.join("redis_7.yml");
-        redis.save_conf(&path)?;
+        redis.save_conf(&path).owe_logic()?;
 
-        let loaded = SoftWare::from_conf(&path)?;
+        let loaded = SoftWare::from_conf(&path).owe_logic()?;
         assert_eq!(loaded.workspec(), redis.workspec());
         Ok(())
     }

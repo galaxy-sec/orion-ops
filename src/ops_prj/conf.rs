@@ -1,19 +1,14 @@
 use crate::error::OpsReason;
 use crate::predule::*;
-
 use crate::system::refs::SysModelSpecRef;
-use crate::{
-    error::SpecResult,
-    module::depend::DependencySet,
-    types::{Configable, Localizable},
-};
+use crate::{error::SpecResult, module::depend::DependencySet, types::Localizable};
+use orion_common::serde::Configable;
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
-use crate::types::{LocalizeOptions, SysUpdateable};
+use crate::types::{LocalizeOptions, SysUpdateable, ValuePath};
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
 use orion_variate::addr::LocalAddr;
-use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -45,7 +40,7 @@ impl ProjectConf {
     }
     pub fn load(path: &Path) -> SpecResult<Self> {
         let conf_file = path.join(OPS_PRJ_FILE);
-        let mut ins = Self::from_conf(&conf_file)?;
+        let mut ins = Self::from_conf(&conf_file).owe_conf()?;
         let mut updated_sys = Vec::new();
         for mut sys in ins.systems {
             if sys.is_update(path) {

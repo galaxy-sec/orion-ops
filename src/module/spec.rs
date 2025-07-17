@@ -1,9 +1,6 @@
 use super::prelude::*;
+use crate::conf::{ConfFile, ConfSpec};
 use crate::predule::*;
-use crate::{
-    artifact::Artifact,
-    conf::{ConfFile, ConfSpec},
-};
 
 use crate::{
     const_vars::{CONFS_DIR, MOD_DIR},
@@ -11,16 +8,17 @@ use crate::{
 };
 use async_trait::async_trait;
 use indexmap::IndexMap;
+use orion_variate::ext::Artifact;
 use orion_variate::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
-    depend::DependencySet, init::{mod_init_gitignore, ModIniter, ModPrjIniter}, model::ModModelSpec, setting::Setting,
-    CpuArch,
-    ModelSTD,
-    OsCPE,
-    RunSPC,
+    CpuArch, ModelSTD, OsCPE, RunSPC,
+    depend::DependencySet,
+    init::{ModIniter, ModPrjIniter, mod_init_gitignore},
+    model::ModModelSpec,
+    setting::Setting,
 };
-use crate::types::LocalizeOptions;
+use crate::types::{Localizable, LocalizeOptions, ValuePath};
 
 #[derive(Getters, Clone, Debug)]
 pub struct ModuleSpec {
@@ -72,17 +70,13 @@ impl ModuleSpec {
 }
 
 #[async_trait]
-impl UnitUpdateable for ModuleSpec {
-    async fn update_local(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl LocalUpdate for ModuleSpec {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         for (target, node) in &self.targets {
             node.update_local(&path.join(target.to_string()), options)
                 .await?;
         }
-        Ok(UnitUpdateValue::from(path.to_path_buf()))
+        Ok(UpdateUnit::from(path.to_path_buf()))
     }
 }
 

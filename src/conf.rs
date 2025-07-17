@@ -4,12 +4,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{const_vars::CONFS_DIR, error::SpecResult, types::Configable};
+use crate::{const_vars::CONFS_DIR, error::SpecResult};
 use async_trait::async_trait;
+use orion_common::serde::Configable;
 use orion_infra::auto_exit_log;
 use orion_variate::{
     addr::{AddrResult, AddrType, path_file_name},
-    types::{UnitUpdateValue, UnitUpdateable},
+    types::{LocalUpdate, UpdateUnit},
     update::UpdateOptions,
 };
 // 由于 `crate::tools::log_flag` 未定义，移除该导入
@@ -68,12 +69,12 @@ impl ConfSpecRef {
     pub fn new<S: Into<String>>(path: S) -> SpecResult<Self> {
         let path = path.into();
         let file_path = PathBuf::from(path.as_str());
-        let obj = ConfSpec::from_conf(&file_path)?;
+        let obj = ConfSpec::from_conf(&file_path).owe_conf()?;
         Ok(Self { path, obj })
     }
     fn load_ref(path: &str) -> SpecResult<ConfSpec> {
         let path = PathBuf::from(path);
-        ConfSpec::from_conf(&path)
+        ConfSpec::from_conf(&path).owe_conf()
     }
 }
 
@@ -118,12 +119,8 @@ impl ConfSpec {
 }
 
 #[async_trait]
-impl UnitUpdateable for ConfSpec {
-    async fn update_local(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl LocalUpdate for ConfSpec {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         debug!( target:"spec/confspec", "upload_local confspec begin: {}" ,path.display() );
 
         let mut is_suc = auto_exit_log!(
@@ -136,13 +133,13 @@ impl UnitUpdateable for ConfSpec {
             if let Some(addr) = f.addr() {
                 let filename = path_file_name(&PathBuf::from(f.path.as_str()))?;
                 let x = addr
-                    .update_rename(&root, filename.as_str(), options)
+                    .update_local_rename(&root, filename.as_str(), options)
                     .await?;
                 is_suc.mark_suc();
                 return Ok(x);
             }
         }
-        Ok(UnitUpdateValue::from(root))
+        Ok(UpdateUnit::from(root))
     }
 }
 

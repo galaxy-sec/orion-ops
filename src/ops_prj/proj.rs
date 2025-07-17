@@ -7,12 +7,11 @@ const OPS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
 const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
-use crate::types::{Configable, Localizable, LocalizeOptions, SysUpdateable, ValueConfable};
+use crate::types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath};
 use async_trait::async_trait;
-use orion_common::serde::Persistable;
+use orion_common::serde::{Configable, Persistable, ValueConfable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType};
 
@@ -55,7 +54,7 @@ impl OpsProject {
         let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         let val_dict = if value_file.exists() {
-            ValueDict::from_conf(&value_file)?
+            ValueDict::from_conf(&value_file).owe_data()?
         } else {
             ValueDict::new()
         };
@@ -79,12 +78,12 @@ impl OpsProject {
             )
         );
         let conf_file = self.root_local().join(OPS_PRJ_FILE);
-        self.conf.save_conf(&conf_file)?;
+        self.conf.save_conf(&conf_file).owe_res()?;
         self.project.save_to(self.root_local(), None).owe_logic()?;
 
         let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
-        self.val_dict.save_conf(&value_file)?;
+        self.val_dict.save_conf(&value_file).owe_res()?;
         workins_init_gitignore(self.root_local())?;
         flag.mark_suc();
         Ok(())
@@ -111,7 +110,7 @@ impl OpsProject {
     pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
         let value_path = self.value_path().ensure_exist().owe_logic()?;
         let value_file = value_path.value_file();
-        let dict = ValueDict::from_valconf(&value_file)?;
+        let dict = ValueDict::from_valconf(&value_file).owe_res()?;
         let cur_opt = options.with_global(dict);
         let dst_path = Some(value_path);
 

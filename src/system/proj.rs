@@ -3,23 +3,19 @@ use crate::error::SysReason;
 use crate::predule::*;
 
 use crate::{
-    const_vars::SYS_MODEL_SPC_ROOT,
-    error::SpecResult,
-    module::depend::DependencySet,
-    types::{Configable, Localizable},
-    workflow::prj::GxlProject,
+    const_vars::SYS_MODEL_SPC_ROOT, error::SpecResult, module::depend::DependencySet,
+    types::Localizable, workflow::prj::GxlProject,
 };
 
 use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
 };
-use crate::types::{LocalizeOptions, ValueConfable};
+use crate::types::{LocalizeOptions, ValuePath};
 use async_trait::async_trait;
-use orion_common::serde::Persistable;
+use orion_common::serde::{Configable, Persistable, ValueConfable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_variate::types::ValuePath;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType};
 
@@ -69,7 +65,7 @@ impl SysProject {
         );
 
         let conf_file = root_local.join("sys_prj.yml");
-        let conf = SysConf::from_conf(&conf_file)?;
+        let conf = SysConf::from_conf(&conf_file).owe_res()?;
         let root_local = root_local.to_path_buf();
         let sys_local = root_local.join("sys");
         let sys_spec = SysModelSpec::load_from(&sys_local)?;
@@ -77,7 +73,7 @@ impl SysProject {
         let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
         let val_dict = if value_file.exists() {
-            ValueDict::from_conf(&value_file)?
+            ValueDict::from_conf(&value_file).owe_data()?
         } else {
             ValueDict::new()
         };
@@ -102,7 +98,7 @@ impl SysProject {
             )
         );
         let conf_file = self.root_local().join("sys_prj.yml");
-        self.conf.save_conf(&conf_file)?;
+        self.conf.save_conf(&conf_file).owe_res()?;
         self.sys_spec.save_local(self.root_local(), "sys")?;
         self.project
             .save_to(self.root_local(), None)
@@ -110,7 +106,7 @@ impl SysProject {
 
         let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
-        self.val_dict.save_conf(&value_file)?;
+        self.val_dict.save_conf(&value_file).owe_res()?;
         sys_init_gitignore(self.root_local())?;
         flag.mark_suc();
         Ok(())
@@ -148,7 +144,7 @@ impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
         let value_path = self.value_path().ensure_exist().owe_res()?;
         let value_file = value_path.value_file();
-        let dict = ValueDict::from_valconf(&value_file)?;
+        let dict = ValueDict::from_valconf(&value_file).owe_res()?;
         let cur_opt = options.with_global(dict);
         let dst_path = Some(value_path);
 

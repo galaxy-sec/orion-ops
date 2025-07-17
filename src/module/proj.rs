@@ -2,8 +2,9 @@ use super::prelude::*;
 use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::error::ModReason;
 use crate::predule::*;
+use crate::types::{Localizable, ValuePath};
 
-use super::init::{mod_init_gitignore, MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL};
+use super::init::{MOD_PRJ_ADM_GXL, MOD_PRJ_WORK_GXL, mod_init_gitignore};
 use crate::{
     const_vars::MODULES_SPC_ROOT,
     module::{
@@ -57,7 +58,7 @@ impl ModProject {
         );
 
         let conf_file = root_local.join("mod_prj.yml");
-        let conf = ModConf::from_conf(&conf_file)?;
+        let conf = ModConf::from_conf(&conf_file).owe_logic()?;
         let root_local = root_local.to_path_buf();
         let mod_spec = ModuleSpec::load_from(&root_local).owe(ModReason::Load.into())?;
         let project = GxlProject::load_from(&root_local).owe(ModReason::Load.into())?;
@@ -81,7 +82,7 @@ impl ModProject {
             )
         );
         let conf_file = self.root_local().join("mod_prj.yml");
-        self.conf.save_conf(&conf_file)?;
+        self.conf.save_conf(&conf_file).owe_res()?;
         self.mod_spec
             .save_to(self.root_local(), Some("./".into()))
             .owe(ModReason::Save.into())?;
@@ -106,7 +107,7 @@ pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecR
         if !v_file.exists() {
             let mut dict = ValueDict::new();
             dict.insert("SAMPLE_KEY", ValueType::from("SAMPLE_VAL"));
-            dict.save_valconf(&v_file)?;
+            dict.save_valconf(&v_file).owe_res()?;
         }
         v_file
     };
@@ -201,7 +202,7 @@ pub mod tests {
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,
-        module::proj::{make_mod_prj_testins, ModProject},
+        module::proj::{ModProject, make_mod_prj_testins},
         types::Localizable,
     };
     #[tokio::test]

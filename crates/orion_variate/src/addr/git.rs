@@ -1,13 +1,13 @@
-use crate::types::ResourceUpload;
+use crate::types::RemoteUpdate;
 use crate::vars::EnvEvalable;
 use crate::{
-    predule::*, tools::get_repo_name, types::UnitUpdateable, update::UpdateOptions, vars::EnvDict,
+    predule::*, tools::get_repo_name, types::LocalUpdate, update::UpdateOptions, vars::EnvDict,
 };
 use async_trait::async_trait;
 use fs_extra::dir::CopyOptions;
 use git2::{
-    build::{CheckoutBuilder, RepoBuilder}, BranchType, FetchOptions, MergeOptions, PushOptions, RemoteUpdateFlags, Repository,
-    ResetType,
+    build::{CheckoutBuilder, RepoBuilder},
+    BranchType, FetchOptions, MergeOptions, PushOptions, RemoteUpdateFlags, Repository, ResetType,
 };
 use home::home_dir;
 use log::warn;
@@ -262,12 +262,8 @@ impl GitAddr {
 }
 
 #[async_trait]
-impl UnitUpdateable for GitAddr {
-    async fn update_local(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl LocalUpdate for GitAddr {
+    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         let name = self.get_local_repo_name();
         let cache_local = home_dir()
             .ok_or(StructError::from_res("unget home".into()))?
@@ -334,17 +330,13 @@ impl UnitUpdateable for GitAddr {
             .owe_res()
             .with(&ctx)?;
         flag.mark_suc();
-        Ok(UnitUpdateValue::from(real_path))
+        Ok(UpdateUnit::from(real_path))
     }
 }
 
 #[async_trait]
-impl ResourceUpload for GitAddr {
-    async fn upload_from(
-        &self,
-        path: &Path,
-        options: &UpdateOptions,
-    ) -> AddrResult<UnitUpdateValue> {
+impl RemoteUpdate for GitAddr {
+    async fn update_remote(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
         let ctx = WithContext::want("upload to repository");
         if !path.exists() {
             return Err(StructError::from_res("path not exist".into()));
@@ -380,7 +372,7 @@ impl ResourceUpload for GitAddr {
         }
         let name = self.get_local_repo_name();
         std::fs::remove_dir_all(temp_path.join(name)).owe_res()?;
-        Ok(UnitUpdateValue::from(path.to_path_buf()))
+        Ok(UpdateUnit::from(path.to_path_buf()))
     }
 }
 
@@ -421,7 +413,7 @@ impl GitAddr {
 
         // 准备认证回调
         let callbacks = self.build_remote_callbacks(); // 使用构建的回调
-        // 配置获取选项
+                                                       // 配置获取选项
         let mut fetch_options = FetchOptions::new();
         fetch_options.remote_callbacks(callbacks);
 
@@ -638,16 +630,16 @@ mod tests {
         }
         std::fs::create_dir_all(&dest_path).assert();
 
-        let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")
-            .with_branch("master")
-            .with_path("postgresql/x86-ubt22-k8s"); // 或使用 .tag("v1.0") 测试标签
+        let git_addr = GitAddr::from("https://github.com/galaxy-sec/hello-word.git")
+            .with_branch("main")
+            .with_path("x86"); // 或使用 .tag("v1.0") 测试标签
 
         // 执行克隆
         let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(git_up.position(), &dest_path.join("x86-ubt22-k8s"));
+        assert_eq!(git_up.position(), &dest_path.join("x86"));
         Ok(())
     }
 
@@ -661,17 +653,14 @@ mod tests {
         }
         std::fs::create_dir_all(&dest_path).assert();
 
-        let git_addr = GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/modspec.git")
-            .with_branch("master");
-        //.path("*");
-        //;
-
+        let git_addr =
+            GitAddr::from("https://github.com/galaxy-sec/hello-word.git").with_branch("main");
         // 执行克隆
         let git_up = git_addr
             .update_local(&dest_path, &UpdateOptions::default())
             .await
             .assert();
-        assert_eq!(git_up.position(), &dest_path.join("modspec.git_master"));
+        assert_eq!(git_up.position(), &dest_path.join("hello-word.git_main"));
         Ok(())
     }
 
@@ -696,7 +685,7 @@ mod tests {
         Ok(())
     }
 
-    use crate::types::ResourceUpload;
+    use crate::types::RemoteUpdate;
     use crate::{addr::GitAddr, update::UpdateOptions};
 
     #[tokio::test]
@@ -710,7 +699,7 @@ mod tests {
         let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").with_branch("main");
 
         let git_up = git_addr
-            .upload_from(&dir, &UpdateOptions::default())
+            .update_remote(&dir, &UpdateOptions::default())
             .await?;
         println!("{:?}", git_up.position);
         Ok(())
@@ -726,7 +715,7 @@ mod tests {
         let git_addr = GitAddr::from("git@github.com:galaxy-sec/spec_test.git").with_branch("main");
 
         let git_up = git_addr
-            .upload_from(&file, &UpdateOptions::default())
+            .update_remote(&file, &UpdateOptions::default())
             .await?;
         println!("{:?}", git_up.position);
         Ok(())

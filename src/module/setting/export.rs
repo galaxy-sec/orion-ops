@@ -21,9 +21,8 @@ impl Setting {
 mod tests {
     use std::env::temp_dir;
 
-    use crate::types::Configable;
-
     use super::*;
+    use orion_common::serde::Configable;
     use orion_error::TestAssert;
 
     #[test]
