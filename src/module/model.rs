@@ -1,3 +1,5 @@
+use orion_variate::ext::ArtifactPackage;
+
 use super::prelude::*;
 use crate::{
     const_vars::{

@@ -8,7 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use indexmap::IndexMap;
-use orion_variate::ext::Artifact;
+use orion_variate::ext::{Artifact, ArtifactPackage};
 use orion_variate::{addr::HttpAddr, vars::VarDefinition};
 
 use super::{
