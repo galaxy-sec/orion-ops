@@ -9,7 +9,7 @@ extern crate clap;
 use crate::args::GxModCmd;
 use clap::Parser;
 use orion_error::ErrorOwe;
-use orion_syspec::error::{SpecResult, report_error};
+use orion_ops::error::{SpecResult, report_error};
 use orion_variate::vars::setup_start_env_vars;
 use spec::do_mod_cmd;
 

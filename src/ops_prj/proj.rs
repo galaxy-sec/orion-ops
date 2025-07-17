@@ -157,7 +157,7 @@ pub mod tests {
         test_init();
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join("workins_sys_1");
         make_clean_path(&prj_path).owe_logic()?;
-        let project = OpsProject::for_test("workins_sys_1".into()).assert("make workins");
+        let project = OpsProject::for_test("workins_sys_1").assert("make workins");
         project.save().assert("save workins_prj");
         let mut project = OpsProject::load(&prj_path).assert("workins-prj");
         project = project

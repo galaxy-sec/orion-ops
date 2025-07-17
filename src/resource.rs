@@ -24,7 +24,7 @@ impl Display for ResAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ResAddress::Ipv4(ipv4_addr) => {
-                write!(f, "addr:{}", ipv4_addr)
+                write!(f, "addr:{ipv4_addr}",)
             }
         }
     }

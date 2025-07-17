@@ -163,42 +163,42 @@ pub fn report_error(e: StructError<SpecReason>) {
     println!("Run Error (Code: {})", e.error_code());
     println!("--------------------------");
     if let Some(target) = e.target() {
-        println!("[TARGET]:\n{}\n", target);
+        println!("[TARGET]:\n{target}\n",);
     }
     println!("[REASON]:");
     match e.get_reason() {
         SpecReason::Uvs(uvs_reason) => match uvs_reason {
             UvsReason::LogicError(e) => {
-                println!("LOGIC ERROR: {}\n", e);
+                println!("LOGIC ERROR: {e}\n",);
             }
             UvsReason::BizError(e) => {
-                println!("BIZ ERROR: {}\n", e);
+                println!("BIZ ERROR: {e}\n",);
             }
             UvsReason::DataError(e, _) => {
-                println!("DATA ERROR: {}\n", e);
+                println!("DATA ERROR: {e}\n",);
             }
             UvsReason::SysError(e) => {
-                println!("SYS ERROR: {}\n", e);
+                println!("SYS ERROR: {e}\n",);
             }
             UvsReason::ResError(e) => {
-                println!("RES ERROR: {}\n", e);
+                println!("RES ERROR: {e}\n",);
             }
             UvsReason::ConfError(e) => {
-                println!("CONF ERROR: {}\n", e);
+                println!("CONF ERROR: {e}\n",);
             }
             UvsReason::RuleError(e) => {
-                println!("RULE ERROR: {}\n", e);
+                println!("RULE ERROR: {e}\n",);
             }
             UvsReason::PrivacyError(e) => {
-                println!("PRIVACY ERROR: {}\n", e);
+                println!("PRIVACY ERROR: {e}\n",);
             }
         },
 
         SpecReason::Localize(e) => {
-            println!("Localize ERROR: {}\n", e);
+            println!("Localize ERROR: {e}\n",);
         }
         SpecReason::Element(e) => {
-            println!("Element ERROR: {}\n", e);
+            println!("Element ERROR: {e}\n",);
         }
         SpecReason::UnKnow => {
             println!("Unknow Error!\n");
@@ -214,13 +214,13 @@ pub fn report_error(e: StructError<SpecReason>) {
         }
     }
     if let Some(pos) = e.position() {
-        println!("\n[POSITION]:\n{}", pos);
+        println!("\n[POSITION]:\n{pos}",);
     }
     if let Some(detail) = e.detail() {
-        println!("\n[DETAIL]:\n{}", detail);
+        println!("\n[DETAIL]:\n{detail}",);
     }
     println!("\n[CONTEXT]:\n");
     for x in e.context() {
-        println!("{}", x)
+        println!("{x}",)
     }
 }

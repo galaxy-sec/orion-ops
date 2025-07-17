@@ -204,7 +204,7 @@ pub fn make_sys_spec_test(name: &str, mod_names: Vec<&str>) -> SpecResult<SysMod
         //let mod_name = "postgresql";
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             mod_name,
-            LocalAddr::from(format!("{}/{}", MODULES_SPC_ROOT, mod_name)),
+            LocalAddr::from(format!("{MODULES_SPC_ROOT}/{mod_name}")),
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ));
     }

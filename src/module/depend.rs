@@ -166,7 +166,7 @@ pub mod tests {
             dep_root: EnvVarPath::from("./".to_string()),
         };
         let yaml_vec = serde_yaml::to_string(&vec).unwrap();
-        println!("{:#}", yaml_vec);
+        println!("{yaml_vec:#}",);
         assert!(yaml_vec.contains("- addr:"));
         assert!(yaml_vec.contains("rename: mysql2"));
     }
