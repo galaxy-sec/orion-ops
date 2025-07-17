@@ -1,0 +1,13 @@
+
+        tunable:
+        # -- See the [property reference documentation](https://docs.redpanda.com/docs/reference/cluster-
+        log_segment_size_min: 16777216 # 16 mb
+        # -- See the property reference documentation.
+        log_segment_size_max: 268435456 # 256 mb
+        # -- See the property reference documentation.
+        compacted_log_segment_size: 67108864 # 64 mb
+        # -- See the property reference documentation.
+        max_compacted_log_segment_size: 536870912 # 512 mb
+        # -- See the property reference documentation.
+        kafka_connection_rate_limit: 1000
+                   

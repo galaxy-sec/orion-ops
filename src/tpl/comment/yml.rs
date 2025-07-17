@@ -27,6 +27,7 @@ pub enum YmlStatus {
 }
 pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalResult<String> {
     let mut out = String::new();
+    let mut line = String::new();
     loop {
         if input.is_empty() {
             break;
@@ -39,44 +40,47 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                 .parse_next(input)?;
 
                 if opt("\n").parse_next(input)?.is_some() {
-                    out += code;
-                    out += "\n";
+                    line += code;
+                    if !line.trim().is_empty() {
+                        out += line.as_str();
+                        out += "\n";
+                        line = String::new();
+                    }
                     continue;
                 }
 
                 if opt("#").parse_next(input)?.is_some() {
                     if !code.trim().is_empty() {
-                        out += code;
+                        line += code;
                     }
                     *status = YmlStatus::Comment;
                     continue;
                 }
-
-                out += code;
+                line += code;
                 if input.is_empty() {
                     break;
                 }
                 let rst = opt("|\n").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::BlockData;
                     continue;
                 }
                 let rst = opt("|").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     continue;
                 }
 
                 let rst = opt("\"").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::StringDouble;
                     continue;
                 }
                 let rst = opt("\'").parse_next(input)?;
                 if let Some(tag_code) = rst {
-                    out += tag_code;
+                    line += tag_code;
                     *status = YmlStatus::StringSingle;
                     continue;
                 }
@@ -91,7 +95,7 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                     if data.trim().is_empty() {
                         *status = YmlStatus::Code;
                     } else {
-                        out += data;
+                        line += data;
                     }
                 }
                 Err(e) => return Err(e),
@@ -99,16 +103,16 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
 
             YmlStatus::StringDouble => {
                 let data = take_till(0.., |c| c == '"').parse_next(input)?;
-                out += data;
+                line += data;
                 let data = literal("\"").parse_next(input)?;
-                out += data;
+                line += data;
                 *status = YmlStatus::Code;
             }
             YmlStatus::StringSingle => {
                 let data = take_till(0.., |c| c == '\'').parse_next(input)?;
-                out += data;
+                line += data;
                 let data = literal("\'").parse_next(input)?;
-                out += data;
+                line += data;
                 *status = YmlStatus::Code;
             }
 
@@ -116,7 +120,7 @@ pub fn ignore_comment_line(status: &mut YmlStatus, input: &mut &str) -> ModalRes
                 let _ = till_line_ending
                     .context(wn_desc("comment-line"))
                     .parse_next(input)?;
-                //let _ = opt(line_ending).context(wn_desc("comment-line_ending")).parse_next(input)?;
+                //let _ = opt(line_ending) .context(wn_desc("comment-line_ending")) .parse_next(input)?;
                 *status = YmlStatus::Code;
             }
         }
@@ -156,9 +160,11 @@ pub fn ignore_comment(input: &mut &str) -> ModalResult<String> {
         }
         //let mut line = till_line_ending.parse_next(input)?;
         let code = ignore_comment_line(&mut status, input)?;
-        out += code.as_str();
-        if opt(line_ending).parse_next(input)?.is_some() {
-            out += "\n";
+        if !code.trim().is_empty() {
+            out += code.as_str();
+            if opt(line_ending).parse_next(input)?.is_some() {
+                //out += "\n";
+            }
         }
     }
     Ok(out)
@@ -167,6 +173,9 @@ pub fn ignore_comment(input: &mut &str) -> ModalResult<String> {
 #[cfg(test)]
 mod tests {
 
+    use std::{fs::read_to_string, path::PathBuf};
+
+    use fs_extra::file::write_all;
     use orion_error::TestAssert;
 
     use super::remove_comment;
@@ -293,5 +302,49 @@ global:
         let data = r#"regex: (\d+);((([0-9]+?)(\.|$)){4})"#;
         let _codes = remove_comment(data).assert();
         println!("{}", _codes);
+    }
+    #[test]
+    fn test_case10() {
+        let data = r#"
+tunable:
+# -- See the [property reference documentation](https://docs.redpanda.com/docs/reference/cluster-
+log_segment_size_min: 16777216 # 16 mb
+# -- See the property reference documentation.
+log_segment_size_max: 268435456 # 256 mb
+# -- See the property reference documentation.
+compacted_log_segment_size: 67108864 # 64 mb
+# -- See the property reference documentation.
+max_compacted_log_segment_size: 536870912 # 512 mb
+# -- See the property reference documentation.
+kafka_connection_rate_limit: 1000
+           "#;
+        let _codes = remove_comment(data).assert();
+        println!("{}", _codes);
+    }
+    #[test]
+    fn test_file_case1() {
+        let base_path = PathBuf::from("./test/data/yml");
+        std::fs::create_dir_all(&base_path).assert();
+
+        let val_file = base_path.join("values.yaml");
+        let data = r#"
+        tunable:
+        # -- See the [property reference documentation](https://docs.redpanda.com/docs/reference/cluster-
+        log_segment_size_min: 16777216 # 16 mb
+        # -- See the property reference documentation.
+        log_segment_size_max: 268435456 # 256 mb
+        # -- See the property reference documentation.
+        compacted_log_segment_size: 67108864 # 64 mb
+        # -- See the property reference documentation.
+        max_compacted_log_segment_size: 536870912 # 512 mb
+        # -- See the property reference documentation.
+        kafka_connection_rate_limit: 1000
+                   "#;
+        std::fs::write(&val_file, data).assert();
+
+        let out_file = PathBuf::from("./test/data/yml/_values.yaml");
+        let yml = read_to_string(&val_file).assert();
+        let codes = remove_comment(yml.as_str()).assert();
+        write_all(out_file, codes.as_str()).assert();
     }
 }
