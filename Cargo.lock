@@ -2238,8 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "orion_variate"
-version = "0.3.1"
-source = "git+https://github.com/galaxy-sec/orion-variate?branch=main#800399b0c920ff4d2dd394854faed6d9cad48972"
+version = "0.4.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2273,7 +2272,7 @@ dependencies = [
  "toml",
  "tracing",
  "url",
- "winnow 0.6.26",
+ "winnow 0.7.11",
 ]
 
 [[package]]
@@ -3992,6 +3991,9 @@ name = "winnow"
 version = "0.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74c7b26e3480b707944fc872477815d29a8e429d2f93a1ce000f5fa84a15cbcd"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "wit-bindgen-rt"

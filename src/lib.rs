@@ -14,6 +14,7 @@ pub mod tools;
 mod app_sys;
 pub mod infra;
 pub mod ops_prj;
+pub mod package;
 pub mod predule;
 pub mod types;
 //pub mod update;

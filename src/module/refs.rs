@@ -80,7 +80,7 @@ impl ModuleSpecRef {
             std::fs::create_dir_all(local).owe_res().with(local)?;
             let target_root = local.join(self.name());
             let target_path = target_root.join(self.model().to_string());
-            if !target_path.exists() || options.clean_exist_ref_mod() {
+            if !target_path.exists() || options.clean_cache() {
                 let tmp_name = "__mod";
                 let prj_path = self
                     .addr
