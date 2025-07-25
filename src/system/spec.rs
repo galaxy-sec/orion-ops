@@ -1,15 +1,9 @@
-use crate::{
-     error::SysReason, predule::*, system::path::SysTargetPaths,
-    types::ValuePath,
-};
+use crate::{error::SysReason, predule::*, system::path::SysTargetPaths, types::ValuePath};
 use std::path::{Path, PathBuf};
 
 use crate::{
-    const_vars::{ MODULES_SPC_ROOT, },
-    error::ElementReason,
-    module::proj::ModProject,
-    types::Localizable,
-    workflow::act::SysWorkflows,
+    const_vars::MODULES_SPC_ROOT, error::ElementReason, module::proj::ModProject,
+    types::Localizable, workflow::act::SysWorkflows,
 };
 use async_trait::async_trait;
 use getset::{Getters, WithSetters};
@@ -117,7 +111,7 @@ impl SysModelSpec {
             .owe(SysReason::Load.into())?;
         flag.mark_suc();
         Ok(Self {
-            define ,
+            define,
             mod_list,
             local: Some(root.to_path_buf()),
             workflow,
@@ -170,7 +164,7 @@ impl SysModelSpec {
         make_sys_spec_test(SysDefine::new(name), vec!["redis2_mock", "mysql2_mock"])
     }
 
-    pub fn make_new(define: SysDefine , repo: &str) -> SpecResult<SysModelSpec> {
+    pub fn make_new(define: SysDefine, repo: &str) -> SpecResult<SysModelSpec> {
         let actions = SysWorkflows::sys_tpl_init();
         let mut modul_spec = SysModelSpec::new(define, actions);
         let mod_name = "you_mod1";
@@ -237,8 +231,8 @@ pub mod tests {
         make_clean_path(&spec_root).owe_logic()?;
         ModProject::make_test_prj("redis_mock")?;
         ModProject::make_test_prj("mysql_mock")?;
-        let spec =
-            make_sys_spec_test(SysDefine::new(sys_name), vec!["redis_mock", "mysql_mock"]).assert("make spec");
+        let spec = make_sys_spec_test(SysDefine::new(sys_name), vec!["redis_mock", "mysql_mock"])
+            .assert("make spec");
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         let spec_path = spec_root.join(spec.define().name());
         make_clean_path(&spec_path).owe_logic()?;

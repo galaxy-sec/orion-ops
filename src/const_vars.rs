@@ -4,6 +4,7 @@ pub const MODULES_INS_ROOT: &str = "./example/mod-ins";
 pub const SYS_MODEL_PRJ_ROOT: &str = "./example/sys-model-prj";
 pub const SYS_MODEL_SPC_ROOT: &str = "./example/sys-model-spec";
 pub const WORKINS_PRJ_ROOT: &str = "./example/workins-prj";
+pub const EXAMPLE_ROOT: &str = "./example";
 pub const WORK_GXL: &str = "work.gxl";
 pub const ADM_GXL: &str = "adm.gxl";
 pub const MOD_LIST_YML: &str = "mod_list.yml";

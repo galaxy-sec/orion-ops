@@ -1,8 +1,8 @@
 pub mod init;
+mod path;
 pub mod proj;
 pub mod refs;
 pub mod spec;
-mod  path;
 use crate::predule::*;
 use std::{net::Ipv4Addr, path::PathBuf};
 
@@ -11,7 +11,6 @@ use async_trait::async_trait;
 use derive_more::Deref;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::{ValueDict, ValueType, VarCollection};
-
 
 use crate::module::refs::ModuleSpecRef;
 use crate::module::spec::ModuleSpec;

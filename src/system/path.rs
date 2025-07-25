@@ -1,15 +1,11 @@
-use crate::{const_vars::SYS_MODLE_DEF_YML, };
-use std::path::{PathBuf};
+use crate::const_vars::SYS_MODLE_DEF_YML;
+use std::path::PathBuf;
 
-use crate::{
-    const_vars::{MOD_LIST_YML,  NET_RES_YML, RESOURCE_YML, VARS_YML},
-
-};
-use getset::{Getters, };
-
+use crate::const_vars::{MOD_LIST_YML, NET_RES_YML, RESOURCE_YML, VARS_YML};
+use getset::Getters;
 
 #[derive(Getters, Clone, Debug)]
- #[getset(get = "pub " )]
+#[getset(get = "pub ")]
 pub struct SysTargetPaths {
     target_root: PathBuf,
     define_path: PathBuf,

@@ -22,7 +22,7 @@ pub enum PackageType {
     Git(GitPackage),
 }
 
-pub fn  convert_addr(input: &str) -> AddrType {
+pub fn convert_addr(input: &str) -> AddrType {
     if input.starts_with("http") {
         if input.ends_with(".git") {
             AddrType::Git(GitAddr::from(input.to_string()))
@@ -50,7 +50,7 @@ pub fn  convert_addr(input: &str) -> AddrType {
 // https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.8.4/galaxy-flow-v0.8.4-aarch64-apple-darwin.tar.gz
 pub fn build_pkg(input: &str) -> PackageType {
     let addr_type = convert_addr(input);
-    
+
     match addr_type {
         AddrType::Git(git_addr) => {
             let name = extract_name_from_url(input, ".git");
@@ -77,10 +77,7 @@ pub fn build_pkg(input: &str) -> PackageType {
 }
 
 fn extract_name_from_url(url: &str, suffix: &str) -> String {
-    url.split('/')
-        .last()
-        .unwrap()
-        .replace(suffix, "")
+    url.split('/').last().unwrap().replace(suffix, "")
 }
 
 #[cfg(test)]
@@ -147,49 +144,49 @@ mod tests {
     }
 }
 
-    #[cfg(test)]
-    mod convert_addr_tests {
-        use super::*;
+#[cfg(test)]
+mod convert_addr_tests {
+    use super::*;
 
-        #[test]
-        fn test_convert_addr_local() {
-            let input = "/Users/dayu/ds-build/mac-devkit-0.1.5.tar.gz";
-            let addr = convert_addr(input);
-            assert!(matches!(addr, AddrType::Local(_)));
-        }
-
-        #[test]
-        fn test_convert_addr_http_tar() {
-            let input = "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.8.4/galaxy-flow-v0.8.4-aarch64-apple-darwin.tar.gz";
-            let addr = convert_addr(input);
-            assert!(matches!(addr, AddrType::Http(_)));
-        }
-
-        #[test]
-        fn test_convert_addr_https_git() {
-            let input = "https://github.com/galaxy-sec/galaxy-flow.git";
-            let addr = convert_addr(input);
-            assert!(matches!(addr, AddrType::Git(_)));
-        }
-
-        #[test]
-        fn test_convert_addr_ssh_git() {
-            let input = "git@github.com:galaxy-sec/galaxy-flow.git";
-            let addr = convert_addr(input);
-            assert!(matches!(addr, AddrType::Git(_)));
-        }
-
-        #[test]
-        fn test_convert_addr_local_git() {
-            let input = "/home/user/repo.git";
-            let addr = convert_addr(input);
-            assert!(matches!(addr, AddrType::Git(_)));
-        }
-
-        #[test]
-        #[should_panic(expected = "Unsupported package type")]
-        fn test_convert_addr_unsupported() {
-            let input = "invalid_input";
-            convert_addr(input);
-        }
+    #[test]
+    fn test_convert_addr_local() {
+        let input = "/Users/dayu/ds-build/mac-devkit-0.1.5.tar.gz";
+        let addr = convert_addr(input);
+        assert!(matches!(addr, AddrType::Local(_)));
     }
+
+    #[test]
+    fn test_convert_addr_http_tar() {
+        let input = "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.8.4/galaxy-flow-v0.8.4-aarch64-apple-darwin.tar.gz";
+        let addr = convert_addr(input);
+        assert!(matches!(addr, AddrType::Http(_)));
+    }
+
+    #[test]
+    fn test_convert_addr_https_git() {
+        let input = "https://github.com/galaxy-sec/galaxy-flow.git";
+        let addr = convert_addr(input);
+        assert!(matches!(addr, AddrType::Git(_)));
+    }
+
+    #[test]
+    fn test_convert_addr_ssh_git() {
+        let input = "git@github.com:galaxy-sec/galaxy-flow.git";
+        let addr = convert_addr(input);
+        assert!(matches!(addr, AddrType::Git(_)));
+    }
+
+    #[test]
+    fn test_convert_addr_local_git() {
+        let input = "/home/user/repo.git";
+        let addr = convert_addr(input);
+        assert!(matches!(addr, AddrType::Git(_)));
+    }
+
+    #[test]
+    #[should_panic(expected = "Unsupported package type")]
+    fn test_convert_addr_unsupported() {
+        let input = "invalid_input";
+        convert_addr(input);
+    }
+}
