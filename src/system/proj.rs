@@ -2,6 +2,7 @@ use crate::const_vars::{VALUE_DIR, VALUE_FILE};
 use crate::error::SysReason;
 use crate::predule::*;
 
+use crate::system::spec::SysDefine;
 use crate::{
     const_vars::SYS_MODEL_SPC_ROOT, error::SpecResult, module::depend::DependencySet,
     types::Localizable, workflow::prj::GxlProject,
@@ -161,7 +162,7 @@ impl SysProject {
 }
 impl SysProject {
     pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> SpecResult<Self> {
-        let mod_spec = SysModelSpec::make_new(name, repo)?;
+        let mod_spec = SysModelSpec::make_new(SysDefine::new(name), repo)?;
         let res = DependencySet::default();
         Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }

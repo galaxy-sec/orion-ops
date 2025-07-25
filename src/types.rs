@@ -10,6 +10,7 @@ use orion_variate::{
 
 use crate::error::SpecResult;
 
+pub type AnyResult<T> = anyhow::Result<T>;
 #[derive(Clone)]
 pub struct SysUpdateValue {
     pub vars: VarCollection,

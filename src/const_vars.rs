@@ -9,6 +9,7 @@ pub const ADM_GXL: &str = "adm.gxl";
 pub const MOD_LIST_YML: &str = "mod_list.yml";
 pub const RESOURCE_YML: &str = "resource.yml";
 pub const NET_RES_YML: &str = "net_res.yml";
+pub const SYS_MODLE_DEF_YML: &str = "sys_model.yml";
 pub const VARS_YML: &str = "vars.yml";
 pub const SPEC_YML: &str = "spec.yml";
 pub const VALUE_FILE: &str = "value.yml";
