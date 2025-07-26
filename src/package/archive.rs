@@ -77,8 +77,8 @@ pub fn compress(source_dir: impl AsRef<Path>, output_path: impl AsRef<Path>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs, path::PathBuf};
     use orion_error::TestAssert;
+    use std::{fs, path::PathBuf};
     use tempfile::tempdir;
 
     #[test]
@@ -122,21 +122,19 @@ mod tests {
         assert!(result.is_err());
     }
 
-
-
     //src: ./test/data/data.tar.gz
     //out: ./test/data/temp/
     #[test]
     fn decompress_tar_gz_file() {
         let src = "./test/data.tar.gz";
         let out = "./test/data/temp/";
-        
+
         // 确保测试数据目录存在
         std::fs::create_dir_all("./test/data").unwrap();
-        
+
         // 清理输出目录
         let _ = std::fs::remove_dir_all(out);
-        
+
         // 执行解压
         decompress(src, out).assert();
         assert!(PathBuf::from(out).join("data/yml").exists());

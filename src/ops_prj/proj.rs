@@ -9,7 +9,7 @@ use crate::{error::SpecResult, module::depend::DependencySet, workflow::prj::Gxl
 const OPS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
 const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
-const PRJ_OPS_TARGET:&str = "ops-systems.yml";
+const PRJ_OPS_TARGET: &str = "ops-systems.yml";
 
 use crate::types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath};
 use async_trait::async_trait;
@@ -23,7 +23,7 @@ use orion_variate::vars::{ValueDict, ValueType};
 use super::conf::ProjectConf;
 use super::init::workins_init_gitignore;
 
-#[derive(Getters, Clone, Debug,MutGetters)]
+#[derive(Getters, Clone, Debug, MutGetters)]
 pub struct OpsProject {
     conf: ProjectConf,
     project: GxlProject,
@@ -46,7 +46,6 @@ impl OpsProject {
     }
     pub fn import_ops_sys(&mut self, ops_sys: OpsSystem) {
         self.ops_target.push(ops_sys);
-
     }
     pub fn load(root_local: &Path) -> SpecResult<Self> {
         let mut flag = auto_exit_log!(

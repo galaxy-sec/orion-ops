@@ -38,7 +38,8 @@ pub async fn do_ins_cmd(cmd: GInsCmd) -> SpecResult<()> {
         GInsCmd::Setting(args) => {
             configure_dfx_logging(&args);
             let spec = OpsProject::load(&current_dir).err_conv()?;
-            spec.ia_setting().map_err(|e: Error| SpecReason::Custom(e.to_string()))?;
+            spec.ia_setting()
+                .map_err(|e: Error| SpecReason::Custom(e.to_string()))?;
         }
     }
     Ok(())
