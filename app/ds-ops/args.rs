@@ -9,6 +9,25 @@ pub enum GInsCmd {
     New(NewArgs),
     Update(UpdateArgs),
     Localize(LocalArgs),
+    Setting(SettingArgs),
+}
+
+#[derive(Debug, Args, Getters)]
+pub struct SettingArgs {
+    #[arg(short = 'd', long = "debug", default_value = "0")]
+    pub debug: usize,
+    /// config log ; eg: --log  cmd=debug,parse=info
+    #[arg(long = "log")]
+    pub log: Option<String>,
+}
+impl DfxArgsGetter for SettingArgs {
+    fn debug_level(&self) -> usize {
+        self.debug
+    }
+
+    fn log_setting(&self) -> Option<String> {
+        self.log.clone()
+    }
 }
 
 #[derive(Debug, Args, Getters)]

@@ -1,14 +1,19 @@
+use std::ops;
+
 use crate::const_vars::{VALUE_DIR, VALUE_FILE, WORKINS_PRJ_ROOT};
 use crate::error::OpsReason;
+use crate::ops_prj::system::{OpsSystem, OpsTarget};
 use crate::predule::*;
 
 use crate::{error::SpecResult, module::depend::DependencySet, workflow::prj::GxlProject};
 const OPS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
 const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
+const PRJ_OPS_TARGET:&str = "ops-systems.yml";
 
 use crate::types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath};
 use async_trait::async_trait;
+use getset::{MutGetters, Setters};
 use orion_common::serde::{Configable, Persistable, ValueConfable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
@@ -18,12 +23,14 @@ use orion_variate::vars::{ValueDict, ValueType};
 use super::conf::ProjectConf;
 use super::init::workins_init_gitignore;
 
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug,MutGetters)]
 pub struct OpsProject {
     conf: ProjectConf,
     project: GxlProject,
     root_local: PathBuf,
     val_dict: ValueDict,
+    #[getset(get = "pub", get_mut = "pub")]
+    ops_target: OpsTarget,
 }
 impl OpsProject {
     pub fn new(conf: ProjectConf, root_local: PathBuf) -> Self {
@@ -34,7 +41,12 @@ impl OpsProject {
             project: GxlProject::from((OPS_PRJ_WORK, OPS_PRJ_ADM)),
             root_local,
             val_dict,
+            ops_target: OpsTarget::default(),
         }
+    }
+    pub fn import_ops_sys(&mut self, ops_sys: OpsSystem) {
+        self.ops_target.push(ops_sys);
+
     }
     pub fn load(root_local: &Path) -> SpecResult<Self> {
         let mut flag = auto_exit_log!(
@@ -49,6 +61,8 @@ impl OpsProject {
         );
 
         let conf = ProjectConf::load(root_local)?;
+        let os_target_path = root_local.join(PRJ_OPS_TARGET);
+        let ops_target = OpsTarget::from_conf(&os_target_path).owe_conf()?;
         let root_local = root_local.to_path_buf();
         let project = GxlProject::load_from(&root_local).owe(OpsReason::Load.into())?;
         let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
@@ -64,6 +78,7 @@ impl OpsProject {
             project,
             root_local,
             val_dict,
+            ops_target,
         })
     }
     pub fn save(&self) -> SpecResult<()> {
@@ -78,6 +93,8 @@ impl OpsProject {
             )
         );
         let conf_file = self.root_local().join(OPS_PRJ_FILE);
+        let os_target_path = self.root_local().join(PRJ_OPS_TARGET);
+        self.ops_target.save_conf(&os_target_path).owe_res()?;
         self.conf.save_conf(&conf_file).owe_res()?;
         self.project.save_to(self.root_local(), None).owe_logic()?;
 

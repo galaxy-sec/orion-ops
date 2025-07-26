@@ -40,12 +40,13 @@ impl SysDefine {
         }
     }
 }
-#[derive(Getters, Clone, Debug)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 #[getset(get = "pub ")]
 pub struct SysModelSpec {
     define: SysDefine,
     mod_list: ModulesList,
     local: Option<PathBuf>,
+    #[serde(skip)]
     workflow: SysWorkflows,
 }
 

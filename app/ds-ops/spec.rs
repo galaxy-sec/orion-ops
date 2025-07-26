@@ -9,6 +9,8 @@ use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 
 use crate::args::GInsCmd;
+use anyhow::Error;
+use orion_ops::error::SpecReason;
 
 pub async fn do_ins_cmd(cmd: GInsCmd) -> SpecResult<()> {
     let current_dir = std::env::current_dir().expect("无法获取当前目录");
@@ -32,6 +34,11 @@ pub async fn do_ins_cmd(cmd: GInsCmd) -> SpecResult<()> {
             spec.localize(LocalizeOptions::new(dict, args.use_default_value))
                 .await
                 .err_conv()?;
+        }
+        GInsCmd::Setting(args) => {
+            configure_dfx_logging(&args);
+            let spec = OpsProject::load(&current_dir).err_conv()?;
+            spec.ia_setting().map_err(|e: Error| SpecReason::Custom(e.to_string()))?;
         }
     }
     Ok(())
