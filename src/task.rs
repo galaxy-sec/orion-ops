@@ -2,7 +2,7 @@ use derive_getters::Getters;
 use derive_more::Display;
 use serde::Serialize;
 
-use crate::{error::SpecResult, module::ModelSTD};
+use crate::{error::MainResult, module::ModelSTD};
 
 #[derive(Clone, Debug, PartialEq, Display, Serialize)]
 pub enum OperationType {
@@ -21,17 +21,17 @@ pub enum OperationType {
     Other,
 }
 pub trait Task {
-    fn exec(&self) -> SpecResult<()>;
+    fn exec(&self) -> MainResult<()>;
 }
 
 pub type TaskHandle = Box<dyn Task>;
 
 pub trait NodeSetupTaskBuilder {
-    fn make_setup_task(&self, node: &ModelSTD) -> SpecResult<TaskHandle>;
+    fn make_setup_task(&self, node: &ModelSTD) -> MainResult<TaskHandle>;
 }
 
 pub trait UpdateTaskMaker {
-    fn make_update_task(&self) -> SpecResult<TaskHandle>;
+    fn make_update_task(&self) -> MainResult<TaskHandle>;
 }
 
 #[derive(Getters)]
@@ -51,7 +51,7 @@ impl CombinedTask {
     }
 }
 impl Task for CombinedTask {
-    fn exec(&self) -> SpecResult<()> {
+    fn exec(&self) -> MainResult<()> {
         for task in &self.subs {
             task.exec()?;
         }
@@ -69,7 +69,7 @@ impl EchoTask {
 }
 
 impl Task for EchoTask {
-    fn exec(&self) -> SpecResult<()> {
+    fn exec(&self) -> MainResult<()> {
         println!("echo task:\n{}\n", self.cmd);
         Ok(())
     }

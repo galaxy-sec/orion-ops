@@ -38,7 +38,7 @@ impl ModuleSpec {
             local: None,
         }
     }
-    pub fn clean_other(&mut self, node: &ModelSTD) -> SpecResult<()> {
+    pub fn clean_other(&mut self, node: &ModelSTD) -> MainResult<()> {
         if let Some(local) = &self.local {
             let src_path = local.join(MOD_DIR);
             let subs = get_sub_dirs(&src_path).owe_res()?;
@@ -50,13 +50,13 @@ impl ModuleSpec {
         }
         Ok(())
     }
-    fn clean_path(path: &Path) -> SpecResult<()> {
+    fn clean_path(path: &Path) -> MainResult<()> {
         if path.exists() {
             std::fs::remove_dir_all(path).owe_res().with(path)?;
         }
         Ok(())
     }
-    pub fn save_main(&self, path: &Path, name: Option<String>) -> SpecResult<()> {
+    pub fn save_main(&self, path: &Path, name: Option<String>) -> MainResult<()> {
         let mod_path = path.join(name.unwrap_or(self.name().clone()));
         std::fs::create_dir_all(&mod_path)
             .owe_conf()
@@ -125,7 +125,7 @@ impl Localizable for ModuleSpec {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         for target in self.targets.values() {
             let target_dst_path = dst_path
                 .as_ref()
@@ -177,7 +177,7 @@ impl ModuleSpec {
         ModuleSpec::init("postgresql", vec![k8s, host])
     }
 
-    pub fn make_new(name: &str) -> SpecResult<ModuleSpec> {
+    pub fn make_new(name: &str) -> MainResult<ModuleSpec> {
         let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
         conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
             "https://mirrors.aliyun.com/postgresql/README",
@@ -248,10 +248,10 @@ impl ModuleSpec {
     }
 }
 
-pub fn make_mod_spec_example() -> SpecResult<ModuleSpec> {
+pub fn make_mod_spec_example() -> MainResult<ModuleSpec> {
     Ok(ModuleSpec::for_example())
 }
-pub fn make_mod_spec_4test() -> SpecResult<ModuleSpec> {
+pub fn make_mod_spec_4test() -> MainResult<ModuleSpec> {
     let name = "postgresql";
     let k8s = ModModelSpec::init(
         ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),

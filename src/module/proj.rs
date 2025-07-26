@@ -45,7 +45,7 @@ impl ModProject {
             root_local,
         }
     }
-    pub fn load(root_local: &Path) -> SpecResult<Self> {
+    pub fn load(root_local: &Path) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "/mod_prj",
@@ -70,7 +70,7 @@ impl ModProject {
             root_local,
         })
     }
-    pub fn save(&self) -> SpecResult<()> {
+    pub fn save(&self) -> MainResult<()> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "spec/local/modprj",
@@ -93,12 +93,12 @@ impl ModProject {
         flag.mark_suc();
         Ok(())
     }
-    pub fn load_global_value(&self, value: &Option<String>) -> SpecResult<ValueDict> {
+    pub fn load_global_value(&self, value: &Option<String>) -> MainResult<ValueDict> {
         load_project_global_value(self.root_local(), value)
     }
 }
 
-pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecResult<ValueDict> {
+pub fn load_project_global_value(root: &Path, options: &Option<String>) -> MainResult<ValueDict> {
     let value_root = ensure_path(root.join(VALUE_DIR)).owe_logic()?;
     let value_file = if let Some(v_file) = options {
         PathBuf::from(v_file)
@@ -116,7 +116,7 @@ pub fn load_project_global_value(root: &Path, options: &Option<String>) -> SpecR
 }
 
 impl ModConf {
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
         self.test_envs
             .update(options)
             .await
@@ -125,7 +125,7 @@ impl ModConf {
 }
 
 impl ModProject {
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
         self.conf.update(options).await?;
         self.mod_spec()
             .update_local(self.root_local(), options)
@@ -141,7 +141,7 @@ impl Localizable for ModConf {
         &self,
         _dst_path: Option<ValuePath>,
         _options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         Ok(())
     }
 }
@@ -152,7 +152,7 @@ impl Localizable for ModProject {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         //let local_path = LocalizePath::from_root(self.root_local());
         self.conf
             .localize(dst_path.clone(), options.clone())
@@ -162,12 +162,12 @@ impl Localizable for ModProject {
     }
 }
 impl ModProject {
-    pub fn make_new(prj_path: &Path, name: &str) -> SpecResult<Self> {
+    pub fn make_new(prj_path: &Path, name: &str) -> MainResult<Self> {
         let mod_spec = ModuleSpec::make_new(name)?;
         let res = DependencySet::default();
         Ok(ModProject::new(mod_spec, res, prj_path.to_path_buf()))
     }
-    pub fn make_test_prj(name: &str) -> SpecResult<Self> {
+    pub fn make_test_prj(name: &str) -> MainResult<Self> {
         let prj_path = PathBuf::from(MODULES_SPC_ROOT).join(name);
         make_clean_path(&prj_path).owe_logic()?;
         let proj = ModProject::make_new(&prj_path, name)?;
@@ -176,7 +176,7 @@ impl ModProject {
     }
 }
 
-pub fn make_mod_prj_testins(prj_path: &Path) -> SpecResult<ModProject> {
+pub fn make_mod_prj_testins(prj_path: &Path) -> MainResult<ModProject> {
     let mod_spec = ModuleSpec::for_example();
     let mut res = DependencySet::default();
     res.push(
@@ -206,7 +206,7 @@ pub mod tests {
         types::Localizable,
     };
     #[tokio::test]
-    async fn test_mod_prj_new() -> SpecResult<()> {
+    async fn test_mod_prj_new() -> MainResult<()> {
         test_init();
         let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("mod-new");
         make_clean_path(&prj_path).owe_logic()?;
@@ -216,7 +216,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn test_mod_prj_example() -> SpecResult<()> {
+    async fn test_mod_prj_example() -> MainResult<()> {
         test_init();
 
         let prj_path = PathBuf::from(MODULES_SPC_ROOT).join("postgresql");

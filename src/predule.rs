@@ -6,6 +6,6 @@ pub use serde_derive::{Deserialize, Serialize};
 pub use std::path::Path;
 pub use std::path::PathBuf;
 
-pub use crate::error::SpecResult;
+pub use crate::error::MainResult;
 pub use async_trait::async_trait;
 pub use contracts::requires;

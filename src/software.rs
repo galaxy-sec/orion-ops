@@ -90,7 +90,7 @@ mod tests {
     use crate::{
         conf::{ConfFile, ConfSpec},
         const_vars::CONFS_DIR,
-        error::SpecResult,
+        error::MainResult,
     };
 
     use super::*;
@@ -104,7 +104,7 @@ mod tests {
 
     // 序列化测试
     #[test]
-    fn confspec_save_load() -> SpecResult<()> {
+    fn confspec_save_load() -> MainResult<()> {
         let root_path = PathBuf::from("./example/spec/redis");
         std::fs::create_dir_all(&root_path).owe_res()?;
         let mut redis = ConfSpec::new("1.0", CONFS_DIR);
@@ -128,7 +128,7 @@ mod tests {
 
     // 序列化测试
     #[test]
-    fn software_save_load() -> SpecResult<()> {
+    fn software_save_load() -> MainResult<()> {
         //let root_path = PathBuf::from("./example/spec/redis");
         let root_path = temp_dir();
         std::fs::create_dir_all(&root_path).owe_res()?;

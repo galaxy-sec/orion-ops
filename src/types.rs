@@ -8,7 +8,7 @@ use orion_variate::{
     vars::{ValueDict, VarCollection},
 };
 
-use crate::error::SpecResult;
+use crate::error::MainResult;
 
 pub type AnyResult<T> = anyhow::Result<T>;
 #[derive(Clone)]
@@ -27,7 +27,7 @@ impl SysUpdateValue {
 #[async_trait]
 pub trait SysUpdateable<T> {
     //pub type UpdateObj = T;
-    async fn update_local(self, path: &Path, options: &UpdateOptions) -> SpecResult<T>;
+    async fn update_local(self, path: &Path, options: &UpdateOptions) -> MainResult<T>;
 }
 
 #[derive(Clone, Debug, Default)]
@@ -67,7 +67,7 @@ pub trait Localizable {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()>;
+    ) -> MainResult<()>;
 }
 
 #[derive(Clone, Debug, Getters)]

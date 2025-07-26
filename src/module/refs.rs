@@ -1,12 +1,12 @@
 use super::prelude::*;
-use crate::error::{ModReason, SpecError};
+use crate::error::{MainError, ModReason};
 use crate::predule::*;
 
 use orion_error::UvsLogicFrom;
 
 use super::ModelSTD;
 use crate::types::{Localizable, LocalizeOptions, ValuePath};
-use crate::{const_vars::MOD_DIR, error::SpecResult, module::model::ModModelSpec};
+use crate::{const_vars::MOD_DIR, error::MainResult, module::model::ModModelSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
@@ -48,7 +48,7 @@ impl ModuleSpecRef {
     pub fn set_local(&mut self, local: PathBuf) {
         self.local = Some(local);
     }
-    pub fn get_target_spec(&self) -> SpecResult<Option<ModModelSpec>> {
+    pub fn get_target_spec(&self) -> MainResult<Option<ModModelSpec>> {
         if self.is_enable() {
             if let Some(local) = &self.local {
                 let target_root = local.join(self.name());
@@ -56,7 +56,7 @@ impl ModuleSpecRef {
                 if target_path.exists() {
                     let spec = ModModelSpec::load_from(&target_path)
                         .with(&target_root)
-                        .owe(SpecReason::from(ModReason::Load))?;
+                        .owe(MainReason::from(ModReason::Load))?;
                     return Ok(Some(spec));
                 }
             }
@@ -70,7 +70,7 @@ impl ModuleSpecRef {
         &self,
         _sys_root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<UpdateUnit> {
+    ) -> MainResult<UpdateUnit> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {
             let mut flag = auto_exit_log!(
@@ -86,7 +86,7 @@ impl ModuleSpecRef {
                     .addr
                     .update_local_rename(local, tmp_name, options)
                     .await
-                    .owe(SpecReason::from(ModReason::Update))?;
+                    .owe(MainReason::from(ModReason::Update))?;
                 let mod_path = prj_path.position().join(MOD_DIR);
                 let tmp_path = local.join(tmp_name);
                 make_clean_path(&target_root).owe_res()?;
@@ -104,16 +104,16 @@ impl ModuleSpecRef {
             //let target_path = target_root.join(self.node().to_string());
             let spec = ModModelSpec::load_from(&target_path)
                 .with(&target_root)
-                .owe(SpecReason::from(ModReason::Load))?;
+                .owe(MainReason::from(ModReason::Load))?;
             let _x = spec
                 .update_local(&target_path, options)
                 .await
-                .owe(SpecReason::from(ModReason::Update))?;
+                .owe(MainReason::from(ModReason::Update))?;
             ModModelSpec::clean_other(&target_root, self.model())?;
             flag.mark_suc();
             return Ok(_x);
         } else {
-            Err(SpecError::from_logic(
+            Err(MainError::from_logic(
                 "no local value in ModuleSpecRef ".into(),
             ))
         }
@@ -131,7 +131,7 @@ impl Localizable for ModuleSpecRef {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         if self.enable.is_none_or(|x| x) {
             if let Some(local) = &self.local {
                 let mut flag = auto_exit_log!(
@@ -141,7 +141,7 @@ impl Localizable for ModuleSpecRef {
                 let mod_path = local.join(self.name.as_str());
                 let target_path = mod_path.join(self.model().to_string());
                 let spec =
-                    ModModelSpec::load_from(&target_path).owe(SpecReason::from(ModReason::Load))?;
+                    ModModelSpec::load_from(&target_path).owe(MainReason::from(ModReason::Load))?;
                 //if let Some(dst) = &dst_path {
                 //    spec.save_main(dst.local(), None)?;
                 //}

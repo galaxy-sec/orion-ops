@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{const_vars::CONFS_DIR, error::SpecResult};
+use crate::{const_vars::CONFS_DIR, error::MainResult};
 use async_trait::async_trait;
 use orion_common::serde::Configable;
 use orion_infra::auto_exit_log;
@@ -66,13 +66,13 @@ impl<'de> serde::Deserialize<'de> for ConfSpecRef {
 }
 
 impl ConfSpecRef {
-    pub fn new<S: Into<String>>(path: S) -> SpecResult<Self> {
+    pub fn new<S: Into<String>>(path: S) -> MainResult<Self> {
         let path = path.into();
         let file_path = PathBuf::from(path.as_str());
         let obj = ConfSpec::from_conf(&file_path).owe_conf()?;
         Ok(Self { path, obj })
     }
-    fn load_ref(path: &str) -> SpecResult<ConfSpec> {
+    fn load_ref(path: &str) -> MainResult<ConfSpec> {
         let path = PathBuf::from(path);
         ConfSpec::from_conf(&path).owe_conf()
     }
@@ -91,7 +91,7 @@ impl ConfFile {
     }
 }
 impl ConfSpec {
-    pub fn save(&self, path: &PathBuf) -> SpecResult<()> {
+    pub fn save(&self, path: &PathBuf) -> MainResult<()> {
         let mut ctx = WithContext::want("save conf spec");
         ctx.with("path", format!("path: {}", path.display()));
         let data_content = toml::to_string(self).owe_data().with(&ctx)?;
@@ -172,7 +172,7 @@ mod tests {
         assert!(with_addr.addr().is_some());
     }
     #[tokio::test]
-    async fn test_async_update() -> SpecResult<()> {
+    async fn test_async_update() -> MainResult<()> {
         test_init();
         let src_dir = PathBuf::from("./temp/src");
         let dst_dir = PathBuf::from("./temp/dst");
@@ -206,7 +206,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn test_conf_with_http_addr() -> SpecResult<()> {
+    async fn test_conf_with_http_addr() -> MainResult<()> {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/global.yml");
@@ -246,7 +246,7 @@ mod tests {
         Ok(())
     }
     #[tokio::test(flavor = "current_thread")]
-    async fn test_conf_with_addr_addr() -> SpecResult<()> {
+    async fn test_conf_with_addr_addr() -> MainResult<()> {
         // 创建包含HttpAddr的配置
         let mut conf = ConfSpec::new("1.0", CONFS_DIR);
         conf.add(ConfFile::new("bitnami").with_addr(GitAddr::from(

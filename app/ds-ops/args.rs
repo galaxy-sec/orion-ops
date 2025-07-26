@@ -7,6 +7,7 @@ use orion_ops::infra::DfxArgsGetter;
 #[command(version, about)]
 pub enum GInsCmd {
     New(NewArgs),
+    Import(ImportArgs),
     Update(UpdateArgs),
     Localize(LocalArgs),
     Setting(SettingArgs),
@@ -52,7 +53,38 @@ pub struct UpdateArgs {
     #[arg(short = 'f', long = "force", default_value = "0")]
     pub force: usize,
 }
+
 impl DfxArgsGetter for UpdateArgs {
+    fn debug_level(&self) -> usize {
+        self.debug
+    }
+
+    fn log_setting(&self) -> Option<String> {
+        self.log.clone()
+    }
+}
+
+#[derive(Debug, Args, Getters)]
+pub struct ImportArgs {
+    ///output run log ;
+    ///level : 1,2,3,4
+    #[arg(short = 'd', long = "debug", default_value = "0")]
+    pub debug: usize,
+    /// config log ; eg: --log  cmd=debug,parse=info
+    #[arg(long = "log")]
+    pub log: Option<String>,
+
+    /// force update;
+    /// eg : -f 2;
+    /// 1,2,3: force update remote git
+    #[arg(short = 'f', long = "force", default_value = "0")]
+    pub force: usize,
+
+    #[arg(short = 'p', long = "path")]
+    pub path: String,
+}
+
+impl DfxArgsGetter for ImportArgs {
     fn debug_level(&self) -> usize {
         self.debug
     }

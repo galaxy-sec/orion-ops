@@ -1,20 +1,18 @@
-use std::ops;
-
 use crate::const_vars::{VALUE_DIR, VALUE_FILE, WORKINS_PRJ_ROOT};
 use crate::error::OpsReason;
 use crate::ops_prj::system::{OpsSystem, OpsTarget};
 use crate::predule::*;
 
-use crate::{error::SpecResult, module::depend::DependencySet, workflow::prj::GxlProject};
+use crate::{error::MainResult, module::depend::DependencySet, workflow::prj::GxlProject};
 const OPS_PRJ_WORK: &str = include_str!("init/_gal/work.gxl");
 const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 const PRJ_OPS_TARGET: &str = "ops-systems.yml";
 
-use crate::types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath};
+use crate::types::{SysUpdateable, ValuePath};
 use async_trait::async_trait;
-use getset::{MutGetters, Setters};
-use orion_common::serde::{Configable, Persistable, ValueConfable};
+use getset::MutGetters;
+use orion_common::serde::{Configable, Persistable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
 use orion_variate::update::UpdateOptions;
@@ -45,9 +43,11 @@ impl OpsProject {
         }
     }
     pub fn import_ops_sys(&mut self, ops_sys: OpsSystem) {
-        self.ops_target.push(ops_sys);
+        if !self.ops_target.contains(&ops_sys) {
+            self.ops_target.push(ops_sys);
+        }
     }
-    pub fn load(root_local: &Path) -> SpecResult<Self> {
+    pub fn load(root_local: &Path) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj",
@@ -80,7 +80,7 @@ impl OpsProject {
             ops_target,
         })
     }
-    pub fn save(&self) -> SpecResult<()> {
+    pub fn save(&self) -> MainResult<()> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "workprj",
@@ -108,7 +108,7 @@ impl OpsProject {
 
 #[async_trait]
 impl SysUpdateable<OpsProject> for OpsProject {
-    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> SpecResult<Self> {
+    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> MainResult<Self> {
         self.conf = self.conf.update_local(path, options).await?;
         self.save()?;
         Ok(self)
@@ -116,36 +116,24 @@ impl SysUpdateable<OpsProject> for OpsProject {
 }
 
 impl OpsProject {
-    pub async fn update(self, options: &UpdateOptions) -> SpecResult<Self> {
+    pub async fn update(self, options: &UpdateOptions) -> MainResult<Self> {
         let path = self.root_local().clone();
         self.update_local(&path, options).await
     }
 }
 
 impl OpsProject {
-    pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
-        let value_path = self.value_path().ensure_exist().owe_logic()?;
-        let value_file = value_path.value_file();
-        let dict = ValueDict::from_valconf(&value_file).owe_res()?;
-        let cur_opt = options.with_global(dict);
-        let dst_path = Some(value_path);
-
-        self.conf
-            .localize(dst_path.clone(), cur_opt.clone())
-            .await?;
-        Ok(())
-    }
     pub fn value_path(&self) -> ValuePath {
         let value_root = self.root_local().join(VALUE_DIR);
         ValuePath::from_root(value_root)
     }
 }
 impl OpsProject {
-    pub fn make_new(prj_path: &Path, name: &str) -> SpecResult<Self> {
+    pub fn make_new(prj_path: &Path, name: &str) -> MainResult<Self> {
         let conf = ProjectConf::new(name, DependencySet::default());
         Ok(OpsProject::new(conf, prj_path.to_path_buf()))
     }
-    pub fn for_test(name: &str) -> SpecResult<Self> {
+    pub fn for_test(name: &str) -> MainResult<Self> {
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join(name);
         make_clean_path(&prj_path).owe_logic()?;
 
@@ -164,12 +152,12 @@ pub mod tests {
     use orion_variate::{tools::test_init, update::UpdateOptions};
 
     use crate::{
-        const_vars::WORKINS_PRJ_ROOT, error::SpecResult, ops_prj::proj::OpsProject,
+        const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject,
         types::LocalizeOptions,
     };
 
     #[tokio::test]
-    async fn test_workins_example() -> SpecResult<()> {
+    async fn test_workins_example() -> MainResult<()> {
         test_init();
         let prj_path = PathBuf::from(WORKINS_PRJ_ROOT).join("workins_sys_1");
         make_clean_path(&prj_path).owe_logic()?;
@@ -180,10 +168,6 @@ pub mod tests {
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");
-        project
-            .localize(LocalizeOptions::for_test())
-            .await
-            .assert("spec.localize");
         Ok(())
     }
 }

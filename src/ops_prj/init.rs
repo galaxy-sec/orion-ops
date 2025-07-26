@@ -2,7 +2,7 @@ use std::path::Path;
 
 use orion_error::{ErrorOwe, ErrorWith};
 
-use crate::{error::SpecResult, task::OperationType, workflow::gxl::GxlAction};
+use crate::{error::MainResult, task::OperationType, workflow::gxl::GxlAction};
 
 const SYS_SETUP_GXL: &str = include_str!("init/workflows/setup.gxl");
 const SYS_UPDATE_GXL: &str = include_str!("init/workflows/update.gxl");
@@ -32,7 +32,7 @@ impl WorkOperatsIniter for GxlAction {
     }
 }
 
-pub fn workins_init_gitignore(path: &Path) -> SpecResult<()> {
+pub fn workins_init_gitignore(path: &Path) -> MainResult<()> {
     let ignore_path = path.join(".gitignore");
     if !ignore_path.exists() {
         std::fs::write(&ignore_path, SYS_GITIGNORE)

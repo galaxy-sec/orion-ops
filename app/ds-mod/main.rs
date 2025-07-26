@@ -9,7 +9,7 @@ extern crate clap;
 use crate::args::GxModCmd;
 use clap::Parser;
 use orion_error::ErrorOwe;
-use orion_ops::error::{SpecResult, report_error};
+use orion_ops::error::{MainResult, report_error};
 use orion_variate::vars::setup_start_env_vars;
 use spec::do_mod_cmd;
 
@@ -27,7 +27,7 @@ async fn main() {
 
 pub struct GxMod {}
 impl GxMod {
-    pub async fn run() -> SpecResult<()> {
+    pub async fn run() -> MainResult<()> {
         setup_start_env_vars().owe_res()?;
         let cmd = GxModCmd::parse();
         do_mod_cmd(cmd).await?;

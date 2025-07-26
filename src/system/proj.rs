@@ -4,7 +4,7 @@ use crate::predule::*;
 
 use crate::system::spec::SysDefine;
 use crate::{
-    const_vars::SYS_MODEL_SPC_ROOT, error::SpecResult, module::depend::DependencySet,
+    const_vars::SYS_MODEL_SPC_ROOT, error::MainResult, module::depend::DependencySet,
     types::Localizable, workflow::prj::GxlProject,
 };
 
@@ -53,7 +53,7 @@ impl SysProject {
             val_dict,
         }
     }
-    pub fn load(root_local: &Path) -> SpecResult<Self> {
+    pub fn load(root_local: &Path) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj",
@@ -87,7 +87,7 @@ impl SysProject {
             val_dict,
         })
     }
-    pub fn save(&self) -> SpecResult<()> {
+    pub fn save(&self) -> MainResult<()> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "sysprj",
@@ -115,7 +115,7 @@ impl SysProject {
 }
 
 impl SysConf {
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
         self.test_envs
             .update(options)
             .await
@@ -124,7 +124,7 @@ impl SysConf {
 }
 
 impl SysProject {
-    pub async fn update(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
         self.conf.update(options).await?;
         self.sys_spec().update_local(options).await
     }
@@ -136,13 +136,13 @@ impl Localizable for SysConf {
         &self,
         _dst_path: Option<ValuePath>,
         _options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         Ok(())
     }
 }
 
 impl SysProject {
-    pub async fn localize(&self, options: LocalizeOptions) -> SpecResult<()> {
+    pub async fn localize(&self, options: LocalizeOptions) -> MainResult<()> {
         let value_path = self.value_path().ensure_exist().owe_res()?;
         let value_file = value_path.value_file();
         let dict = ValueDict::from_valconf(&value_file).owe_res()?;
@@ -161,12 +161,12 @@ impl SysProject {
     }
 }
 impl SysProject {
-    pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> SpecResult<Self> {
+    pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> MainResult<Self> {
         let mod_spec = SysModelSpec::make_new(SysDefine::new(name), repo)?;
         let res = DependencySet::default();
         Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }
-    pub fn make_test_prj(name: &str, repo: &str) -> SpecResult<Self> {
+    pub fn make_test_prj(name: &str, repo: &str) -> MainResult<Self> {
         let prj_path = PathBuf::from(SYS_MODEL_SPC_ROOT).join(name);
         make_clean_path(&prj_path).owe_logic()?;
         let proj = SysProject::make_new(&prj_path, name, repo)?;
@@ -189,13 +189,13 @@ pub mod tests {
 
     use crate::{
         const_vars::SYS_MODEL_PRJ_ROOT,
-        error::SpecResult,
+        error::MainResult,
         module::depend::{Dependency, DependencySet},
         system::{proj::SysProject, spec::SysModelSpec},
         types::LocalizeOptions,
     };
     #[tokio::test]
-    async fn test_mod_prj_new() -> SpecResult<()> {
+    async fn test_mod_prj_new() -> MainResult<()> {
         test_init();
         let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("sys_new");
         make_clean_path(&prj_path).owe_logic()?;
@@ -205,7 +205,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn test_sys_prj_example() -> SpecResult<()> {
+    async fn test_sys_prj_example() -> MainResult<()> {
         test_init();
 
         let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("example_sys2");
@@ -228,7 +228,7 @@ pub mod tests {
         Ok(())
     }
 
-    fn make_sys_prj_testins(prj_path: &Path) -> SpecResult<SysProject> {
+    fn make_sys_prj_testins(prj_path: &Path) -> MainResult<SysProject> {
         let mod_spec = SysModelSpec::for_example("exmaple_sys2")?;
         let mut res = DependencySet::default();
         res.push(

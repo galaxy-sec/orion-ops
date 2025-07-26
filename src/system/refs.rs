@@ -1,5 +1,5 @@
 use crate::{
-    error::{SpecReason, SysReason, ToErr},
+    error::{MainReason, SysReason, ToErr},
     predule::*,
     types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath},
 };
@@ -9,7 +9,7 @@ use orion_error::{UvsLogicFrom, UvsReason};
 use orion_infra::auto_exit_log;
 use orion_variate::{addr::AddrType, types::LocalUpdate, update::UpdateOptions};
 
-use crate::error::SpecResult;
+use crate::error::MainResult;
 
 use super::spec::SysModelSpec;
 
@@ -46,7 +46,7 @@ impl SysModelSpecRef {
         path.join(self.name()).exists()
     }
 
-    pub fn load(mut self, path: &Path) -> SpecResult<Self> {
+    pub fn load(mut self, path: &Path) -> MainResult<Self> {
         let path = path.join(self.name());
         let mut flag = auto_exit_log!(
             info!(
@@ -67,7 +67,7 @@ impl SysModelSpecRef {
 
 #[async_trait]
 impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
-    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> SpecResult<Self> {
+    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj/sys-model",
@@ -97,12 +97,12 @@ impl Localizable for SysModelSpecRef {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         if let Some(spec) = &self.spec {
             spec.localize(dst_path, options).await?;
             Ok(())
         } else {
-            SpecReason::from(UvsReason::from_logic("miss spec from spec-ref".into())).err_result()
+            MainReason::from(UvsReason::from_logic("miss spec from spec-ref".into())).err_result()
         }
     }
 }

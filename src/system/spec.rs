@@ -21,11 +21,11 @@ use super::{
 };
 use crate::types::LocalizeOptions;
 use crate::{
-    error::{SpecReason, SpecResult, ToErr},
+    error::{MainReason, MainResult, ToErr},
     module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, Getters, WithSetters)]
+#[derive(Clone, Debug, Serialize, Deserialize, Getters, WithSetters,PartialEq)]
 pub struct SysDefine {
     #[getset(get = "pub ")]
     name: String,
@@ -57,10 +57,10 @@ impl SysModelSpec {
     pub fn add_mod_ref(&mut self, modx: ModuleSpecRef) {
         self.mod_list.add_ref(modx)
     }
-    pub fn save_to(&self, path: &Path) -> SpecResult<()> {
+    pub fn save_to(&self, path: &Path) -> MainResult<()> {
         self.save_local(path, self.define.name())
     }
-    pub fn save_local(&self, path: &Path, name: &str) -> SpecResult<()> {
+    pub fn save_local(&self, path: &Path, name: &str) -> MainResult<()> {
         let root = path.join(name);
 
         let mut flag = auto_exit_log!(
@@ -80,7 +80,7 @@ impl SysModelSpec {
         Ok(())
     }
 
-    pub fn load_from(root: &Path) -> SpecResult<Self> {
+    pub fn load_from(root: &Path) -> MainResult<Self> {
         let mut ctx = WithContext::want("load syspec");
         let name = root
             .file_name()
@@ -128,7 +128,7 @@ impl SysModelSpec {
         }
     }
 
-    pub async fn update_local(&self, options: &UpdateOptions) -> SpecResult<()> {
+    pub async fn update_local(&self, options: &UpdateOptions) -> MainResult<()> {
         if let Some(local) = &self.local {
             let value = self.mod_list.update(local, options).await?;
             let path = local.join("vars.yml");
@@ -138,7 +138,7 @@ impl SysModelSpec {
             value.vars.save_yml(&path).owe_res()?;
             Ok(())
         } else {
-            SpecReason::from(ElementReason::Miss("local path".into())).err_result()
+            MainReason::from(ElementReason::Miss("local path".into())).err_result()
         }
     }
 }
@@ -149,23 +149,23 @@ impl Localizable for SysModelSpec {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         if let Some(_local) = &self.local {
             self.mod_list.localize(dst_path, options).await?;
             Ok(())
         } else {
-            SpecReason::from(ElementReason::Miss("local path".into())).err_result()
+            MainReason::from(ElementReason::Miss("local path".into())).err_result()
         }
     }
 }
 impl SysModelSpec {
-    pub fn for_example(name: &str) -> SpecResult<SysModelSpec> {
+    pub fn for_example(name: &str) -> MainResult<SysModelSpec> {
         ModProject::make_test_prj("redis2_mock")?;
         ModProject::make_test_prj("mysql2_mock")?;
         make_sys_spec_test(SysDefine::new(name), vec!["redis2_mock", "mysql2_mock"])
     }
 
-    pub fn make_new(define: SysDefine, repo: &str) -> SpecResult<SysModelSpec> {
+    pub fn make_new(define: SysDefine, repo: &str) -> MainResult<SysModelSpec> {
         let actions = SysWorkflows::sys_tpl_init();
         let mut modul_spec = SysModelSpec::new(define, actions);
         let mod_name = "you_mod1";
@@ -198,7 +198,7 @@ impl SysModelSpec {
     }
 }
 
-pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> SpecResult<SysModelSpec> {
+pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> MainResult<SysModelSpec> {
     let actions = SysWorkflows::sys_tpl_init();
     let mut modul_spec = SysModelSpec::new(define, actions);
     for mod_name in mod_names {
@@ -225,7 +225,7 @@ pub mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn build_example_sys_spec() -> SpecResult<()> {
+    async fn build_example_sys_spec() -> MainResult<()> {
         test_init();
         let sys_name = "example_sys";
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT).join(sys_name);

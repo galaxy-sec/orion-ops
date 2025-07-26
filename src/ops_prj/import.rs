@@ -1,22 +1,21 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use fs_extra::dir::{CopyOptions, move_dir};
 use orion_common::serde::Configable;
+use orion_error::{ErrorOwe, ErrorWith, UvsConfFrom};
 use orion_infra::path::make_clean_path;
 use orion_variate::{
+    archive::decompress,
     types::LocalUpdate,
     update::UpdateOptions,
     vars::{EnvEvalable, ValueDict, VarCollection},
 };
 
 use crate::{
+    error::{MainError, MainResult},
     ops_prj::{proj::OpsProject, system::OpsSystem},
-    package::{
-        archive::decompress,
-        types::{PackageType, build_pkg, convert_addr},
-    },
+    package::types::{PackageType, build_pkg, convert_addr},
     system::spec::SysModelSpec,
-    types::AnyResult,
 };
 
 impl OpsProject {
@@ -24,7 +23,7 @@ impl OpsProject {
         &mut self,
         path: &str,
         up_opt: &UpdateOptions,
-    ) -> AnyResult<SysModelSpec> {
+    ) -> MainResult<SysModelSpec> {
         // 1. 解析地址
         let addr = convert_addr(path);
 
@@ -36,17 +35,20 @@ impl OpsProject {
                 .env_eval(&ValueDict::default()),
         );
 
-        let up_unit = addr.update_local(&work_path, up_opt).await?;
+        let up_unit = addr.update_local(&work_path, up_opt).await.owe_data()?;
         let package = build_pkg(path);
         let sys_src = match package {
             //tar.gz ,tgz
             PackageType::Bin(bin_package) => {
                 let out_path = work_path.join(bin_package.name());
-                make_clean_path(&out_path)?;
-                decompress(up_unit.position(), out_path.clone())?;
+                make_clean_path(&out_path).owe_res()?;
+                decompress(up_unit.position(), out_path.clone())
+                    .owe_sys()
+                    .want("decompress tar.gz")
+                    .with(up_unit.position().display().to_string())?;
                 out_path
             }
-            PackageType::Git(git_package) => up_unit.position().to_path_buf(),
+            PackageType::Git(_git_package) => up_unit.position().to_path_buf(),
         };
         let sys_spec = SysModelSpec::load_from(&sys_src.join("sys"))?;
 
@@ -60,29 +62,42 @@ impl OpsProject {
             let sys_dst_path = sys_dst_root.join(last_name);
             let sys_new_path = sys_dst_root.join(sys_spec.define().name());
             if sys_dst_path.exists() {
-                std::fs::remove_dir_all(&sys_dst_path)?;
+                std::fs::remove_dir_all(&sys_dst_path).owe_res()?;
             }
             if sys_new_path.exists() {
-                std::fs::remove_dir_all(&sys_new_path)?;
+                std::fs::remove_dir_all(&sys_new_path).owe_res()?;
             }
-            move_dir(sys_src, sys_dst_root, &CopyOptions::new())?;
-            std::fs::rename(sys_dst_path, sys_new_path)?;
+            move_dir(sys_src, sys_dst_root, &CopyOptions::new()).owe_res()?;
+            std::fs::rename(sys_dst_path, sys_new_path).owe_res()?;
             let value_path = self
                 .root_local()
                 .join("values")
+                .join(sys_spec.define().name());
+            let value_link = self
+                .root_local()
                 .join(sys_spec.define().name())
-                .join("value.yml");
-            if !value_path.exists() {
-                ValueDict::default().save_conf(&value_path)?;
+                .join("values");
+            let value_file = value_path.join("value.yml");
+            if !value_file.exists() {
+                std::fs::create_dir(&value_path).owe_res()?;
+                ValueDict::default().save_conf(&value_file).owe_res()?;
+            }
+            if !value_link.exists() {
+                std::os::unix::fs::symlink(&value_path, &value_link)
+                    .owe_res()
+                    .with(&value_link)?;
             }
         } else {
-            anyhow::bail!("import package failed, bad path: {}", sys_src.display());
+            MainError::from_conf(format!(
+                "import package failed, bad path: {}",
+                sys_src.display()
+            ));
         }
         self.save()?;
         // 5. 提供系统包的信息， 包组所有组件。
         Ok(sys_spec)
     }
-    pub fn ia_setting(&self) -> AnyResult<()> {
+    pub fn ia_setting(&self) -> MainResult<()> {
         use inquire::{Confirm, Text};
 
         for i in self.ops_target().iter() {
@@ -92,8 +107,8 @@ impl OpsProject {
                 .join("values")
                 .join(i.sys().name())
                 .join("value.yml");
-            let mut vars_vec = VarCollection::from_conf(&vars_path)?;
-            let mut vals_dict = ValueDict::from_conf(&value_path)?;
+            let vars_vec = VarCollection::from_conf(&vars_path).owe_res()?;
+            let mut vals_dict = ValueDict::from_conf(&value_path).owe_res()?;
 
             // 通过交互模式设定vars的值
             println!("Setting variables for {}", i.sys().name());
@@ -107,17 +122,21 @@ impl OpsProject {
                 let mut default_value = var.value();
                 let value_str = Text::new(&prompt)
                     .with_default(&var.value().to_string())
-                    .prompt()?;
-                default_value.update_by_str(value_str.as_str())?;
+                    .prompt()
+                    .owe_data()?;
+                default_value.update_by_str(value_str.as_str()).owe_data()?;
                 vals_dict.insert(var.name().to_string(), default_value);
             }
 
             // 如果用户确认保存更改
-            if Confirm::new("Do you want to save these changes?").prompt()? {
+            if Confirm::new("Do you want to save these changes?")
+                .prompt()
+                .owe_data()?
+            {
                 // 保存修改后的vars到文件
                 // vars.save_to_file(&vars_path)?; // 假设的方法
                 println!("Changes saved to {}", vars_path.display());
-                vals_dict.save_conf(&value_path)?;
+                vals_dict.save_conf(&value_path).owe_res()?;
             }
         }
         Ok(())
@@ -147,6 +166,7 @@ mod test {
             .assert();
         println!("{}", serde_json::to_string(&sys_spec).assert());
     }
+    #[ignore = "need interactive run"]
     #[tokio::test]
     async fn ia_setting() {
         test_init();

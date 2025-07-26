@@ -15,7 +15,7 @@ pub use crate::{
         ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML, LOGS_SPEC_YML, RES_SPEC_YML, SETTING_YML,
         SPEC_DIR, VARS_YML,
     },
-    error::{ElementReason, SpecReason, SpecResult, ToErr},
+    error::{ElementReason, MainReason, MainResult, ToErr},
     resource::CaculateResSpec,
     software::LogsSpec,
     workflow::{act::ModWorkflows, prj::GxlProject},

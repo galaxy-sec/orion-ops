@@ -6,7 +6,7 @@ use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, Wit
 use serde::Serialize;
 
 use crate::{
-    error::{ModReason, SpecResult},
+    error::{ModReason, MainResult},
     module::setting::TemplatePath,
 };
 use orion_variate::tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars};
@@ -41,7 +41,7 @@ impl LocalizeTemplate<'_> {
         dst: &PathBuf,
         data: &PathBuf,
         setting: &TemplatePath,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         let mut err_ctx = WithContext::want("render tpl path");
         // 处理目录模板
         err_ctx.with_path("data", data);
@@ -65,7 +65,7 @@ impl LocalizeTemplate<'_> {
         dst: &PathBuf,
         data: &T,
         setting: &TemplatePath,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         debug!("tpl dir: {}", tpl_dir.display());
         for entry in walkdir::WalkDir::new(tpl_dir) {
             let entry = entry.owe_data()?;
@@ -91,7 +91,7 @@ impl LocalizeTemplate<'_> {
         dst_path: &PathBuf,
         data: &T,
         templatize: &TemplatePath,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         debug!("tpl:{}", tpl_path.display());
         debug!("dst:{}", dst_path.display());
 

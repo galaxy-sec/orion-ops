@@ -1,11 +1,11 @@
 use crate::error::OpsReason;
 use crate::predule::*;
 use crate::system::refs::SysModelSpecRef;
-use crate::{error::SpecResult, module::depend::DependencySet, types::Localizable};
+use crate::{error::MainResult, module::depend::DependencySet };
 use orion_common::serde::Configable;
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 
-use crate::types::{LocalizeOptions, SysUpdateable, ValuePath};
+use crate::types::{ SysUpdateable, };
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
 use orion_variate::addr::LocalAddr;
@@ -14,7 +14,6 @@ use orion_variate::update::UpdateOptions;
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectConf {
     name: String,
-    systems: Vec<SysModelSpecRef>,
     work_envs: DependencySet,
 }
 
@@ -23,7 +22,6 @@ impl ProjectConf {
         Self {
             name: name.into(),
             work_envs: local_res,
-            systems: Vec::new(),
         }
     }
     pub fn for_test() -> Self {
@@ -34,27 +32,18 @@ impl ProjectConf {
         let work_envs = DependencySet::example();
         Self {
             name: "example_sys".to_string(),
-            systems,
             work_envs,
         }
     }
-    pub fn load(path: &Path) -> SpecResult<Self> {
+    pub fn load(path: &Path) -> MainResult<Self> {
         let conf_file = path.join(OPS_PRJ_FILE);
-        let mut ins = Self::from_conf(&conf_file).owe_conf()?;
-        let mut updated_sys = Vec::new();
-        for mut sys in ins.systems {
-            if sys.is_update(path) {
-                sys = sys.load(path)?;
-            }
-            updated_sys.push(sys);
-        }
-        ins.systems = updated_sys;
+        let ins = Self::from_conf(&conf_file).owe_conf()?;
         Ok(ins)
     }
 }
 #[async_trait]
 impl SysUpdateable<ProjectConf> for ProjectConf {
-    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> SpecResult<Self> {
+    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj/conf",
@@ -69,25 +58,7 @@ impl SysUpdateable<ProjectConf> for ProjectConf {
             .update(options)
             .await
             .owe(OpsReason::Update.into())?;
-        let mut updated_sys = Vec::new();
-        for sys in self.systems {
-            updated_sys.push(sys.update_local(path, options).await?);
-        }
-        self.systems = updated_sys;
         flag.mark_suc();
         Ok(self)
-    }
-}
-#[async_trait]
-impl Localizable for ProjectConf {
-    async fn localize(
-        &self,
-        dst_path: Option<ValuePath>,
-        options: LocalizeOptions,
-    ) -> SpecResult<()> {
-        for sys in self.systems() {
-            sys.localize(dst_path.clone(), options.clone()).await?;
-        }
-        Ok(())
     }
 }

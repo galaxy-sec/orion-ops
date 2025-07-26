@@ -3,7 +3,7 @@ use std::path::Path;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
-    error::SpecResult,
+    error::MainResult,
     task::OperationType,
     workflow::{
         act::{ModWorkflows, Workflow},
@@ -95,7 +95,7 @@ impl ModIniter for ModWorkflows {
     }
 }
 
-pub fn mod_init_gitignore(path: &Path) -> SpecResult<()> {
+pub fn mod_init_gitignore(path: &Path) -> MainResult<()> {
     let ignore_path = path.join(".gitignore");
     if !ignore_path.exists() {
         std::fs::write(&ignore_path, MOD_GITIGNORE)

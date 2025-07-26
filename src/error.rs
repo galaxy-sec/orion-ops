@@ -3,7 +3,7 @@ use orion_error::{DomainReason, ErrorCode, StructError, StructErrorTrait, UvsRea
 use serde_derive::Serialize;
 use thiserror::Error;
 #[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
-pub enum SpecReason {
+pub enum MainReason {
     #[error("unknow")]
     UnKnow,
     #[error("localize:{0}")]
@@ -121,16 +121,16 @@ impl ErrorCode for OpsReason {
     }
 }
 
-impl ErrorCode for SpecReason {
+impl ErrorCode for MainReason {
     fn error_code(&self) -> i32 {
         match self {
-            SpecReason::UnKnow => 500,
-            SpecReason::Uvs(r) => r.error_code(),
-            SpecReason::Localize(r) => r.error_code(),
-            SpecReason::Element(r) => r.error_code(),
-            SpecReason::Mod(r) => r.error_code(),
-            SpecReason::Sys(r) => r.error_code(),
-            SpecReason::Ops(r) => r.error_code(),
+            MainReason::UnKnow => 500,
+            MainReason::Uvs(r) => r.error_code(),
+            MainReason::Localize(r) => r.error_code(),
+            MainReason::Element(r) => r.error_code(),
+            MainReason::Mod(r) => r.error_code(),
+            MainReason::Sys(r) => r.error_code(),
+            MainReason::Ops(r) => r.error_code(),
         }
     }
 }
@@ -154,12 +154,12 @@ where
     }
 }
 
-pub type SpecResult<T> = Result<T, StructError<SpecReason>>;
-pub type SpecError = StructError<SpecReason>;
+pub type MainResult<T> = Result<T, StructError<MainReason>>;
+pub type MainError = StructError<MainReason>;
 
 pub const PATH_NOT_EXIST: &str = "path not exists";
 
-pub fn report_error(e: StructError<SpecReason>) {
+pub fn report_error(e: StructError<MainReason>) {
     println!("Run Error (Code: {})", e.error_code());
     println!("--------------------------");
     if let Some(target) = e.target() {
@@ -167,7 +167,7 @@ pub fn report_error(e: StructError<SpecReason>) {
     }
     println!("[REASON]:");
     match e.get_reason() {
-        SpecReason::Uvs(uvs_reason) => match uvs_reason {
+        MainReason::Uvs(uvs_reason) => match uvs_reason {
             UvsReason::LogicError(e) => {
                 println!("LOGIC ERROR: {e}\n",);
             }
@@ -194,22 +194,22 @@ pub fn report_error(e: StructError<SpecReason>) {
             }
         },
 
-        SpecReason::Localize(e) => {
+        MainReason::Localize(e) => {
             println!("Localize ERROR: {e}\n",);
         }
-        SpecReason::Element(e) => {
+        MainReason::Element(e) => {
             println!("Element ERROR: {e}\n",);
         }
-        SpecReason::UnKnow => {
+        MainReason::UnKnow => {
             println!("Unknow Error!\n");
         }
-        SpecReason::Mod(e) => {
+        MainReason::Mod(e) => {
             println!("Mod Error: \n{e} !");
         }
-        SpecReason::Sys(e) => {
+        MainReason::Sys(e) => {
             println!("Sys Error: \n{e}");
         }
-        SpecReason::Ops(e) => {
+        MainReason::Ops(e) => {
             println!("Operator Error: \n{e}");
         }
     }

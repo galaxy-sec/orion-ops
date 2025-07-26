@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::system::spec::SysDefine;
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize)]
+#[derive(Getters, Clone, Debug, Serialize, Deserialize,PartialEq )]
 #[getset(get = "pub")]
 pub struct OpsSystem {
     sys: SysDefine,

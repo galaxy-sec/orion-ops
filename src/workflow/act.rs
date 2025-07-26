@@ -97,7 +97,7 @@ impl Persistable<Workflow> for Workflow {
 
 #[cfg(test)]
 mod tests {
-    use crate::{error::SpecResult, module::init::ModIniter};
+    use crate::{error::MainResult, module::init::ModIniter};
 
     use super::*;
     use tempfile::TempDir;
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn test_save_and_load_actions() -> SpecResult<()> {
+    fn test_save_and_load_actions() -> MainResult<()> {
         let temp_dir = TempDir::new().owe_res()?;
         let path = temp_dir.path().to_path_buf();
 

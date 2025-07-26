@@ -1,6 +1,6 @@
 use orion_error::{ErrorConv, ErrorOwe};
 use orion_infra::path::make_new_path;
-use orion_ops::error::SpecResult;
+use orion_ops::error::MainResult;
 use orion_ops::infra::configure_dfx_logging;
 use orion_ops::module::proj::load_project_global_value;
 use orion_ops::system::proj::SysProject;
@@ -10,7 +10,7 @@ use orion_variate::vars::ValueDict;
 
 use crate::args::GSysCmd;
 
-pub async fn do_sys_cmd(cmd: GSysCmd) -> SpecResult<()> {
+pub async fn do_sys_cmd(cmd: GSysCmd) -> MainResult<()> {
     let current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
         GSysCmd::New(args) => {

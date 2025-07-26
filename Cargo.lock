@@ -2273,7 +2273,7 @@ dependencies = [
 
 [[package]]
 name = "orion-ops"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2373,6 +2373,7 @@ dependencies = [
 [[package]]
 name = "orion_variate"
 version = "0.5.0"
+source = "git+https://github.com/galaxy-sec/orion-variate?tag=v0.5.0#c867ee580eb5edef6f0c0a1abee3e3a67e1b35fe"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2380,6 +2381,7 @@ dependencies = [
  "derive-getters",
  "derive_more",
  "env_logger",
+ "flate2",
  "flexi_logger",
  "fs_extra",
  "getset",
@@ -2401,6 +2403,7 @@ dependencies = [
  "serde_ini",
  "serde_json",
  "serde_yaml",
+ "tar",
  "thiserror 2.0.12",
  "tokio",
  "toml",

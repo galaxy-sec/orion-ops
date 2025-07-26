@@ -43,7 +43,7 @@ impl ModModelSpec {
         &self,
         options: LocalizeOptions,
         value_paths: &TargetValuePaths,
-    ) -> Result<OriginDict, StructError<SpecReason>> {
+    ) -> Result<OriginDict, StructError<MainReason>> {
         let mut used = OriginDict::from(options.global_value().clone());
         used.set_source("global");
         if value_paths.user_value_file().exists() && !options.use_default_value() {
@@ -65,7 +65,7 @@ impl ModModelSpec {
     fn crate_sample_value_file(
         &self,
         value_paths: &TargetValuePaths,
-    ) -> Result<(), StructError<SpecReason>> {
+    ) -> Result<(), StructError<MainReason>> {
         if !(value_paths.sample_value_file().exists() || value_paths.user_value_file().exists()) {
             value_paths
                 .sample_value_file()
@@ -90,7 +90,7 @@ impl LocalUpdate for ModModelSpec {
     }
 }
 impl ModModelSpec {
-    pub fn save_main(&self, root: &Path, name: Option<String>) -> SpecResult<()> {
+    pub fn save_main(&self, root: &Path, name: Option<String>) -> MainResult<()> {
         let target_path = root.join(name.unwrap_or(self.model().to_string()));
         std::fs::create_dir_all(&target_path)
             .owe_conf()
@@ -99,7 +99,7 @@ impl ModModelSpec {
         Ok(())
     }
 
-    pub fn clean_other(root: &Path, node: &ModelSTD) -> SpecResult<()> {
+    pub fn clean_other(root: &Path, node: &ModelSTD) -> MainResult<()> {
         let subs = get_sub_dirs(root).owe_logic()?;
         for sub in subs {
             if !sub.ends_with(node.to_string().as_str()) {
@@ -108,7 +108,7 @@ impl ModModelSpec {
         }
         Ok(())
     }
-    fn clean_path(path: &Path) -> SpecResult<()> {
+    fn clean_path(path: &Path) -> MainResult<()> {
         if path.exists() {
             std::fs::remove_dir_all(path).owe_res().with(path)?;
         }
@@ -282,7 +282,7 @@ impl ModModelSpec {
             depends: DependencySet::default(),
         }
     }
-    pub fn get_local_values(&self, parent: ValuePath) -> SpecResult<Option<String>> {
+    pub fn get_local_values(&self, parent: ValuePath) -> MainResult<Option<String>> {
         let value_paths = TargetValuePaths::from(parent.path());
         if value_paths.used_readable().exists() {
             let data = read_to_string(value_paths.used_readable()).owe_sys()?;
@@ -298,7 +298,7 @@ impl Localizable for ModModelSpec {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         let mut flag = auto_exit_log!(
             info!(target : "/mod/target", "mod-target localize {} success!", self.model()),
             error!(target: "/mod/target", "mod-target localize {} fail!",
@@ -306,7 +306,7 @@ impl Localizable for ModModelSpec {
         );
         let mut ctx = WithContext::want("modul localize");
         let local = self.local.clone().ok_or(
-            SpecReason::from(ElementReason::Miss("local-path".into()))
+            MainReason::from(ElementReason::Miss("local-path".into()))
                 .to_err()
                 .with(&ctx),
         )?;
@@ -371,7 +371,7 @@ pub mod test {
 
     use crate::{
         const_vars::TARGET_SPC_ROOT,
-        error::SpecResult,
+        error::MainResult,
         module::{
             CpuArch, OsCPE, RunSPC,
             init::{ModIniter, ModPrjIniter},
@@ -380,7 +380,7 @@ pub mod test {
 
     use super::*;
 
-    pub fn make_mod_k8s_4test() -> SpecResult<ModModelSpec> {
+    pub fn make_mod_k8s_4test() -> MainResult<ModModelSpec> {
         let name = "postgresql";
         let k8s = ModModelSpec::init(
             ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
@@ -402,7 +402,7 @@ pub mod test {
         Ok(k8s)
     }
 
-    pub fn make_mod_host_4test() -> SpecResult<ModModelSpec> {
+    pub fn make_mod_host_4test() -> MainResult<ModModelSpec> {
         let name = "postgresql";
         let host = ModModelSpec::init(
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
@@ -425,7 +425,7 @@ pub mod test {
     }
 
     #[tokio::test]
-    async fn build_target_k8s() -> SpecResult<()> {
+    async fn build_target_k8s() -> MainResult<()> {
         test_init();
         let spec = make_mod_k8s_4test().assert();
         let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());
@@ -442,7 +442,7 @@ pub mod test {
     }
 
     #[tokio::test]
-    async fn build_target_host() -> SpecResult<()> {
+    async fn build_target_host() -> MainResult<()> {
         test_init();
         let spec = make_mod_host_4test().assert();
         let spec_path = PathBuf::from(TARGET_SPC_ROOT).join(spec.model().to_string());

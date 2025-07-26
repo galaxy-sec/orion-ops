@@ -1,6 +1,6 @@
 use orion_common::serde::Persistable;
 use orion_error::{ErrorConv, ErrorOwe};
-use orion_ops::error::SpecResult;
+use orion_ops::error::MainResult;
 use orion_ops::infra::configure_dfx_logging;
 use orion_ops::module::proj::ModProject;
 use orion_ops::module::spec::make_mod_spec_example;
@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 use crate::args::{self};
 
-pub async fn do_mod_cmd(cmd: args::GxModCmd) -> SpecResult<()> {
+pub async fn do_mod_cmd(cmd: args::GxModCmd) -> MainResult<()> {
     let current_dir = std::env::current_dir().expect("无法获取当前目录");
     match cmd {
         args::GxModCmd::Example => {

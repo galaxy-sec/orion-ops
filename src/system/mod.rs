@@ -15,7 +15,7 @@ use orion_variate::vars::{ValueDict, ValueType, VarCollection};
 use crate::module::refs::ModuleSpecRef;
 use crate::module::spec::ModuleSpec;
 use crate::{
-    error::SpecResult,
+    error::MainResult,
     resource::{ResouceTypes, Vps},
     software::FileFormat,
 };
@@ -57,7 +57,7 @@ impl ModulesList {
         &self,
         sys_root: &Path,
         options: &UpdateOptions,
-    ) -> SpecResult<SysUpdateValue> {
+    ) -> MainResult<SysUpdateValue> {
         let mut vars = VarCollection::default();
         for m in &self.mods {
             if m.is_enable() {
@@ -79,7 +79,7 @@ impl Localizable for ModulesList {
         &self,
         dst_path: Option<ValuePath>,
         options: LocalizeOptions,
-    ) -> SpecResult<()> {
+    ) -> MainResult<()> {
         let root = dst_path.map(|x| x.join_all("mods"));
         for m in &self.mods {
             if m.is_enable() {

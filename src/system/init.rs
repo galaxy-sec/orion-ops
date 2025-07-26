@@ -3,7 +3,7 @@ use std::path::Path;
 use orion_error::{ErrorOwe, ErrorWith};
 
 use crate::{
-    error::SpecResult,
+    error::MainResult,
     task::OperationType,
     workflow::{
         act::{Workflow, Workflows},
@@ -62,7 +62,7 @@ impl SysIniter for Workflows {
     }
 }
 
-pub fn sys_init_gitignore(path: &Path) -> SpecResult<()> {
+pub fn sys_init_gitignore(path: &Path) -> MainResult<()> {
     let ignore_path = path.join(".gitignore");
     if !ignore_path.exists() {
         std::fs::write(&ignore_path, SYS_GITIGNORE)
