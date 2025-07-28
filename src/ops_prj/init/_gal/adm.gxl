@@ -1,48 +1,7 @@
+extern mod ver,git,ver_adm { git = "https://github.com/galaxy-operators/cfm-gxl.git", channel = "${GXL_CHANNEL:main}" }
 mod  envs {
   env default {
   }
 }
-mod main :  {
-
-  #[auto_load(entry)]
-  flow __into {
-    main_key = "dv_example" ;
-  }
-  #[usage(desp="update version of patch ")]
-  flow ver_patch   : ver.patch,_ver_app      { }
-  #[usage(desp="update version of feature ")]
-  flow ver_feature : ver.feature, _ver_app  { }
-  #[usage(desp="add tag by version ")]
-  flow ver_tag     : git.tag_ver ;
-
-  flow _ver_app: ver.use {
-    gx.echo (  " up version: ${VERSION} to cargo.toml" );
-  }
-
-}
-mod ver {
-  flow use   {
-      gx.ver ( file : "${ENV_ROOT}/version.txt" ,  inc : "null" );
-      gx.echo (  "current version : ${VERSION}" );
-    }
-  flow build   {
-      gx.ver ( file : "${ENV_ROOT}/version.txt" ,  inc : "build" );
-      gx.echo (  "current version : ${VERSION}" );
-    }
-  flow patch {
-      gx.ver ( file : "${ENV_ROOT}/version.txt" ,  inc : "bugfix" );
-      gx.echo ( "current version : ${VERSION}" );
-    }
-  flow feature {
-      gx.ver ( file : "${ENV_ROOT}/version.txt" ,  inc : "feature" );
-      gx.echo ( "current version : ${VERSION}"  );
-    }
-}
-
-mod git {
-  flow tag_ver  {
-    gx.ver ( file : "${ENV_ROOT}/version.txt" ,  inc : "null" );
-    gx.cmd ( "git tag ${VERSION}" );
-    gx.cmd ( "git push --tags" );
-  }
+mod main  : ver_adm {
 }
