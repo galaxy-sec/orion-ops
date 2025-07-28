@@ -21,7 +21,7 @@ pub async fn do_ins_cmd(cmd: GInsCmd) -> MainResult<()> {
             configure_dfx_logging(&args);
             let options = UpdateOptions::from((args.force, ValueDict::default()));
             let mut prj = OpsProject::load(&current_dir).err_conv()?;
-            prj.import_sys(&args.path(), &options).await.err_conv()?;
+            prj.import_sys(args.path(), &options).await.err_conv()?;
         }
         GInsCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);

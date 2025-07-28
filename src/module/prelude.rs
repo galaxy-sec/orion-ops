@@ -11,10 +11,7 @@ pub use orion_variate::{
 
 pub use crate::types::LocalizeOptions;
 pub use crate::{
-    const_vars::{
-        ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML,   SETTING_YML,
-        SPEC_DIR, VARS_YML,
-    },
+    const_vars::{ARTIFACT_YML, CONF_SPEC_YML, DEPENDS_YML, SETTING_YML, SPEC_DIR, VARS_YML},
     error::{ElementReason, MainReason, MainResult, ToErr},
     resource::CaculateResSpec,
     workflow::{act::ModWorkflows, prj::GxlProject},

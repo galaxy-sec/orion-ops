@@ -58,7 +58,8 @@ impl OpsProject {
 
         // 4. 导入到 工作目录
         let sys_dst_root = self.root_local();
-        if let Some(last_name) = sys_src.iter().last() {
+        //if let Some(last_name) = sys_src.iter().last() {
+        if let Some(last_name) = sys_src.iter().next_back() {
             let sys_dst_path = sys_dst_root.join(last_name);
             let sys_new_path = sys_dst_root.join(sys_spec.define().name());
             if sys_dst_path.exists() {
@@ -115,9 +116,9 @@ impl OpsProject {
 
             for var in vars_vec.vars() {
                 let prompt = if let Some(desp) = var.desp() {
-                    format!("{}\n{}", var.name(), desp)
+                    format!("{}\n{desp}", var.name())
                 } else {
-                    format!("{}", var.name())
+                    var.name().to_string()
                 };
                 let mut default_value = var.value();
                 let value_str = Text::new(&prompt)

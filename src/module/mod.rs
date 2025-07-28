@@ -106,6 +106,13 @@ impl ModelSTD {
             spc: RunSPC::K8S,
         }
     }
+    pub fn support() -> Vec<Self> {
+        vec![
+            Self::arm_mac14_host(),
+            Self::x86_ubt22_host(),
+            Self::x86_ubt22_k8s(),
+        ]
+    }
     pub fn from_cur_sys() -> Self {
         let info = os_info::get();
 

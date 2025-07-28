@@ -166,16 +166,15 @@ impl SysProject {
     }
 }
 impl SysProject {
-    pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> MainResult<Self> {
-        let mod_spec =
-            SysModelSpec::make_new(SysDefine::new(name, ModelSTD::from_cur_sys()), repo)?;
+    pub fn make_new(prj_path: &Path, name: &str, model: ModelSTD) -> MainResult<Self> {
+        let mod_spec = SysModelSpec::make_new(SysDefine::new(name, model))?;
         let res = DependencySet::default();
         Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }
-    pub fn make_test_prj(name: &str, repo: &str) -> MainResult<Self> {
+    pub fn make_test_prj(name: &str) -> MainResult<Self> {
         let prj_path = PathBuf::from(SYS_MODEL_SPC_ROOT).join(name);
         make_clean_path(&prj_path).owe_logic()?;
-        let proj = SysProject::make_new(&prj_path, name, repo)?;
+        let proj = SysProject::make_new(&prj_path, name, ModelSTD::from_cur_sys())?;
         proj.save()?;
         Ok(proj)
     }
@@ -196,7 +195,10 @@ pub mod tests {
     use crate::{
         const_vars::SYS_MODEL_PRJ_ROOT,
         error::MainResult,
-        module::depend::{Dependency, DependencySet},
+        module::{
+            ModelSTD,
+            depend::{Dependency, DependencySet},
+        },
         system::{proj::SysProject, spec::SysModelSpec},
         types::LocalizeOptions,
     };
@@ -205,7 +207,7 @@ pub mod tests {
         test_init();
         let prj_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("sys_new");
         make_clean_path(&prj_path).owe_logic()?;
-        let proj = SysProject::make_new(&prj_path, "sys_new", "https://github.com")?;
+        let proj = SysProject::make_new(&prj_path, "sys_new", ModelSTD::from_cur_sys())?;
         proj.save()?;
         Ok(())
     }

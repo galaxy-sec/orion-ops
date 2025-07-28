@@ -151,9 +151,7 @@ pub mod tests {
     use orion_infra::path::make_clean_path;
     use orion_variate::{tools::test_init, update::UpdateOptions};
 
-    use crate::{
-        const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject,
-    };
+    use crate::{const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject};
 
     #[tokio::test]
     async fn test_workins_example() -> MainResult<()> {

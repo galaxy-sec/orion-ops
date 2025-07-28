@@ -29,18 +29,14 @@ pub fn convert_addr(input: &str) -> AddrType {
         } else if input.ends_with(".tar.gz") {
             AddrType::Http(HttpAddr::from(input.to_string()))
         } else {
-            panic!("Unsupported package type: {}", input);
+            panic!("Unsupported package type: {input}");
         }
-    } else if input.starts_with("git@") {
+    } else if input.starts_with("git@") || input.ends_with(".git") {
         AddrType::Git(GitAddr::from(input.to_string()))
+    } else if input.ends_with(".tar.gz") {
+        AddrType::Local(LocalAddr::from(input.to_string()))
     } else {
-        if input.ends_with(".git") {
-            AddrType::Git(GitAddr::from(input.to_string()))
-        } else if input.ends_with(".tar.gz") {
-            AddrType::Local(LocalAddr::from(input.to_string()))
-        } else {
-            panic!("Unsupported package type: {}", input);
-        }
+        panic!("Unsupported package type: {input}");
     }
 }
 // input :
@@ -77,7 +73,7 @@ pub fn build_pkg(input: &str) -> PackageType {
 }
 
 fn extract_name_from_url(url: &str, suffix: &str) -> String {
-    url.split('/').last().unwrap().replace(suffix, "")
+    url.split('/').next_back().unwrap().replace(suffix, "")
 }
 
 #[cfg(test)]

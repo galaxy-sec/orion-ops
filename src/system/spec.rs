@@ -89,7 +89,7 @@ impl SysModelSpec {
 
     pub fn load_from(root: &Path) -> MainResult<Self> {
         let mut ctx = WithContext::want("load syspec");
-        let name = root
+        let _name = root
             .file_name()
             .and_then(|f| f.to_str())
             .ok_or_else(|| StructError::from_conf("bad name".to_string()))?;
@@ -179,7 +179,7 @@ impl SysModelSpec {
         )
     }
 
-    pub fn make_new(define: SysDefine, repo: &str) -> MainResult<SysModelSpec> {
+    pub fn make_new(define: SysDefine) -> MainResult<SysModelSpec> {
         let actions = SysWorkflows::sys_tpl_init();
         let mut modul_spec = SysModelSpec::new(define, actions);
         let mod_name = "you_mod1";
@@ -187,7 +187,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 mod_name,
-                GitAddr::from(repo).with_tag("0.1.0"),
+                GitAddr::from("https://github.com/you-mod1").with_tag("0.1.0"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -195,7 +195,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod2",
-                GitAddr::from(repo).with_branch("beta"),
+                GitAddr::from("https://github.com/you-mod2").with_branch("beta"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -203,7 +203,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod3",
-                GitAddr::from("http://github").with_tag("v1.0.0"),
+                GitAddr::from("https://github.com/you-mod3").with_tag("v1.0.0"),
                 ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             )
             .with_enable(false),
