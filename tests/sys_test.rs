@@ -17,7 +17,7 @@ use orion_variate::{
     update::UpdateOptions,
 };
 #[tokio::test]
-async fn test_all() -> MainResult<()> {
+async fn test_full_flow() -> MainResult<()> {
     test_init();
     let sys_proj = make_sys_prj_example().await?;
     let out_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("example_sys_x.tar.gz");

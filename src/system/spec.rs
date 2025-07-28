@@ -26,14 +26,15 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters, WithSetters, PartialEq)]
+#[getset(get = "pub ")]
 pub struct SysDefine {
-    #[getset(get = "pub ")]
     name: String,
-    #[getset(get = "pub ", set_with = "pub ")]
+    model: ModelSTD,
+    #[getset( set_with = "pub ")]
     vender: String,
 }
 impl SysDefine {
-    pub fn new<S: Into<String>>(name: S) -> Self {
+    pub fn new<S: Into<String>>(name: S,model: ModelSTD) -> Self {
         Self {
             name: name.into(),
             vender: String::new(),
