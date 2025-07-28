@@ -153,6 +153,7 @@ mod test {
 
     use super::*;
 
+    #[ignore = "need interactive run"]
     #[tokio::test]
     async fn import_pkg() {
         test_init();
