@@ -1,0 +1,32 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  security:
+    allowInsecureImages: false
+  compatibility:
+    openshift:
+      adaptSecurityContext: auto
+
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+kubeVersion: ""
+clusterDomain: cluster.local
+extraDeploy: []
+commonLabels: {}
+commonAnnotations: {}
+diagnosticMode:
+  enabled: false
+  command:
+    - sleep
+  args:
+    - infinity
+
+image:
+  registry: docker.io
+  repository: bitnami/nginx
+  tag: 1.28.0-debian-12-r0
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  debug: false

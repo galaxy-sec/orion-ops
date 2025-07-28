@@ -136,7 +136,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_depend() {
-        let prj_path = PathBuf::from("./test/temp/depend/");
+        let prj_path = PathBuf::from("./test_data/temp/depend/");
         if prj_path.exists() {
             std::fs::remove_dir_all(&prj_path).assert("remove dir");
         }

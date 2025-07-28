@@ -7,7 +7,7 @@ use orion_ops::{
     error::MainResult,
     module::depend::{Dependency, DependencySet},
     ops_prj::proj::OpsProject,
-    system::{proj::SysProject, spec::SysModelSpec},
+    system::{init::SYS_PRJ_ADM, proj::SysProject, spec::SysModelSpec},
     types::LocalizeOptions,
 };
 use orion_variate::{
@@ -29,7 +29,10 @@ async fn test_all() -> MainResult<()> {
             &UpdateOptions::for_test(),
         )
         .await?;
-
+    let sys_path = ops_proj.root_local().join("example_sys_x");
+    let sys_proj = SysProject::load(&sys_path)?;
+    sys_proj.update(&UpdateOptions::default()).await?;
+    sys_proj.localize(LocalizeOptions::for_test()).await?;
     Ok(())
     //sys_proj.
 }
@@ -69,7 +72,7 @@ async fn make_sys_prj_example() -> MainResult<SysProject> {
 }
 
 fn make_sys_prj_testins(prj_path: &Path) -> MainResult<SysProject> {
-    let mod_spec = SysModelSpec::for_example("exmaple_sys_x")?;
+    let mod_spec = SysModelSpec::for_example("example_sys_x")?;
     let mut res = DependencySet::default();
     res.push(
         Dependency::new(

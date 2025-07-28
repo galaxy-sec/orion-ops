@@ -221,7 +221,7 @@ mod tests {
         //let src_dir = PathBuf::from("./temp/src");
         //let dst_dir = PathBuf::from("./temp/dst");
         //let temp_dir = temp_dir();
-        let temp_dir = PathBuf::from("./test/temp/http");
+        let temp_dir = PathBuf::from("./test_data/temp/http");
         if temp_dir.exists() {
             std::fs::remove_dir_all(&temp_dir).assert();
         }
@@ -257,7 +257,7 @@ mod tests {
         //let src_dir = PathBuf::from("./temp/src");
         //let dst_dir = PathBuf::from("./temp/dst");
         //let temp_dir = temp_dir();
-        let temp_dir = PathBuf::from("./test/temp/conf_dst");
+        let temp_dir = PathBuf::from("./test_data/temp/conf_dst");
         if temp_dir.exists() {
             std::fs::remove_dir_all(&temp_dir).assert();
         }

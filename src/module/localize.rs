@@ -298,9 +298,9 @@ mod tests {
 
     #[test]
     fn test_helm_nginx_rendering() {
-        let root_dir = PathBuf::from("./test/helm");
-        let helm_dir = PathBuf::from("./test/helm/nginx");
-        let out_dir = PathBuf::from("./test/temp/nginx");
+        let root_dir = PathBuf::from("./test_data/helm");
+        let helm_dir = PathBuf::from("./test_data/helm/nginx");
+        let out_dir = PathBuf::from("./test_data/temp/nginx");
         if out_dir.exists() {
             std::fs::remove_dir_all(&out_dir).assert();
         }

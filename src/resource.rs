@@ -167,7 +167,7 @@ mod tests {
         root.add(vps3);
 
         // 创建临时文件
-        let temp_dir = PathBuf::from("./temp");
+        let temp_dir = PathBuf::from("./test_data/temp");
         std::fs::create_dir_all(&temp_dir).unwrap();
         let file_path = temp_dir.join("node_redis.yml");
 
