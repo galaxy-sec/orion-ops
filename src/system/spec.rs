@@ -1,4 +1,9 @@
-use crate::{error::SysReason, predule::*, system::path::SysTargetPaths, types::ValuePath};
+use crate::{
+    error::{MainError, SysReason},
+    predule::*,
+    system::path::SysTargetPaths,
+    types::ValuePath,
+};
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -8,7 +13,7 @@ use crate::{
 use async_trait::async_trait;
 use getset::{Getters, WithSetters};
 use orion_common::serde::{Configable, Persistable, Yamlable};
-use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, WithContext};
+use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsLogicFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_variate::{
     addr::{GitAddr, LocalAddr},
@@ -30,14 +35,15 @@ use crate::{
 pub struct SysDefine {
     name: String,
     model: ModelSTD,
-    #[getset( set_with = "pub ")]
+    #[getset(set_with = "pub ")]
     vender: String,
 }
 impl SysDefine {
-    pub fn new<S: Into<String>>(name: S,model: ModelSTD) -> Self {
+    pub fn new<S: Into<String>>(name: S, model: ModelSTD) -> Self {
         Self {
             name: name.into(),
             vender: String::new(),
+            model,
         }
     }
 }
@@ -96,7 +102,11 @@ impl SysModelSpec {
 
         ctx.with_path("mod_list", paths.modlist_path());
         let define = if !paths.define_path().exists() {
-            SysDefine::new(name)
+            return MainError::from_logic(format!(
+                "miss define file : {}",
+                paths.define_path().display()
+            ))
+            .err();
         } else {
             SysDefine::from_conf(paths.define_path())
                 .with("load define".to_string())
@@ -163,7 +173,10 @@ impl SysModelSpec {
     pub fn for_example(name: &str) -> MainResult<SysModelSpec> {
         ModProject::make_test_prj("redis2_mock")?;
         ModProject::make_test_prj("mysql2_mock")?;
-        make_sys_spec_test(SysDefine::new(name), vec!["redis2_mock", "mysql2_mock"])
+        make_sys_spec_test(
+            SysDefine::new(name, ModelSTD::from_cur_sys()),
+            vec!["redis2_mock", "mysql2_mock"],
+        )
     }
 
     pub fn make_new(define: SysDefine, repo: &str) -> MainResult<SysModelSpec> {
@@ -233,8 +246,11 @@ pub mod tests {
         make_clean_path(&spec_root).owe_logic()?;
         ModProject::make_test_prj("redis_mock")?;
         ModProject::make_test_prj("mysql_mock")?;
-        let spec = make_sys_spec_test(SysDefine::new(sys_name), vec!["redis_mock", "mysql_mock"])
-            .assert("make spec");
+        let spec = make_sys_spec_test(
+            SysDefine::new(sys_name, ModelSTD::from_cur_sys()),
+            vec!["redis_mock", "mysql_mock"],
+        )
+        .assert("make spec");
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         let spec_path = spec_root.join(spec.define().name());
         make_clean_path(&spec_path).owe_logic()?;

@@ -1,5 +1,6 @@
-use crate::const_vars::{VALUE_DIR, VALUE_FILE, SYS_PRJ_CONF_FILE_V1, SYS_PRJ_CONF_FILE_V2};
+use crate::const_vars::{SYS_PRJ_CONF_FILE_V1, SYS_PRJ_CONF_FILE_V2, VALUE_DIR, VALUE_FILE};
 use crate::error::SysReason;
+use crate::module::ModelSTD;
 use crate::predule::*;
 
 use crate::system::spec::SysDefine;
@@ -166,7 +167,8 @@ impl SysProject {
 }
 impl SysProject {
     pub fn make_new(prj_path: &Path, name: &str, repo: &str) -> MainResult<Self> {
-        let mod_spec = SysModelSpec::make_new(SysDefine::new(name), repo)?;
+        let mod_spec =
+            SysModelSpec::make_new(SysDefine::new(name, ModelSTD::from_cur_sys()), repo)?;
         let res = DependencySet::default();
         Ok(SysProject::new(mod_spec, res, prj_path.to_path_buf()))
     }

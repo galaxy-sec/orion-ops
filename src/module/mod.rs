@@ -106,6 +106,35 @@ impl ModelSTD {
             spc: RunSPC::K8S,
         }
     }
+    pub fn from_cur_sys() -> Self {
+        let info = os_info::get();
+
+        // 根据CPU架构字符串确定CpuArch
+        let arch_str = info
+            .architecture()
+            .map(|s| s.to_lowercase())
+            .unwrap_or_else(|| "x86".to_string());
+        let arch = match arch_str.as_str() {
+            "x86" | "x86_64" | "amd64" => CpuArch::X86,
+            "arm" | "aarch64" | "arm64" => CpuArch::Arm,
+            _ => CpuArch::X86, // 默认使用X86
+        };
+
+        // 根据操作系统确定OsCPE
+        // TODO: need version;
+        let os = match info.os_type() {
+            os_info::Type::Macos => OsCPE::MAC14,
+            os_info::Type::Windows => OsCPE::WIN10,
+            os_info::Type::Ubuntu => OsCPE::UBT22,
+            os_info::Type::CentOS | os_info::Type::Redhat => OsCPE::COS7,
+            _ => OsCPE::UBT22, // 默认使用Ubuntu 22.04
+        };
+
+        // 默认使用Host运行空间
+        let spc = RunSPC::Host;
+
+        Self { arch, os, spc }
+    }
 }
 
 // 紧凑的序列化实现
