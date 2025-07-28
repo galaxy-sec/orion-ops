@@ -1,18 +1,10 @@
-extern mod setup,update { path = "./workflows"; }
+extern mod operators { path = "./workflows";  } 
 
-
-mod main   {
-    #[usage(color="blue")]
-    env local {
-        SPEC_DIR = "local";
+mod envs {
+    env default {
+        //gx.read_file ( file : "./values/_used.json") ;
     }
-    #[usage(desp="for dev",color="red")]
-    env spec {
-        SPEC_DIR = "spec";
-    }
-    #[usage(desp="use pub")]
-    env default  : local;
+}
 
-    flow setup  : setup.do ;
-    flow update : update.do ;
+mod main   : operators {
 }

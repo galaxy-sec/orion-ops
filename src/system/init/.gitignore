@@ -1,4 +1,15 @@
-local
+**/local
 spec/mods
 .report
 .run.gxl
+common
+used.json
+used.yml
+sys/mods
+_used.json
+_used.yml
+_vaule.yml
+_value.yml
+artifacts
+*.gz
+*.tar.gz

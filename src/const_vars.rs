@@ -35,3 +35,14 @@ pub const WORKFLOWS_DIR: &str = "workflows";
 pub const SETUP_SH: &str = "setup.sh";
 pub const MOD_LOCAL_PRJ: &str = "mod_local_prj.yml";
 pub const SYS_LOCAL_PRJ: &str = "sys_local_prj.yml";
+// Constants for ModProject
+pub const MOD_PRJ_CONF_FILE_V1: &str = "mod_prj.yml";
+pub const MOD_PRJ_CONF_FILE_V2: &str = "mod-prj.yml";
+pub const MOD_PRJ_TEST_ROOT: &str = "/home/galaxy";
+pub const BITNAMI_COMMON_GIT_URL: &str =
+    "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git";
+// Constants for OpsProject
+pub const OPS_PRJ_CONF_FILE: &str = "ops-prj.yml";
+// Constants for SysProject
+pub const SYS_PRJ_CONF_FILE_V1: &str = "sys_prj.yml";
+pub const SYS_PRJ_CONF_FILE_V2: &str = "sys-prj.yml";

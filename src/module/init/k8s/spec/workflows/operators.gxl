@@ -1,0 +1,14 @@
+extern mod mod_ops { git =  "https://github.com/galaxy-operators/ops-gxl.git", channel = "${GXL_CHANNEL_OPS:main}" }
+mod operators : empty_operators {
+
+    #[auto_load(entry)]
+    flow __into {
+      gx.read_file( file : "./values/_used.json" ,  name : "SETTING" ) ;
+    }
+    #[task(name="ds-ops@install")]
+    flow install {
+    }
+    #[task(name="ds-ops@download")]
+    flow download {
+    }
+}

@@ -7,11 +7,13 @@ use getset::Getters;
 #[derive(Getters, Clone, Debug)]
 #[getset(get = "pub ")]
 pub struct SysTargetPaths {
+    #[allow(dead_code)]
     target_root: PathBuf,
     define_path: PathBuf,
     spec_path: PathBuf,
     //net_path: PathBuf,
     //res_path: PathBuf,
+    #[allow(dead_code)]
     vars_path: PathBuf,
     modlist_path: PathBuf,
     workflow_path: PathBuf,

@@ -1,0 +1,24 @@
+extern mod mod_ops { git =  "https://github.com/galaxy-operators/ops-gxl.git", channel = "${GXL_CHANNEL_OPS:main}" }
+mod operators : empty_operators {
+
+    #[auto_load(entry)]
+    flow __into {
+      gx.read_file( file : "./values/_used.json" ,  name : "SETTING" ) ;
+    }
+    #[task(name="ds-ops@install")]
+    flow install {
+    }
+    #[task(name="ds-ops@download")]
+    flow download {
+          mod_local = "./local";
+          art_local = "${SETTING.ART_PATH}";
+          gx.echo ("mod-local: ${mod_local}");
+          gx.read_file( file : "${mod_local}/artifact.yml" ,  name : "ART" ) ;
+          gx.cmd ( "mkdir -p ${ART_LOCAL}/temp");
+          for ${ITEM} in ${ART} {
+              gx.echo ("art: ${ITEM.LOCAL}  URL:${ITEM.ADDR.URL}");
+              gx.download ( url : "${ITEM.ADDR.URL}" , local_file : "${ART_LOCAL}/${ITEM.LOCAL}" );
+              //gx.untar ( file : "${ART_LOCAL}/${ITEM.LOCAL}" , dst : "${ART_LOCAL}/temp");
+          }
+    }
+}

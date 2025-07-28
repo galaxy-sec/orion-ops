@@ -6,7 +6,7 @@ use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsResFrom, Wit
 use serde::Serialize;
 
 use crate::{
-    error::{ModReason, MainResult},
+    error::{MainResult, ModReason},
     module::setting::TemplatePath,
 };
 use orion_variate::tpl::{CommentFmt, CustTmplLabel, LabelCoverter, TplHandleBars};

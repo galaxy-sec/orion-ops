@@ -1,7 +1,37 @@
-extern mod setup { path = "./sys/workflows"; }
+extern mod operators { path = "./sys/workflows" ; }  ;
+extern mod ver,git { git = "https://github.com/galaxy-operators/cfm-gxl.git", channel = "${GXL_CHANNEL:main}" }
 
-mod main {
-    env default  {
+mod envs {
+
+    env default  : _common{
     }
-    flow setup : setup.stage1 ;
+    env _common {
+        FORCE_FLAG = "";
+        LOG_LEVEL = "" ;
+        SYS_BIN =  "ds-sys" ;
+        MOD_BIN =  "ds-mod" ;
+        SYS     =  "sys" ;
+        MODULE_ENV =  "default";
+        //SYS_MODEL = "arm-mac14-host";
+        SYS_MODEL = "you-sys-model";
+        PKG_NAME = "you-sys";
+    }
+    env force {
+        FORCE_FLAG = "-f 3";
+    }
+
+}
+
+mod main : operators {
+    
+    BUILD_PATH = "${GXL_PRJ_ROOT}/build";
+    #[auto_load(entry)]
+    flow ver.use | @_into_main  {
+    }
+    #[task(name="main conf")]
+    flow conf   {
+        gx.cmd ("${ENV_SYS_BIN} update ${ENV_LOG_LEVEL}  ${ENV_FORCE_FLAG}") ;
+        gx.cmd ("${ENV_SYS_BIN} localize ${ENV_LOG_LEVEL} ") ;
+    }
+
 }

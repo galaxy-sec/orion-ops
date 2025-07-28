@@ -1,11 +1,11 @@
 use crate::error::OpsReason;
 use crate::predule::*;
 use crate::system::refs::SysModelSpecRef;
-use crate::{error::MainResult, module::depend::DependencySet };
+use crate::{error::MainResult, module::depend::DependencySet};
 use orion_common::serde::Configable;
-const OPS_PRJ_FILE: &str = "ops-prj.yml";
+use crate::const_vars::OPS_PRJ_CONF_FILE;
 
-use crate::types::{ SysUpdateable, };
+use crate::types::SysUpdateable;
 use async_trait::async_trait;
 use orion_infra::auto_exit_log;
 use orion_variate::addr::LocalAddr;
@@ -25,7 +25,7 @@ impl ProjectConf {
         }
     }
     pub fn for_test() -> Self {
-        let systems = vec![SysModelSpecRef::from(
+        let _systems = vec![SysModelSpecRef::from(
             "example_sys",
             LocalAddr::from("./example/sys-model-spec/example_sys"),
         )];
@@ -36,7 +36,7 @@ impl ProjectConf {
         }
     }
     pub fn load(path: &Path) -> MainResult<Self> {
-        let conf_file = path.join(OPS_PRJ_FILE);
+        let conf_file = path.join(OPS_PRJ_CONF_FILE);
         let ins = Self::from_conf(&conf_file).owe_conf()?;
         Ok(ins)
     }

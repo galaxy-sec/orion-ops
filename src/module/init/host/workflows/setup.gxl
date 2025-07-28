@@ -1,8 +1,0 @@
-mod setup {
-    flow do {
-      gx.echo ( value : "this is  host setup" );
-      gx.cmd  ( cmd : "mkdir -p ${HOME}/download" );
-      gx.artifact ( file : "./${ENV_SPEC_DIR}/artifact.yml" , dst_path :  "${HOME}/download"  );
-
-    }
-}

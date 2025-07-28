@@ -1,5 +1,8 @@
 use super::prelude::*;
-use crate::const_vars::{VALUE_DIR, VALUE_FILE};
+use crate::const_vars::{
+    BITNAMI_COMMON_GIT_URL, MOD_PRJ_CONF_FILE_V1, MOD_PRJ_CONF_FILE_V2, MOD_PRJ_TEST_ROOT,
+    VALUE_DIR, VALUE_FILE,
+};
 use crate::error::ModReason;
 use crate::predule::*;
 use crate::types::{Localizable, ValuePath};
@@ -37,7 +40,7 @@ impl ModProject {
     pub fn new(spec: ModuleSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
         let conf = ModConf::new(local_res);
         let mut val_dict = ValueDict::default();
-        val_dict.insert("TEST_WORK_ROOT", ValueType::from("/home/galaxy"));
+        val_dict.insert("TEST_WORK_ROOT", ValueType::from(MOD_PRJ_TEST_ROOT));
         Self {
             conf,
             mod_spec: spec,
@@ -49,16 +52,20 @@ impl ModProject {
         let mut flag = auto_exit_log!(
             info!(
                 target : "/mod_prj",
-                "load modprj  to {} success!", root_local.display()
+                 "load mod-prj  to {} success!", root_local.display()
             ),
             error!(
                 target : "/mod_prj",
-                "load modprj  to {} fail!", root_local.display()
+                "load mod-prj  to {} fail!", root_local.display()
             )
         );
 
-        let conf_file = root_local.join("mod_prj.yml");
-        let conf = ModConf::from_conf(&conf_file).owe_logic()?;
+        let conf_file_v1 = root_local.join(MOD_PRJ_CONF_FILE_V1);
+        let conf_file_v2 = root_local.join(MOD_PRJ_CONF_FILE_V2);
+        if conf_file_v1.exists() {
+            std::fs::rename(&conf_file_v1, &conf_file_v2).owe_res()?;
+        };
+        let conf = ModConf::from_conf(&conf_file_v2).owe_logic()?;
         let root_local = root_local.to_path_buf();
         let mod_spec = ModuleSpec::load_from(&root_local).owe(ModReason::Load.into())?;
         let project = GxlProject::load_from(&root_local).owe(ModReason::Load.into())?;
@@ -74,14 +81,14 @@ impl ModProject {
         let mut flag = auto_exit_log!(
             info!(
                 target : "spec/local/modprj",
-                "save modprj  to {} success!", self.root_local().display()
+                 "save modprj  to {} success!", self.root_local().display()
             ),
             error!(
-                target : "spec/local/modprj",
-                "save modprj  to {} fail!", self.root_local().display()
+               target : "spec/local/modprj",
+               "save modprj  to {} fail!", self.root_local().display()
             )
         );
-        let conf_file = self.root_local().join("mod_prj.yml");
+        let conf_file = self.root_local().join("mod-prj.yml");
         self.conf.save_conf(&conf_file).owe_res()?;
         self.mod_spec
             .save_to(self.root_local(), Some("./".into()))
@@ -181,9 +188,7 @@ pub fn make_mod_prj_testins(prj_path: &Path) -> MainResult<ModProject> {
     let mut res = DependencySet::default();
     res.push(
         Dependency::new(
-            AddrType::from(GitAddr::from(
-                "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
-            )),
+            AddrType::from(GitAddr::from(BITNAMI_COMMON_GIT_URL)),
             EnvVarPath::from(prj_path.join("test_res")),
         )
         .with_rename("bit-common"),

@@ -25,7 +25,7 @@ use crate::{
     module::{CpuArch, ModelSTD, OsCPE, RunSPC, refs::ModuleSpecRef, spec::ModuleSpec},
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, Getters, WithSetters,PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Getters, WithSetters, PartialEq)]
 pub struct SysDefine {
     #[getset(get = "pub ")]
     name: String,

@@ -12,21 +12,17 @@ use crate::{
     },
 };
 
-const HOST_SETUP_GXL: &str = include_str!("init/host/workflows/setup.gxl");
-const HOST_UPDATE_GXL: &str = include_str!("init/host/workflows/update.gxl");
+pub const MOD_HOST_OPS_GXL: &str = include_str!("init/host/workflows/operators.gxl");
 pub const MOD_PRJ_WORK_GXL: &str = include_str!("init/_gal/work.gxl");
 pub const MOD_PRJ_ADM_GXL: &str = include_str!("init/_gal/adm.gxl");
-const MOD_HOST_PRJ: &str = include_str!("init/host/_gal/work.gxl");
-const MOD_GITIGNORE: &str = include_str!("init/.gitignore");
+pub const MOD_HOST_WORK_GXL: &str = include_str!("init/host/_gal/work.gxl");
+pub const MOD_PRJ_GITIGNORE: &str = include_str!("init/.gitignore");
 
-const K8S_SETUP_GXL: &str = include_str!("init/k8s/spec/workflows/setup.gxl");
-const K8S_UPDATE_GXL: &str = include_str!("init/k8s/spec/workflows/update.gxl");
-const MOD_K8S_PRJ: &str = include_str!("init/k8s/_gal/work.gxl");
+pub const K8S_K8S_OPS_GXL: &str = include_str!("init/k8s/spec/workflows/operators.gxl");
+pub const MOD_K8S_WORK_GXL: &str = include_str!("init/k8s/_gal/work.gxl");
 pub trait ModActIniter {
-    fn host_setup_tpl() -> Self;
-    fn host_update_tpl() -> Self;
-    fn k8s_setup_tpl() -> Self;
-    fn k8s_update_tpl() -> Self;
+    fn host_ops_tpl() -> Self;
+    fn k8s_ops_tpl() -> Self;
 }
 pub trait ModPrjIniter {
     fn spec_host_tpl() -> Self;
@@ -34,41 +30,27 @@ pub trait ModPrjIniter {
 }
 
 impl ModActIniter for GxlAction {
-    fn host_setup_tpl() -> Self {
+    fn host_ops_tpl() -> Self {
+        Self::new(
+            OperationType::Setup,
+            "operators.gxl".into(),
+            MOD_HOST_OPS_GXL.to_string(),
+        )
+    }
+    fn k8s_ops_tpl() -> Self {
         Self::new(
             OperationType::Setup,
             "setup.gxl".into(),
-            HOST_SETUP_GXL.to_string(),
-        )
-    }
-    fn host_update_tpl() -> Self {
-        Self::new(
-            OperationType::Update,
-            "update.gxl".into(),
-            HOST_UPDATE_GXL.to_string(),
-        )
-    }
-    fn k8s_setup_tpl() -> Self {
-        Self::new(
-            OperationType::Setup,
-            "setup.gxl".into(),
-            K8S_SETUP_GXL.to_string(),
-        )
-    }
-    fn k8s_update_tpl() -> Self {
-        Self::new(
-            OperationType::Update,
-            "update.gxl".into(),
-            K8S_UPDATE_GXL.to_string(),
+            K8S_K8S_OPS_GXL.to_string(),
         )
     }
 }
 impl ModPrjIniter for GxlProject {
     fn spec_host_tpl() -> Self {
-        Self::from(MOD_HOST_PRJ)
+        Self::from(MOD_HOST_WORK_GXL)
     }
     fn spec_k8s_tpl() -> Self {
-        Self::from(MOD_K8S_PRJ)
+        Self::from(MOD_K8S_WORK_GXL)
     }
 }
 
@@ -79,18 +61,12 @@ pub trait ModIniter {
 
 impl ModIniter for ModWorkflows {
     fn mod_host_tpl_init() -> Self {
-        let actions = vec![
-            Workflow::Gxl(GxlAction::host_setup_tpl()),
-            Workflow::Gxl(GxlAction::host_update_tpl()),
-        ];
+        let actions = vec![Workflow::Gxl(GxlAction::host_ops_tpl())];
         Self::new(actions)
     }
 
     fn mod_k8s_tpl_init() -> ModWorkflows {
-        let actions = vec![
-            Workflow::Gxl(GxlAction::k8s_setup_tpl()),
-            Workflow::Gxl(GxlAction::k8s_update_tpl()),
-        ];
+        let actions = vec![Workflow::Gxl(GxlAction::k8s_ops_tpl())];
         Self::new(actions)
     }
 }
@@ -98,7 +74,7 @@ impl ModIniter for ModWorkflows {
 pub fn mod_init_gitignore(path: &Path) -> MainResult<()> {
     let ignore_path = path.join(".gitignore");
     if !ignore_path.exists() {
-        std::fs::write(&ignore_path, MOD_GITIGNORE)
+        std::fs::write(&ignore_path, MOD_PRJ_GITIGNORE)
             .owe_res()
             .with(&ignore_path)?;
     }

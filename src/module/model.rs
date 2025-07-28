@@ -25,8 +25,6 @@ pub struct ModModelSpec {
     artifact: ArtifactPackage,
     workflow: ModWorkflows,
     gxl_prj: GxlProject,
-    logs_spec: LogsSpec,
-    res_spec: CaculateResSpec,
     vars: VarCollection,
     local: Option<PathBuf>,
     setting: Option<Setting>,
@@ -121,8 +119,6 @@ pub struct ModTargetPaths {
     target_root: PathBuf,
     spec_path: PathBuf,
     conf_path: PathBuf,
-    logs_path: PathBuf,
-    res_path: PathBuf,
     vars_path: PathBuf,
     setting_path: PathBuf,
     artifact_path: PathBuf,
@@ -135,8 +131,6 @@ impl From<&PathBuf> for ModTargetPaths {
         Self {
             target_root: target_root.to_path_buf(),
             conf_path: spec_path.join(CONF_SPEC_YML),
-            logs_path: spec_path.join(LOGS_SPEC_YML),
-            res_path: spec_path.join(RES_SPEC_YML),
             vars_path: target_root.join(VARS_YML),
             setting_path: target_root.join(SETTING_YML),
             artifact_path: spec_path.join(ARTIFACT_YML),
@@ -187,9 +181,6 @@ impl Persistable<ModModelSpec> for ModModelSpec {
         self.artifact.save_conf(paths.artifact_path()).owe_logic()?;
 
         self.depends.save_conf(paths.depends_path()).owe_logic()?;
-        self.logs_spec.save_conf(paths.logs_path()).owe_logic()?;
-
-        self.res_spec.save_conf(paths.res_path()).owe_logic()?;
         self.vars.save_conf(paths.vars_path()).owe_logic()?;
         self.gxl_prj.save_to(&paths.target_root, None)?;
         flag.mark_suc();
@@ -222,17 +213,9 @@ impl Persistable<ModModelSpec> for ModModelSpec {
 
         //ctx.with_path("conf_spec", paths.conf_path());
         //let conf_spec = ConfSpec::from_conf(paths.conf_path()).with(&ctx)?;
-        ctx.with_path("logs_spec", paths.logs_path());
-        let logs_spec = LogsSpec::from_conf(paths.logs_path())
-            .with(&ctx)
-            .owe_logic()?;
 
         ctx.with_path("depends", paths.depends_path());
         let depends = DependencySet::from_conf(paths.depends_path())
-            .with(&ctx)
-            .owe_logic()?;
-        ctx.with_path("res_spec", paths.res_path());
-        let res_spec = CaculateResSpec::from_conf(paths.res_path())
             .with(&ctx)
             .owe_logic()?;
         ctx.with_path("vars", paths.vars_path());
@@ -247,8 +230,6 @@ impl Persistable<ModModelSpec> for ModModelSpec {
             artifact,
             workflow: actions,
             //conf_spec,
-            logs_spec,
-            res_spec,
             local: Some(target_root.to_path_buf()),
             vars,
             setting,
@@ -264,7 +245,7 @@ impl ModModelSpec {
         workflow: ModWorkflows,
         gxl_prj: GxlProject,
         //conf_spec: ConfSpec,
-        res_spec: CaculateResSpec,
+        _res_spec: CaculateResSpec,
         vars: VarCollection,
         setting: Option<Setting>,
     ) -> Self {
@@ -273,9 +254,6 @@ impl ModModelSpec {
             workflow,
             gxl_prj,
             artifact,
-            //conf_spec,
-            logs_spec: LogsSpec::tpl_init(),
-            res_spec,
             local: None,
             vars,
             setting,

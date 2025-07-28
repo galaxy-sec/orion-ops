@@ -105,17 +105,15 @@ mod tests {
     #[test]
     fn test_host_tpl_init() {
         let actions = ModWorkflows::mod_host_tpl_init();
-        assert_eq!(actions.actions().len(), 2);
+        assert_eq!(actions.actions().len(), 1);
         matches!(actions.actions()[0], Workflow::Gxl(_));
-        matches!(actions.actions()[1], Workflow::Gxl(_));
     }
 
     #[test]
     fn test_k8s_tpl_init() {
         let actions = ModWorkflows::mod_k8s_tpl_init();
-        assert_eq!(actions.actions().len(), 2);
+        assert_eq!(actions.actions().len(), 1);
         matches!(actions.actions()[0], Workflow::Gxl(_));
-        matches!(actions.actions()[1], Workflow::Gxl(_));
     }
 
     #[test]

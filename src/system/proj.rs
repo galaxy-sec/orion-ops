@@ -1,4 +1,4 @@
-use crate::const_vars::{VALUE_DIR, VALUE_FILE};
+use crate::const_vars::{VALUE_DIR, VALUE_FILE, SYS_PRJ_CONF_FILE_V1, SYS_PRJ_CONF_FILE_V2};
 use crate::error::SysReason;
 use crate::predule::*;
 
@@ -65,8 +65,12 @@ impl SysProject {
             )
         );
 
-        let conf_file = root_local.join("sys_prj.yml");
-        let conf = SysConf::from_conf(&conf_file).owe_res()?;
+        let conf_file_v1 = root_local.join(SYS_PRJ_CONF_FILE_V1);
+        let conf_file_v2 = root_local.join(SYS_PRJ_CONF_FILE_V2);
+        if conf_file_v1.exists() {
+            std::fs::rename(&conf_file_v1, &conf_file_v2).owe_res()?;
+        }
+        let conf = SysConf::from_conf(&conf_file_v2).owe_res()?;
         let root_local = root_local.to_path_buf();
         let sys_local = root_local.join("sys");
         let sys_spec = SysModelSpec::load_from(&sys_local)?;
@@ -95,11 +99,11 @@ impl SysProject {
             ),
             error!(
                 target : "sysprj",
-                "save project  to {} fail!", self.root_local().display()
+                "save project to {} fail!", self.root_local().display()
             )
         );
-        let conf_file = self.root_local().join("sys_prj.yml");
-        self.conf.save_conf(&conf_file).owe_res()?;
+        let conf_file_v2 = self.root_local().join("sys-prj.yml");
+        self.conf.save_conf(&conf_file_v2).owe_res()?;
         self.sys_spec.save_local(self.root_local(), "sys")?;
         self.project
             .save_to(self.root_local(), None)

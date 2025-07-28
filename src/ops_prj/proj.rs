@@ -153,7 +153,6 @@ pub mod tests {
 
     use crate::{
         const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject,
-        types::LocalizeOptions,
     };
 
     #[tokio::test]
@@ -163,8 +162,8 @@ pub mod tests {
         make_clean_path(&prj_path).owe_logic()?;
         let project = OpsProject::for_test("workins_sys_1").assert("make workins");
         project.save().assert("save workins_prj");
-        let mut project = OpsProject::load(&prj_path).assert("workins-prj");
-        project = project
+        let project = OpsProject::load(&prj_path).assert("workins-prj");
+        project
             .update(&UpdateOptions::default())
             .await
             .assert("spec.update_local");

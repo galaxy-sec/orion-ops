@@ -1,48 +1,17 @@
-//extern mod head { path = "./_gal/"; }
-mod envs  {
-   env _common    {
-    prj_key   = "gflow" ;
-
-  }
-
-  #[usage(desp="cicd env",color="red")]
-  env cicd : _common  {
-  }
- #[usage(desp="developer local env",color="red")]
-  env local : _common {
-    sub_env = "local";
-  }
-  env spec : _common {
-    sub_env = "spec";
-  }
-
-  env arm_mac {
-    target = "arm-mac14-host";
-  }
-  env x86_k8s {
-    target = "x86-k8s-host";
-  }
-
-  //#[usage(desp="default auto ")]
-  //env default    : local;
-}
-
-mod main   {
-
-    #[auto_load(entry)]
-    flow __into  {
-      target    = "${ENV_TARGET}" ;
-
+extern mod mod_ops { git =  "https://github.com/galaxy-operators/ops-gxl.git", channel = "${GXL_CHANNEL:main}" }
+mod envs : {
+    env  _common {
+        module_env = "default";
     }
-    flow conf  {
-      gx.echo ( "PRJ_BINS: ${PRJ_BINS} ");
+    env arm_mac : _common {
+        model = "arm-mac14-host";
     }
-    flow setup : : proxy.setup {
+    env x86_ubt : _common {
+        model = "x86-ubt22-host";
     }
-}
+    env x86_ubt_k8s : _common {
+        model = "x86-ubt22-k8s";
+    }
 
-mod  proxy {
-   flow setup {
-        gx.run ( local : "./mod/${TARGET}", env : "${ENV_SUB_ENV}" , flow : "setup" ) ;
-   }
 }
+mod main :  mod_ops {}

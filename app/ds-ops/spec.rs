@@ -2,9 +2,7 @@ use orion_error::{ErrorConv, ErrorOwe};
 use orion_infra::path::make_new_path;
 use orion_ops::error::MainResult;
 use orion_ops::infra::configure_dfx_logging;
-use orion_ops::module::proj::load_project_global_value;
 use orion_ops::ops_prj::proj::OpsProject;
-use orion_ops::types::LocalizeOptions;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 
@@ -31,13 +29,16 @@ pub async fn do_ins_cmd(cmd: GInsCmd) -> MainResult<()> {
             let spec = OpsProject::load(&current_dir).err_conv()?;
             spec.update(&options).await.err_conv()?;
         }
-        GInsCmd::Localize(args) => {
+        GInsCmd::Localize(_args) => {
+            todo!();
+            /*
             configure_dfx_logging(&args);
             let spec = OpsProject::load(&current_dir).err_conv()?;
             let dict = load_project_global_value(spec.root_local(), args.value())?;
             spec.localize(LocalizeOptions::new(dict, args.use_default_value))
                 .await
                 .err_conv()?;
+            */
         }
         GInsCmd::Setting(args) => {
             configure_dfx_logging(&args);

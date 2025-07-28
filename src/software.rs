@@ -46,6 +46,7 @@ pub struct LogsSpec {
     files: Vec<LogFile>,
 }
 impl LogsSpec {
+    #[allow(dead_code)]
     pub(crate) fn tpl_init() -> LogsSpec {
         Self {
             version: "0.1.0".to_string(),
