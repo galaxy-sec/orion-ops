@@ -9,7 +9,8 @@ use crate::{
 
 // 常量定义
 const POSTGRESQL_URL: &str = "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz";
-const POSTGRESQL_MD5_URL: &str = "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5";
+const POSTGRESQL_MD5_URL: &str =
+    "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5";
 const POSTGRESQL_README_URL: &str = "https://mirrors.aliyun.com/postgresql/README";
 const POSTGRESQL_ARCHIVE: &str = "postgresql-17.4.tar.gz";
 const POSTGRESQL_MD5_ARCHIVE: &str = "postgresql-17.4.tar.gz.md5";
@@ -182,22 +183,23 @@ impl ModuleSpec {
 
     pub fn make_new(name: &str) -> MainResult<ModuleSpec> {
         let mut conf = ConfSpec::new("1.0.0", CONFS_DIR);
-        conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(
-            POSTGRESQL_README_URL,
-        )));
-        let vars =     VarCollection::define(vec![
-                VarDefinition::from(("EXAMPLE_SIZE", 1000)),
-                VarDefinition::from(("ART_CACHE_REPO", ""))
-                ]);
+        conf.add(ConfFile::new("example.conf").with_addr(HttpAddr::from(POSTGRESQL_README_URL)));
+        let vars = VarCollection::define(vec![
+            VarDefinition::from(("EXAMPLE_SIZE", 1000)),
+            VarDefinition::from(("ART_CACHE_REPO", "")),
+        ]);
 
         let x86_ubu22_k8s = ModModelSpec::init(
             ModelSTD::x86_ubt22_k8s(),
-            ArtifactPackage::from(vec![Artifact::new(
-                name,
-                "0.1.0",
-                HttpAddr::from(POSTGRESQL_MD5_URL),
-                POSTGRESQL_MD5_ARCHIVE,
-            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
+            ArtifactPackage::from(vec![
+                Artifact::new(
+                    name,
+                    "0.1.0",
+                    HttpAddr::from(POSTGRESQL_MD5_URL),
+                    POSTGRESQL_MD5_ARCHIVE,
+                )
+                .with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}")))),
+            ]),
             ModWorkflows::mod_k8s_tpl_init(),
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
@@ -207,12 +209,15 @@ impl ModuleSpec {
 
         let arm_mac_host = ModModelSpec::init(
             ModelSTD::arm_mac14_host(),
-            ArtifactPackage::from(vec![Artifact::new(
-                name,
-                "0.1.0",
-                HttpAddr::from(POSTGRESQL_MD5_URL),
-                POSTGRESQL_MD5_ARCHIVE,
-            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
+            ArtifactPackage::from(vec![
+                Artifact::new(
+                    name,
+                    "0.1.0",
+                    HttpAddr::from(POSTGRESQL_MD5_URL),
+                    POSTGRESQL_MD5_ARCHIVE,
+                )
+                .with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}")))),
+            ]),
             ModWorkflows::mod_host_tpl_init(),
             GxlProject::spec_host_tpl(),
             //conf.clone(),
@@ -221,12 +226,15 @@ impl ModuleSpec {
         );
         let x86_ubt22_host = ModModelSpec::init(
             ModelSTD::arm_mac14_host(),
-            ArtifactPackage::from(vec![Artifact::new(
-                name,
-                "0.1.0",
-                HttpAddr::from(POSTGRESQL_MD5_URL),
-                POSTGRESQL_MD5_ARCHIVE,
-            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
+            ArtifactPackage::from(vec![
+                Artifact::new(
+                    name,
+                    "0.1.0",
+                    HttpAddr::from(POSTGRESQL_MD5_URL),
+                    POSTGRESQL_MD5_ARCHIVE,
+                )
+                .with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}")))),
+            ]),
             ModWorkflows::mod_host_tpl_init(),
             GxlProject::spec_host_tpl(),
             //conf.clone(),
@@ -245,16 +253,15 @@ pub fn make_mod_spec_example() -> MainResult<ModuleSpec> {
     Ok(ModuleSpec::for_example())
 }
 pub fn make_mod_spec_4test() -> MainResult<ModuleSpec> {
-
-        let name = "postgresql";
-        let k8s = ModModelSpec::init(
-            ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
-            ArtifactPackage::from(vec![Artifact::new(
-                name,
-                "0.1.0",
-                HttpAddr::from(POSTGRESQL_URL),
-                POSTGRESQL_ARCHIVE,
-            )]),
+    let name = "postgresql";
+    let k8s = ModModelSpec::init(
+        ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
+        ArtifactPackage::from(vec![Artifact::new(
+            name,
+            "0.1.0",
+            HttpAddr::from(POSTGRESQL_URL),
+            POSTGRESQL_ARCHIVE,
+        )]),
         ModWorkflows::mod_k8s_tpl_init(),
         GxlProject::spec_k8s_tpl(),
         //conf.clone(),
@@ -264,13 +271,13 @@ pub fn make_mod_spec_4test() -> MainResult<ModuleSpec> {
     .with_depends(DependencySet::for_test());
 
     let host = ModModelSpec::init(
-            ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
-            ArtifactPackage::from(vec![Artifact::new(
-                name,
-                "0.1.0",
-                HttpAddr::from(POSTGRESQL_URL),
-                POSTGRESQL_ARCHIVE,
-            )]),
+        ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
+        ArtifactPackage::from(vec![Artifact::new(
+            name,
+            "0.1.0",
+            HttpAddr::from(POSTGRESQL_URL),
+            POSTGRESQL_ARCHIVE,
+        )]),
         ModWorkflows::mod_host_tpl_init(),
         GxlProject::spec_host_tpl(),
         //conf.clone(),
