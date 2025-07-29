@@ -143,6 +143,7 @@ impl ModuleSpec {
             ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
                 ),
@@ -161,6 +162,7 @@ impl ModuleSpec {
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
                 ),
@@ -187,11 +189,12 @@ impl ModuleSpec {
             ModelSTD::x86_ubt22_k8s(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
                 "postgresql-17.4.tar.gz.md5",
-            )]),
+            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
             ModWorkflows::mod_k8s_tpl_init(),
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
@@ -204,11 +207,12 @@ impl ModuleSpec {
             ModelSTD::arm_mac14_host(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
                 "postgresql-17.4.tar.gz.md5",
-            )]),
+            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
             ModWorkflows::mod_host_tpl_init(),
             GxlProject::spec_host_tpl(),
             //conf.clone(),
@@ -224,11 +228,12 @@ impl ModuleSpec {
             ModelSTD::arm_mac14_host(),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz.md5",
                 ),
                 "postgresql-17.4.tar.gz.md5",
-            )]),
+            ).with_cache_addr(Some(AddrType::from(HttpAddr::from("{{ART_CACHE_REPO}}"))))]),
             ModWorkflows::mod_host_tpl_init(),
             GxlProject::spec_host_tpl(),
             //conf.clone(),
@@ -257,6 +262,7 @@ pub fn make_mod_spec_4test() -> MainResult<ModuleSpec> {
         ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
         ArtifactPackage::from(vec![Artifact::new(
             name,
+            "0.1.0",
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),
@@ -273,6 +279,7 @@ pub fn make_mod_spec_4test() -> MainResult<ModuleSpec> {
         ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ArtifactPackage::from(vec![Artifact::new(
             name,
+            "0.1.0",
             HttpAddr::from("https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz"),
             "postgresql-17.4.tar.gz",
         )]),

@@ -138,6 +138,7 @@ mod tests {
 
         let artifact = Artifact::new(
             "redis-7.0.1",
+            "7.0.1",
             LocalAddr::from("redis-linux-7.tar.gz"),
             "redis-linux-7.tar.gz",
         );

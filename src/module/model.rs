@@ -1,4 +1,4 @@
-use orion_variate::ext::ArtifactPackage;
+use orion_variate::{ext::ArtifactPackage, vars::EnvEvalable};
 
 use super::prelude::*;
 use crate::{
@@ -364,6 +364,7 @@ pub mod test {
             ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
                 ),
@@ -386,6 +387,7 @@ pub mod test {
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             ArtifactPackage::from(vec![Artifact::new(
                 name,
+                "0.1.0",
                 HttpAddr::from(
                     "https://mirrors.aliyun.com/postgresql/latest/postgresql-17.4.tar.gz",
                 ),
