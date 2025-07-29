@@ -2372,7 +2372,8 @@ dependencies = [
 
 [[package]]
 name = "orion_variate"
-version = "0.5.4"
+version = "0.5.6"
+source = "git+https://github.com/galaxy-sec/orion-variate?tag=v0.5.6#ee754c19758f50ce1359e923b306fd11b42e3473"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3928,7 +3929,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

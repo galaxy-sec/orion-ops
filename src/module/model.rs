@@ -245,7 +245,6 @@ impl ModModelSpec {
         workflow: ModWorkflows,
         gxl_prj: GxlProject,
         //conf_spec: ConfSpec,
-        _res_spec: CaculateResSpec,
         vars: VarCollection,
         setting: Option<Setting>,
     ) -> Self {
@@ -373,7 +372,6 @@ pub mod test {
             ModWorkflows::mod_k8s_tpl_init(),
             GxlProject::spec_k8s_tpl(),
             //conf.clone(),
-            CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
@@ -396,7 +394,6 @@ pub mod test {
             ModWorkflows::mod_host_tpl_init(),
             GxlProject::spec_host_tpl(),
             //conf.clone(),
-            CaculateResSpec::new(2, 4),
             VarCollection::define(vec![VarDefinition::from(("SPEED_LIMIT", 1000))]),
             Some(Setting::example()),
         )
@@ -444,7 +441,6 @@ pub mod test {
             ArtifactPackage::default(),
             ModWorkflows::default(),
             GxlProject::default(),
-            CaculateResSpec::new(2, 4),
             vars,
             None,
         )
