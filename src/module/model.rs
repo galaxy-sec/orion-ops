@@ -219,7 +219,8 @@ impl Persistable<ModModelSpec> for ModModelSpec {
             .with(&ctx)
             .owe_logic()?;
         ctx.with_path("vars", paths.vars_path());
-        let vars = VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path())
+        //let vars = VarCollection::eval_from_file(&ValueDict::default(), paths.vars_path())
+        let vars = VarCollection::from_conf(paths.vars_path())
             .with(&ctx)
             .owe_logic()?;
 

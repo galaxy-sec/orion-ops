@@ -105,13 +105,13 @@ impl ModuleSpecRef {
             let spec = ModModelSpec::load_from(&target_path)
                 .with(&target_root)
                 .owe(MainReason::from(ModReason::Load))?;
-            let _x = spec
+            let unit = spec
                 .update_local(&target_path, options)
                 .await
                 .owe(MainReason::from(ModReason::Update))?;
             ModModelSpec::clean_other(&target_root, self.model())?;
             flag.mark_suc();
-            return Ok(_x);
+            return Ok(unit);
         } else {
             Err(MainError::from_logic(
                 "no local value in ModuleSpecRef ".into(),
