@@ -45,7 +45,7 @@ impl ModProject {
         Self {
             conf,
             mod_spec: spec,
-            project: GxlProject::from((MOD_PRJ_WORK_GXL, MOD_PRJ_ADM_GXL,MOD_PRJ_ROOT_FILE)),
+            project: GxlProject::from((MOD_PRJ_WORK_GXL, MOD_PRJ_ADM_GXL, MOD_PRJ_ROOT_FILE)),
             root_local,
         }
     }

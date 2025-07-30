@@ -33,8 +33,8 @@ impl From<(&str, &str)> for GxlProject {
     }
 }
 
-impl From<(&str, &str,&str)> for GxlProject {
-    fn from(value: (&str, &str,&str)) -> Self {
+impl From<(&str, &str, &str)> for GxlProject {
+    fn from(value: (&str, &str, &str)) -> Self {
         Self {
             work: value.0.to_string(),
             adm: Some(value.1.to_string()),
@@ -63,7 +63,7 @@ impl Persistable<GxlProject> for GxlProject {
                     .want("crate version.txt")?;
             }
         }
-        if let Some(prj) = &self.prj{
+        if let Some(prj) = &self.prj {
             std::fs::write(gal_path.join(PRJ_TOML), prj.as_str()).owe_res()?;
         }
         Ok(())
@@ -79,7 +79,7 @@ impl Persistable<GxlProject> for GxlProject {
         } else {
             None
         };
-        let prj= if prj_path.exists() {
+        let prj = if prj_path.exists() {
             Some(std::fs::read_to_string(prj_path).owe_res()?)
         } else {
             None
