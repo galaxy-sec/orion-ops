@@ -4,6 +4,7 @@ use crate::const_vars::{
     VALUE_DIR, VALUE_FILE,
 };
 use crate::error::ModReason;
+use crate::module::init::MOD_PRJ_ROOT_FILE;
 use crate::predule::*;
 use crate::types::{Localizable, ValuePath};
 
@@ -44,7 +45,7 @@ impl ModProject {
         Self {
             conf,
             mod_spec: spec,
-            project: GxlProject::from((MOD_PRJ_WORK_GXL, MOD_PRJ_ADM_GXL)),
+            project: GxlProject::from((MOD_PRJ_WORK_GXL, MOD_PRJ_ADM_GXL,MOD_PRJ_ROOT_FILE)),
             root_local,
         }
     }

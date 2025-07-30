@@ -14,6 +14,7 @@ use crate::{
 
 pub const MOD_HOST_OPS_GXL: &str = include_str!("init/host/workflows/operators.gxl");
 pub const MOD_PRJ_WORK_GXL: &str = include_str!("init/_gal/work.gxl");
+pub const MOD_PRJ_ROOT_FILE: &str = include_str!("init/_gal/project.toml");
 pub const MOD_PRJ_ADM_GXL: &str = include_str!("init/_gal/adm.gxl");
 pub const MOD_HOST_WORK_GXL: &str = include_str!("init/host/_gal/work.gxl");
 pub const MOD_PRJ_GITIGNORE: &str = include_str!("init/.gitignore");
@@ -40,7 +41,7 @@ impl ModActIniter for GxlAction {
     fn k8s_ops_tpl() -> Self {
         Self::new(
             OperationType::Setup,
-            "setup.gxl".into(),
+            "operators.gxl".into(),
             K8S_K8S_OPS_GXL.to_string(),
         )
     }
