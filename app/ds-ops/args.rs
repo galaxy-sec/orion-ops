@@ -1,4 +1,4 @@
-use clap::{ArgAction, Parser};
+use clap::{ArgAction, Args, Parser};
 use derive_getters::Getters;
 use orion_ops::infra::DfxArgsGetter;
 
