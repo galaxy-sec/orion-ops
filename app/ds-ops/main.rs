@@ -31,7 +31,7 @@ impl GxOps {
     pub async fn run() -> MainResult<()> {
         setup_start_env_vars().owe_res()?;
         let cmd = GInsCmd::parse();
-        debug!("galaxy flow running .....");
+        println!("ds-ops: {}", env!("CARGO_PKG_VERSION"));
         do_ins_cmd(cmd).await?;
         Ok(())
     }
