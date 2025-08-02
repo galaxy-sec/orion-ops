@@ -1,6 +1,5 @@
 use orion_variate::{
     ext::ArtifactPackage,
-    vars::{EnvDict, EnvEvalable},
 };
 
 use super::prelude::*;
@@ -9,7 +8,6 @@ use crate::{
         DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_JSON, USED_READABLE_FILE,
         USER_VALUE_FILE, VALUE_DIR,
     },
-    error::ModReason,
     predule::*,
     types::{Localizable, ValuePath},
 };

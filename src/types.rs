@@ -50,11 +50,6 @@ impl LocalizeOptions {
     pub fn raw_value(&self) -> &ValueDict {
         &self.raw_dict
     }
-    pub fn with_global(mut self, value: ValueDict) -> Self {
-        todo!();
-        self.eval_dict = value;
-        self
-    }
     pub fn use_default_value(&self) -> bool {
         self.use_default_value
     }

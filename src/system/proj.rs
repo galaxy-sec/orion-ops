@@ -15,7 +15,7 @@ use super::{
 };
 use crate::types::{LocalizeOptions, ValuePath};
 use async_trait::async_trait;
-use orion_common::serde::{Configable, Persistable, ValueConfable};
+use orion_common::serde::{Configable, Persistable, };
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
 use orion_variate::update::UpdateOptions;
@@ -149,15 +149,15 @@ impl Localizable for SysConf {
 impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> MainResult<()> {
         let value_path = self.value_path().ensure_exist().owe_res()?;
-        let value_file = value_path.value_file();
-        let dict = ValueDict::from_valconf(&value_file).owe_res()?;
-        let cur_opt = options.with_global(dict);
+        //let value_file = value_path.value_file();
+        //let dict = ValueDict::from_valconf(&value_file).owe_res()?;
+        //let options = options.with_global(dict);
         let dst_path = Some(value_path);
 
         self.conf
-            .localize(dst_path.clone(), cur_opt.clone())
+            .localize(dst_path.clone(), options.clone())
             .await?;
-        self.sys_spec().localize(dst_path, cur_opt).await?;
+        self.sys_spec().localize(dst_path, options).await?;
         Ok(())
     }
     pub fn value_path(&self) -> ValuePath {
