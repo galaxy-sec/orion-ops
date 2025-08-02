@@ -8,7 +8,7 @@ use orion_variate::vars::{EnvDict, EnvEvalable, OriginDict, ValueDict, ValueType
 
 use crate::{
     const_vars::{VALUE_DIR, VALUE_FILE},
-    error::{MainResult, },
+    error::MainResult,
     module::model::TargetValuePaths,
     types::LocalizeOptions,
 };
