@@ -5,7 +5,7 @@ use getset::Getters;
 use orion_infra::path::{PathResult, ensure_path};
 use orion_variate::{
     update::UpdateOptions,
-    vars::{ValueDict, VarCollection},
+    vars::{EnvDict, EnvEvalable, ValueDict, VarCollection},
 };
 
 use crate::error::MainResult;
@@ -32,21 +32,27 @@ pub trait SysUpdateable<T> {
 
 #[derive(Clone, Debug, Default)]
 pub struct LocalizeOptions {
-    global_dict: ValueDict,
+    eval_dict: ValueDict,
+    raw_dict: ValueDict,
     use_default_value: bool,
 }
 impl LocalizeOptions {
-    pub fn new(global_dict: ValueDict, mod_user_value: bool) -> Self {
+    pub fn new(raw_dict: ValueDict, mod_user_value: bool) -> Self {
         Self {
-            global_dict,
+            eval_dict: raw_dict.clone().env_eval(&EnvDict::default()),
+            raw_dict,
             use_default_value: mod_user_value,
         }
     }
-    pub fn global_value(&self) -> &ValueDict {
-        &self.global_dict
+    pub fn evaled_value(&self) -> &ValueDict {
+        &self.eval_dict
+    }
+    pub fn raw_value(&self) -> &ValueDict {
+        &self.raw_dict
     }
     pub fn with_global(mut self, value: ValueDict) -> Self {
-        self.global_dict = value;
+        todo!();
+        self.eval_dict = value;
         self
     }
     pub fn use_default_value(&self) -> bool {
@@ -55,7 +61,8 @@ impl LocalizeOptions {
 
     pub fn for_test() -> Self {
         Self {
-            global_dict: ValueDict::new(),
+            eval_dict: ValueDict::new(),
+            raw_dict: ValueDict::new(),
             use_default_value: false,
         }
     }

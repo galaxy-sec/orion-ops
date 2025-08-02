@@ -4,6 +4,7 @@ use orion_ops::error::MainResult;
 use orion_ops::infra::configure_dfx_logging;
 use orion_ops::module::proj::ModProject;
 use orion_ops::module::spec::make_mod_spec_example;
+use orion_ops::project::load_project_global_value;
 use orion_ops::types::{Localizable, LocalizeOptions};
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
@@ -34,7 +35,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> MainResult<()> {
         args::GxModCmd::Localize(args) => {
             configure_dfx_logging(&args);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            let dict = spec.load_global_value(args.value())?;
+            let dict = load_project_global_value(spec.root_local(), args.value())?;
             spec.localize(None, LocalizeOptions::new(dict, args.use_default_value))
                 .await
                 .err_conv()?;

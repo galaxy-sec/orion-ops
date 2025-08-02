@@ -1,7 +1,6 @@
 use super::prelude::*;
 use crate::const_vars::{
     BITNAMI_COMMON_GIT_URL, MOD_PRJ_CONF_FILE_V1, MOD_PRJ_CONF_FILE_V2, MOD_PRJ_TEST_ROOT,
-    VALUE_DIR, VALUE_FILE,
 };
 use crate::error::ModReason;
 use crate::module::init::MOD_PRJ_ROOT_FILE;
@@ -101,26 +100,6 @@ impl ModProject {
         flag.mark_suc();
         Ok(())
     }
-    pub fn load_global_value(&self, value: &Option<String>) -> MainResult<ValueDict> {
-        load_project_global_value(self.root_local(), value)
-    }
-}
-
-pub fn load_project_global_value(root: &Path, options: &Option<String>) -> MainResult<ValueDict> {
-    let value_root = ensure_path(root.join(VALUE_DIR)).owe_logic()?;
-    let value_file = if let Some(v_file) = options {
-        PathBuf::from(v_file)
-    } else {
-        let v_file = value_root.join(VALUE_FILE);
-        if !v_file.exists() {
-            let mut dict = ValueDict::new();
-            dict.insert("SAMPLE_KEY", ValueType::from("SAMPLE_VAL"));
-            dict.save_valconf(&v_file).owe_res()?;
-        }
-        v_file
-    };
-    let dict = ValueDict::eval_from_file(&EnvDict::default(), &value_file).owe_logic()?;
-    Ok(dict)
 }
 
 impl ModConf {

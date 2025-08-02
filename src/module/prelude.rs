@@ -18,6 +18,6 @@ pub use crate::{
 
 pub use orion_variate::addr::types::EnvVarPath;
 pub use orion_variate::addr::{AddrType, GitAddr};
-pub use orion_variate::vars::{EnvDict, ValueType};
+pub use orion_variate::vars::ValueType;
 
 pub use orion_common::serde::{Configable, JsonAble, ValueConfable};

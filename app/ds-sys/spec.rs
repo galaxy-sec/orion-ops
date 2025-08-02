@@ -4,7 +4,8 @@ use orion_infra::path::make_new_path;
 use orion_ops::error::MainResult;
 use orion_ops::infra::configure_dfx_logging;
 use orion_ops::module::ModelSTD;
-use orion_ops::module::proj::load_project_global_value;
+
+use orion_ops::project::load_project_global_value;
 use orion_ops::system::proj::SysProject;
 use orion_ops::types::LocalizeOptions;
 use orion_variate::update::UpdateOptions;
