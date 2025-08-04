@@ -4,15 +4,15 @@ version = "0.10.5"
 edition = "2024"
 
 [[bin]]
-name = "ds-sys"
+name = "gsys"
 path = "app/ds-sys/main.rs"
 
 [[bin]]
-name = "ds-mod"
+name = "gmod"
 path = "app/ds-mod/main.rs"
 
 [[bin]]
-name = "ds-ops"
+name = "gops"
 path = "app/ds-ops/main.rs"
 
 #[[bin]]
