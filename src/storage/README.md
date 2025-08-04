@@ -219,7 +219,7 @@ storage:
     type: postgresql
     host: localhost
     port: 5432
-    database: orion_ops
+    database: galaxy_ops
     username: orion
     password: secret
     pool_size: 10
@@ -243,10 +243,10 @@ storage:
   file:
     backend: local
     local:
-      path: /var/lib/orion-ops/data
+      path: /var/lib/galaxy-ops/data
     s3:
       endpoint: https://s3.amazonaws.com
-      bucket: orion-ops
+      bucket: galaxy-ops
       region: us-east-1
       access_key: AKIA...
       secret_key: secret
@@ -256,7 +256,7 @@ storage:
 
 ### 数据库操作
 ```rust
-use orion_ops::storage::{DatabaseManager, UserRepository};
+use galaxy_ops::storage::{DatabaseManager, UserRepository};
 
 let db = DatabaseManager::new(config).await?;
 let user_repo = UserRepository::new(db.clone());
@@ -271,7 +271,7 @@ let users = user_repo.list_users(0, 10).await?;
 
 ### 缓存操作
 ```rust
-use orion_ops::storage::{CacheManager, CacheStrategy};
+use galaxy_ops::storage::{CacheManager, CacheStrategy};
 
 let cache = CacheManager::new(redis_config).await?;
 
@@ -287,7 +287,7 @@ cache.delete("user:admin").await?;
 
 ### 文件存储操作
 ```rust
-use orion_ops::storage::{FileStorage, StorageBackend};
+use galaxy_ops::storage::{FileStorage, StorageBackend};
 
 let storage = FileStorage::new(config).await?;
 
@@ -305,7 +305,7 @@ storage.delete("config/app.yaml").await?;
 
 ### 事务支持
 ```rust
-use orion_ops::storage::DatabaseManager;
+use galaxy_ops::storage::DatabaseManager;
 
 let db = DatabaseManager::new(config).await?;
 let tx = db.begin_transaction().await?;
@@ -322,7 +322,7 @@ tx.commit().await?;
 
 ### 迁移脚本
 ```rust
-use orion_ops::storage::MigrationManager;
+use galaxy_ops::storage::MigrationManager;
 
 let migrator = MigrationManager::new(db).await?;
 migrator.run_migrations().await?;
@@ -370,7 +370,7 @@ CREATE INDEX idx_users_email ON users(email);
 ### 数据库备份
 ```bash
 # PostgreSQL备份
-pg_dump -h localhost -U orion orion_ops > backup.sql
+pg_dump -h localhost -U orion galaxy_ops > backup.sql
 
 # Redis备份
 redis-cli BGSAVE
@@ -379,7 +379,7 @@ redis-cli BGSAVE
 ### 数据恢复
 ```bash
 # PostgreSQL恢复
-psql -h localhost -U orion orion_ops < backup.sql
+psql -h localhost -U orion galaxy_ops < backup.sql
 
 # Redis恢复
 redis-cli --rdb dump.rdb

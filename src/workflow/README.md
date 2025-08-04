@@ -488,7 +488,7 @@ workflow:
 
 ### 工作流执行器
 ```rust
-use orion_ops::workflow::{WorkflowEngine, WorkflowInstance};
+use galaxy_ops::workflow::{WorkflowEngine, WorkflowInstance};
 
 let engine = WorkflowEngine::new();
 
@@ -519,7 +519,7 @@ engine.cancel(execution_id).await?;
 
 ### 任务执行器
 ```rust
-use orion_ops::workflow::{TaskExecutor, TaskContext};
+use galaxy_ops::workflow::{TaskExecutor, TaskContext};
 
 #[async_trait]
 impl TaskExecutor for MyTaskExecutor {
@@ -546,7 +546,7 @@ impl TaskExecutor for MyTaskExecutor {
 
 ### 状态持久化
 ```rust
-use orion_ops::workflow::{StateManager, StateStore};
+use galaxy_ops::workflow::{StateManager, StateStore};
 
 let state_manager = StateManager::new();
 
@@ -620,7 +620,7 @@ impl CompensationAction {
 
 ### 工作流监控
 ```rust
-use orion_ops::workflow::{WorkflowMonitor, MetricCollector};
+use galaxy_ops::workflow::{WorkflowMonitor, MetricCollector};
 
 let monitor = WorkflowMonitor::new();
 
@@ -936,7 +936,7 @@ ds-ops workflow logs --id <execution-id>
 
 ### 3. 程序化使用
 ```rust
-use orion_ops::workflow::{WorkflowEngine, WorkflowDefinition};
+use galaxy_ops::workflow::{WorkflowEngine, WorkflowDefinition};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

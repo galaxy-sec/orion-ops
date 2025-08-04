@@ -2,7 +2,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use orion_error::ErrorConv;
-use orion_ops::{error::SpecResult, system::proj::SysProject};
+use galaxy_ops::{error::SpecResult, system::proj::SysProject};
 use rmcp::{
     Error as McpError, RoleServer, ServerHandler,
     handler::server::{router::tool::ToolRouter, tool::Parameters},

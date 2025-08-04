@@ -89,7 +89,7 @@ graph TB
 
 ### 模块依赖管理
 ```rust
-use orion_ops::module::{ModuleSpec, ModuleDependency};
+use galaxy_ops::module::{ModuleSpec, ModuleDependency};
 
 let module = ModuleSpec::builder()
     .name("web-server")
@@ -100,7 +100,7 @@ let module = ModuleSpec::builder()
 
 ### 平台适配
 ```rust
-use orion_ops::module::ModulePlatform;
+use galaxy_ops::module::ModulePlatform;
 
 let platform = ModulePlatform::detect();
 match platform {
@@ -112,7 +112,7 @@ match platform {
 
 ### 本地化配置
 ```rust
-use orion_ops::module::{LocalizeOptions, LocalizeContext};
+use galaxy_ops::module::{LocalizeOptions, LocalizeContext};
 
 let options = LocalizeOptions::new()
     .with_template_dir("/templates")

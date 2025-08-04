@@ -2,7 +2,7 @@
 
 ## 概述
 
-本目录包含了 orion-ops 项目的核心顶层文件，这些文件定义了系统的基本类型、错误处理、配置管理和工具函数。这些文件构成了整个系统的基础架构。
+本目录包含了 galaxy-ops 项目的核心顶层文件，这些文件定义了系统的基本类型、错误处理、配置管理和工具函数。这些文件构成了整个系统的基础架构。
 
 ## 文件结构
 
@@ -22,7 +22,7 @@
 
 **使用示例：**
 ```rust
-use orion_ops::types::{SysUpdateValue, LocalizeOptions, SysUpdateable};
+use galaxy_ops::types::{SysUpdateValue, LocalizeOptions, SysUpdateable};
 
 // 创建系统更新值
 let vars = VarCollection::new();
@@ -55,7 +55,7 @@ let options = LocalizeOptions::new(global_dict, true);
 
 **使用示例：**
 ```rust
-use orion_ops::error::{MainReason, MainResult};
+use galaxy_ops::error::{MainReason, MainResult};
 
 fn example_function() -> MainResult<String> {
     // 返回成功结果
@@ -205,7 +205,7 @@ pub struct Task {
 ### 1. 基础使用
 
 ```rust
-use orion_ops::{
+use galaxy_ops::{
     types::*,
     error::*,
     conf::AppConfig,
@@ -230,7 +230,7 @@ async fn main() -> MainResult<()> {
 ### 2. 错误处理
 
 ```rust
-use orion_ops::error::{MainReason, MainResult};
+use galaxy_ops::error::{MainReason, MainResult};
 
 fn handle_error() -> MainResult<()> {
     match risky_operation() {
@@ -259,7 +259,7 @@ fn handle_error() -> MainResult<()> {
 ### 3. 配置管理
 
 ```rust
-use orion_ops::conf::AppConfig;
+use galaxy_ops::conf::AppConfig;
 
 async fn manage_config() -> MainResult<()> {
     // 创建默认配置

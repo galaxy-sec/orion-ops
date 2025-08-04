@@ -1,6 +1,6 @@
 use clap::{ArgAction, Parser};
 use derive_getters::Getters;
-use orion_ops::infra::DfxArgsGetter;
+use galaxy_ops::infra::DfxArgsGetter;
 
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "ds-sys")]

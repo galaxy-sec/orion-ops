@@ -152,7 +152,7 @@ graph TB
 
 ### 服务注册与发现
 ```rust
-use orion_ops::service::{ServiceRegistry, ServiceProvider};
+use galaxy_ops::service::{ServiceRegistry, ServiceProvider};
 
 let registry = ServiceRegistry::new();
 registry.register("user-service", Box::new(UserService::new()));
@@ -163,7 +163,7 @@ registry.register("auth-service", Box::new(AuthService::new()));
 
 ### 用户管理
 ```rust
-use orion_ops::service::UserService;
+use galaxy_ops::service::UserService;
 
 let user_service = UserService::new();
 let user = user_service.create_user("admin", "admin@example.com", UserRole::Admin)?;
@@ -172,7 +172,7 @@ let users = user_service.list_users(0, 10)?;
 
 ### 认证授权
 ```rust
-use orion_ops::service::AuthService;
+use galaxy_ops::service::AuthService;
 
 let auth_service = AuthService::new();
 let token = auth_service.login("admin", "password")?;
@@ -182,7 +182,7 @@ let permissions = auth_service.get_user_permissions("admin")?;
 
 ### 系统配置
 ```rust
-use orion_ops::service::SystemConfigService;
+use galaxy_ops::service::SystemConfigService;
 
 let config_service = SystemConfigService::new();
 let config = config_service.get_config("database.url")?;
@@ -191,7 +191,7 @@ config_service.set_config("log.level", "debug", ConfigScope::Global)?;
 
 ### 任务调度
 ```rust
-use orion_ops::service::TaskSchedulerService;
+use galaxy_ops::service::TaskSchedulerService;
 
 let scheduler = TaskSchedulerService::new();
 let task = scheduler.create_task("backup", "0 0 * * *", "backup.sh")?;

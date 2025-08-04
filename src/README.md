@@ -9,7 +9,7 @@ Orion Ops是一个用于系统配置和部署的Rust库，提供了模块化管�
 
 ```mermaid
 graph TD
-    A[orion-ops] --> B[核心层]
+    A[galaxy-ops] --> B[核心层]
     A --> C[业务模块层]
     A --> D[数据类型层]
     A --> E[工具层]
@@ -89,8 +89,8 @@ graph TD
 ## 使用示例
 
 ```rust
-use orion_ops::types::{ValuePath, LocalizeOptions};
-use orion_ops::module::ModelSTD;
+use galaxy_ops::types::{ValuePath, LocalizeOptions};
+use galaxy_ops::module::ModelSTD;
 
 // 创建系统配置
 let model_std = ModelSTD::from_cur_sys();

@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use orion_error::{ErrorOwe, TestAssertWithMsg};
 use orion_infra::path::make_clean_path;
-use orion_ops::{
+use galaxy_ops::{
     const_vars::{SYS_MODEL_PRJ_ROOT, WORKINS_PRJ_ROOT},
     error::MainResult,
     module::depend::{Dependency, DependencySet},

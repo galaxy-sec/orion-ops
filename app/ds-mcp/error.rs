@@ -1,4 +1,4 @@
-use orion_ops::error::SpecError;
+use galaxy_ops::error::SpecError;
 use rmcp::model::{ErrorCode, ErrorData};
 
 use serde_json::Value;

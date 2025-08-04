@@ -1,13 +1,13 @@
-# Orion-Ops 项目总览
+# galaxy-ops 项目总览
 
 ## 项目简介
 
-Orion-Ops 是一个现代化的运维管理平台，提供模块化管理、系统配置、包管理、工作流自动化等核心功能。项目采用 Rust 语言开发，具有高性能、内存安全和并发处理的优势。
+galaxy-ops 是一个现代化的运维管理平台，提供模块化管理、系统配置、包管理、工作流自动化等核心功能。项目采用 Rust 语言开发，具有高性能、内存安全和并发处理的优势。
 
 ## 项目结构
 
 ```
-orion-ops/
+galaxy-ops/
 ├── src/
 │   ├── README.md              # 项目概述
 │   ├── core_files.md          # 核心文件文档
@@ -148,7 +148,7 @@ brew install postgresql redis
 ```bash
 # 克隆项目
 git clone <repository-url>
-cd orion-ops
+cd galaxy-ops
 
 # 构建项目
 cargo build --release
@@ -162,12 +162,12 @@ cargo test
 ```yaml
 # config.yaml
 app:
-  name: "orion-ops"
+  name: "galaxy-ops"
   version: "0.10.2"
   environment: "development"
 
 database:
-  url: "postgresql://localhost/orion_ops"
+  url: "postgresql://localhost/galaxy_ops"
   pool_size: 10
 
 cache:
@@ -256,7 +256,7 @@ cargo readme > README.md
 统一的错误类型系统：
 
 ```rust
-use orion_ops::error::{MainReason, MainResult};
+use galaxy_ops::error::{MainReason, MainResult};
 
 pub fn example() -> MainResult<String> {
     // 业务逻辑
@@ -269,7 +269,7 @@ pub fn example() -> MainResult<String> {
 类型安全的配置系统：
 
 ```rust
-use orion_ops::conf::AppConfig;
+use galaxy_ops::conf::AppConfig;
 
 let config = AppConfig::load("config.yaml").await?;
 config.validate()?;
@@ -300,27 +300,27 @@ CMD ["ds-ops"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orion-ops
+  name: galaxy-ops
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: orion-ops
+      app: galaxy-ops
   template:
     metadata:
       labels:
-        app: orion-ops
+        app: galaxy-ops
     spec:
       containers:
-      - name: orion-ops
-        image: orion-ops:latest
+      - name: galaxy-ops
+        image: galaxy-ops:latest
         ports:
         - containerPort: 8080
         env:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: orion-ops-secrets
+              name: galaxy-ops-secrets
               key: database-url
 ```
 
@@ -332,7 +332,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'orion-ops'
+  - job_name: 'galaxy-ops'
     static_configs:
       - targets: ['localhost:8080']
 ```

@@ -1,5 +1,7 @@
+
+
 ## 工作规则
 - 任务完成后需要把结果写到当前文档
 
 ## 工作任务
-[x]  orion-ops 改名为 galaxy-ops , 修改相关的文档
+[ ]  galaxy-ops 改名为 galaxy-ops , 修改相关的文档 

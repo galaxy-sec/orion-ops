@@ -1,5 +1,5 @@
 [package]
-name = "orion-ops"
+name = "galaxy-ops"
 version = "0.10.6"
 edition = "2024"
 
@@ -23,7 +23,7 @@ path = "app/ds-ops/main.rs"
 members = ["."]
 
 [workspace.package]
-#name = "orion-ops"
+#name = "galaxy-ops"
 version = "0.4.1"
 edition = "2024"
 license = "Apache-2.0"

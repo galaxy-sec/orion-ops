@@ -1,13 +1,13 @@
 use inquire::Select;
 use orion_error::{ErrorConv, ErrorOwe};
 use orion_infra::path::make_new_path;
-use orion_ops::error::MainResult;
-use orion_ops::infra::configure_dfx_logging;
-use orion_ops::module::ModelSTD;
+use galaxy_ops::error::MainResult;
+use galaxy_ops::infra::configure_dfx_logging;
+use galaxy_ops::module::ModelSTD;
 
-use orion_ops::project::load_project_global_value;
-use orion_ops::system::proj::SysProject;
-use orion_ops::types::LocalizeOptions;
+use galaxy_ops::project::load_project_global_value;
+use galaxy_ops::system::proj::SysProject;
+use galaxy_ops::types::LocalizeOptions;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 

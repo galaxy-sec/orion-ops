@@ -2,7 +2,7 @@
 
 ## 概述
 
-Ops Project 模块是 orion-ops 项目的核心组件，负责项目生命周期管理、配置管理和系统初始化。该模块提供了完整的项目操作框架，支持从项目创建到部署的全流程管理。
+Ops Project 模块是 galaxy-ops 项目的核心组件，负责项目生命周期管理、配置管理和系统初始化。该模块提供了完整的项目操作框架，支持从项目创建到部署的全流程管理。
 
 ## 系统架构
 
@@ -216,7 +216,7 @@ ds-ops project import --source docker --image my-app:latest
 ### 3. 程序化使用
 
 ```rust
-use orion_ops::ops_prj::{ProjectManager, InitConfig, ProjectTemplate};
+use galaxy_ops::ops_prj::{ProjectManager, InitConfig, ProjectTemplate};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

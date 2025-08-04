@@ -1,8 +1,8 @@
 use orion_error::{ErrorConv, ErrorOwe};
 use orion_infra::path::make_new_path;
-use orion_ops::error::MainResult;
-use orion_ops::infra::configure_dfx_logging;
-use orion_ops::ops_prj::proj::OpsProject;
+use galaxy_ops::error::MainResult;
+use galaxy_ops::infra::configure_dfx_logging;
+use galaxy_ops::ops_prj::proj::OpsProject;
 use orion_variate::update::UpdateOptions;
 use orion_variate::vars::ValueDict;
 

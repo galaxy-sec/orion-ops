@@ -156,7 +156,7 @@ pub struct PackageDependency {
 
 #### 包管理器功能
 ```rust
-use orion_ops::package::{PackageManager, PackageRegistry};
+use galaxy_ops::package::{PackageManager, PackageRegistry};
 
 let manager = PackageManager::new();
 
@@ -250,9 +250,9 @@ scripts:
 
 ### 本地仓库
 ```rust
-use orion_ops::package::{LocalRegistry, PackageRegistry};
+use galaxy_ops::package::{LocalRegistry, PackageRegistry};
 
-let registry = LocalRegistry::new("/var/lib/orion-ops/packages");
+let registry = LocalRegistry::new("/var/lib/galaxy-ops/packages");
 
 // 添加包到本地仓库
 registry.publish(package).await?;
@@ -269,7 +269,7 @@ registry.yank("example-package", "1.2.3").await?;
 
 ### 远程仓库
 ```rust
-use orion_ops::package::{RemoteRegistry, PackageRegistry};
+use galaxy_ops::package::{RemoteRegistry, PackageRegistry};
 
 let registry = RemoteRegistry::new("https://registry.example.com");
 
@@ -288,7 +288,7 @@ let info = registry.info("example-package").await?;
 # registry.yml
 registries:
   official:
-    url: "https://registry.orion-ops.com"
+    url: "https://registry.galaxy-ops.com"
     priority: 1
   
   company:
@@ -298,7 +298,7 @@ registries:
       token: "${COMPANY_TOKEN}"
   
   local:
-    path: "/var/lib/orion-ops/packages"
+    path: "/var/lib/galaxy-ops/packages"
     priority: 3
 ```
 
@@ -386,9 +386,9 @@ impl PackageManager {
 
 ### 缓存策略
 ```rust
-use orion_ops::package::{PackageCache, CacheStrategy};
+use galaxy_ops::package::{PackageCache, CacheStrategy};
 
-let cache = PackageCache::new("/var/cache/orion-ops/packages");
+let cache = PackageCache::new("/var/cache/galaxy-ops/packages");
 
 // 设置缓存策略
 cache.set_strategy(CacheStrategy::LRU {
@@ -440,7 +440,7 @@ build:
 
 ### 构建脚本
 ```rust
-use orion_ops::package::{PackageBuilder, BuildConfig};
+use galaxy_ops::package::{PackageBuilder, BuildConfig};
 
 let builder = PackageBuilder::new();
 let config = BuildConfig::from_file("build.yml")?;
@@ -470,7 +470,7 @@ let manifest = builder.generate_manifest(&package)?;
 ```yaml
 # publish.yml
 publish:
-  registry: "https://registry.orion-ops.com"
+  registry: "https://registry.galaxy-ops.com"
   auth:
     token: "${REGISTRY_TOKEN}"
   
@@ -488,7 +488,7 @@ publish:
 
 ### 搜索功能
 ```rust
-use orion_ops::package::{PackageSearch, SearchQuery};
+use galaxy_ops::package::{PackageSearch, SearchQuery};
 
 let search = PackageSearch::new();
 
@@ -529,7 +529,7 @@ pub struct SearchIndex {
 
 ### 依赖关系可视化
 ```rust
-use orion_ops::package::{DependencyGraph, GraphVisualizer};
+use galaxy_ops::package::{DependencyGraph, GraphVisualizer};
 
 let graph = DependencyGraph::build("example-package").await?;
 
@@ -600,7 +600,7 @@ test:
 
 ### 安全扫描
 ```rust
-use orion_ops::package::{SecurityScanner, ScanResult};
+use galaxy_ops::package::{SecurityScanner, ScanResult};
 
 let scanner = SecurityScanner::new();
 

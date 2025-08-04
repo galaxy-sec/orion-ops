@@ -199,7 +199,7 @@ pub struct Deployment {
 
 #### 应用系统管理器功能
 ```rust
-use orion_ops::app_sys::{AppSystem, SysProject};
+use galaxy_ops::app_sys::{AppSystem, SysProject};
 
 let system = AppSystem::new();
 
@@ -284,7 +284,7 @@ environments:
 
 ### 环境变量管理
 ```rust
-use orion_ops::app_sys::{EnvironmentManager, ConfigValue};
+use galaxy_ops::app_sys::{EnvironmentManager, ConfigValue};
 
 let env_manager = EnvironmentManager::new();
 
@@ -390,7 +390,7 @@ services:
 
 ### 服务依赖管理
 ```rust
-use orion_ops::app_sys::{ServiceManager, ServiceDependency};
+use galaxy_ops::app_sys::{ServiceManager, ServiceDependency};
 
 let service_manager = ServiceManager::new();
 
@@ -462,7 +462,7 @@ deployments:
 
 ### 部署流程
 ```rust
-use orion_ops::app_sys::{DeploymentManager, DeploymentStrategy};
+use galaxy_ops::app_sys::{DeploymentManager, DeploymentStrategy};
 
 let deployment_manager = DeploymentManager::new();
 
@@ -521,7 +521,7 @@ config:
 
 ### 配置热更新
 ```rust
-use orion_ops::app_sys::{ConfigManager, ConfigWatcher};
+use galaxy_ops::app_sys::{ConfigManager, ConfigWatcher};
 
 let config_manager = ConfigManager::new();
 
@@ -603,7 +603,7 @@ monitoring:
 
 ### 监控集成
 ```rust
-use orion_ops::app_sys::{MonitoringManager, AlertManager};
+use galaxy_ops::app_sys::{MonitoringManager, AlertManager};
 
 let monitoring = MonitoringManager::new();
 
@@ -642,7 +642,7 @@ logging:
 
 ### 日志收集
 ```rust
-use orion_ops::app_sys::{LogManager, LogCollector};
+use galaxy_ops::app_sys::{LogManager, LogCollector};
 
 let log_manager = LogManager::new();
 

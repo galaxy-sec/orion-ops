@@ -95,7 +95,7 @@ graph TB
 
 #### 初始化流程
 ```rust
-use orion_ops::system::SystemInitializer;
+use galaxy_ops::system::SystemInitializer;
 
 let initializer = SystemInitializer::new();
 let result = initializer
@@ -122,7 +122,7 @@ let result = initializer
 
 #### 使用示例
 ```rust
-use orion_ops::system::SystemPath;
+use galaxy_ops::system::SystemPath;
 
 let sys_path = SystemPath::new();
 
@@ -187,7 +187,7 @@ system-project/
 
 #### 引用管理
 ```rust
-use orion_ops::system::SystemRefs;
+use galaxy_ops::system::SystemRefs;
 
 let refs = SystemRefs::new();
 
@@ -221,7 +221,7 @@ let is_valid = refs.validate_all();
 ```yaml
 # system-spec.yml
 system:
-  name: "orion-ops"
+  name: "galaxy-ops"
   version: "1.0.0"
   
   modules:
@@ -334,7 +334,7 @@ pub struct SystemStatus {
 
 ### 状态监控
 ```rust
-use orion_ops::system::{SystemStatus, HealthChecker};
+use galaxy_ops::system::{SystemStatus, HealthChecker};
 
 let status = SystemStatus::current();
 println!("System State: {:?}", status.state);
@@ -355,15 +355,15 @@ if health.is_healthy() {
 ```yaml
 # system.yml
 system:
-  name: "orion-ops"
+  name: "galaxy-ops"
   version: "1.0.0"
   
   paths:
-    config: "/etc/orion-ops"
-    data: "/var/lib/orion-ops"
-    logs: "/var/log/orion-ops"
-    cache: "/var/cache/orion-ops"
-    temp: "/tmp/orion-ops"
+    config: "/etc/galaxy-ops"
+    data: "/var/lib/galaxy-ops"
+    logs: "/var/log/galaxy-ops"
+    cache: "/var/cache/galaxy-ops"
+    temp: "/tmp/galaxy-ops"
   
   services:
     database:
@@ -371,7 +371,7 @@ system:
       type: "postgresql"
       host: "localhost"
       port: 5432
-      database: "orion_ops"
+      database: "galaxy_ops"
     
     cache:
       enabled: true
@@ -494,7 +494,7 @@ pub enum SystemError {
 
 ### 监控实现
 ```rust
-use orion_ops::system::{SystemMonitor, MetricCollector};
+use galaxy_ops::system::{SystemMonitor, MetricCollector};
 
 let monitor = SystemMonitor::new();
 
@@ -583,7 +583,7 @@ RUN cargo build --release
 
 EXPOSE 8080
 
-CMD ["./target/release/orion-ops"]
+CMD ["./target/release/galaxy-ops"]
 ```
 
 ### Kubernetes部署
@@ -591,35 +591,35 @@ CMD ["./target/release/orion-ops"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orion-ops
+  name: galaxy-ops
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: orion-ops
+      app: galaxy-ops
   template:
     metadata:
       labels:
-        app: orion-ops
+        app: galaxy-ops
     spec:
       containers:
-      - name: orion-ops
-        image: orion-ops:latest
+      - name: galaxy-ops
+        image: galaxy-ops:latest
         ports:
         - containerPort: 8080
         env:
         - name: SYSTEM_CONFIG_PATH
-          value: "/etc/orion-ops/system.yml"
+          value: "/etc/galaxy-ops/system.yml"
         volumeMounts:
         - name: config
-          mountPath: /etc/orion-ops
+          mountPath: /etc/galaxy-ops
         - name: data
-          mountPath: /var/lib/orion-ops
+          mountPath: /var/lib/galaxy-ops
       volumes:
       - name: config
         configMap:
-          name: orion-ops-config
+          name: galaxy-ops-config
       - name: data
         persistentVolumeClaim:
-          claimName: orion-ops-data
+          claimName: galaxy-ops-data
 ```
