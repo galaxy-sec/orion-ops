@@ -42,13 +42,14 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Show version
-        run: ./target/${{ matrix.target }}/release/ds-mod --version
+        run: ./target/${{ matrix.target }}/release/gmod --version
 
       - name: Archive (UNIX)
         run: |
           mkdir -p artifacts
-          cp -av target/${{ matrix.target }}/release/ds-mod artifacts/
-          cp -av target/${{ matrix.target }}/release/ds-sys artifacts/
+          cp -av target/${{ matrix.target }}/release/gmod artifacts/
+          cp -av target/${{ matrix.target }}/release/gsys artifacts/
+          cp -av target/${{ matrix.target }}/release/gops artifacts/
           tar -czf ${{ github.event.repository.name }}-${{ github.ref_name }}-${{ matrix.target }}.tar.gz  artifacts
         if: ${{ ! startsWith(matrix.os, 'windows') }}
 

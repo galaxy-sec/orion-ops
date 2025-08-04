@@ -250,7 +250,7 @@ mod tests {
         // 创建包含HttpAddr的配置
         let mut conf = ConfSpec::new("1.0", CONFS_DIR);
         conf.add(ConfFile::new("bitnami").with_addr(GitAddr::from(
-            "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
+            "https://github.com/galaxy-sec/hello-word.git",
         )));
 
         // 测试更新
