@@ -29,7 +29,7 @@ pub struct GxMod {}
 impl GxMod {
     pub async fn run() -> MainResult<()> {
         setup_start_env_vars().owe_res()?;
-        println!("ds-mod: {}", env!("CARGO_PKG_VERSION"));
+        println!("gmod: {}", env!("CARGO_PKG_VERSION"));
         let cmd = GxModCmd::parse();
         do_mod_cmd(cmd).await?;
         Ok(())

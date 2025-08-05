@@ -30,7 +30,7 @@ impl GxSys {
     pub async fn run() -> MainResult<()> {
         setup_start_env_vars().owe_res()?;
         let cmd = GSysCmd::parse();
-        println!("ds-sys: {}", env!("CARGO_PKG_VERSION"));
+        println!("gsys: {}", env!("CARGO_PKG_VERSION"));
         do_sys_cmd(cmd).await?;
         Ok(())
     }

@@ -187,10 +187,10 @@ pub struct Environment {
 
 ```bash
 # 使用CLI创建项目
-ds-ops project create --name my-app --template rust-binary
+gops project create --name my-app --template rust-binary
 
 # 指定详细配置
-ds-ops project create \
+gops project create \
     --name my-app \
     --template rust-binary \
     --description "A sample Rust application" \
@@ -204,13 +204,13 @@ ds-ops project create \
 
 ```bash
 # 从Git仓库导入
-ds-ops project import --source git --url https://github.com/user/repo.git
+gops project import --source git --url https://github.com/user/repo.git
 
 # 从本地目录导入
-ds-ops project import --source local --path /path/to/project
+gops project import --source local --path /path/to/project
 
 # 从Docker镜像导入
-ds-ops project import --source docker --image my-app:latest
+gops project import --source docker --image my-app:latest
 ```
 
 ### 3. 程序化使用
@@ -442,16 +442,16 @@ impl BuildSystem for CustomBuildSystem {
 
 ```bash
 # 查看项目状态
-ds-ops project status --name my-app
+gops project status --name my-app
 
 # 查看项目日志
-ds-ops project logs --name my-app
+gops project logs --name my-app
 
 # 调试项目配置
-ds-ops project config --name my-app --validate
+gops project config --name my-app --validate
 
 # 清理项目缓存
-ds-ops project clean --name my-app
+gops project clean --name my-app
 ```
 
 ## 性能优化

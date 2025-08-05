@@ -6,6 +6,8 @@ galaxy-ops,它通过为组件、系统提供 operator, 来实现对系统进行�
 - 系统的配置、监控、日志等
 主要功能：
 -  通过 gmod 来管理 mod operator, 包括创建、更新、本地化; 再由 gflow 来完成 安装、启动、停止、重启等
+-  通过 gsys 来管理 sys operator, 包括创建、更新、本地化; 再由 gflow 来完成 安装、启动、停止、重启等
+  sys operator 组合多个 mod operator, 来定义一个系统
 
 ## 工作规则
 - 任务完成后需要把结果写到当前文档
@@ -34,3 +36,5 @@ galaxy-ops,它通过为组件、系统提供 operator, 来实现对系统进行�
     - 每个参数都有help文本和使用说明
     - 支持--help查看完整文档，格式统一规范
     - 代码编译验证通过，文档注释格式正确
+
+[]  分析  example/sys-model-spec/example_sys 的文件结构，写到到docs/operator/sys/README.md, 代码可以参考  src/system 

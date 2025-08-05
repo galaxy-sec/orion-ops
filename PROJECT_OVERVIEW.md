@@ -260,8 +260,8 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     redis-tools \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/ds-ops /usr/local/bin/
-CMD ["ds-ops"]
+COPY --from=builder /app/target/release/gops /usr/local/bin/
+CMD ["gops"]
 ```
 
 

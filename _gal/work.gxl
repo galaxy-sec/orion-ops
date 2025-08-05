@@ -82,13 +82,13 @@ mod main   {
     gx.cmd (  "cp ${MAIN_PRJ_BINS}/${AP}* ${MAIN_USR_BINS}/"  );
   }
   flow _pub_sys | _pub_dysec  {
-    UP_TARGET = "ds-sys";
+    UP_TARGET = "gsys";
   }
   flow @_pub_mod  | _pub_dysec {
-    UP_TARGET = "ds-mod";
+    UP_TARGET = "gmod";
   }
   flow @_pub_ops | _pub_dysec {
-    UP_TARGET = "ds-ops";
+    UP_TARGET = "gops";
   }
 
   flow @pub_dysec  | _pub_mod | _pub_sys | _pub_ops;

@@ -925,13 +925,13 @@ workflow:
 ### 2. 执行工作流
 ```bash
 # 使用CLI执行工作流
-ds-ops workflow run --file deploy-app.yml --var environment=production
+gops workflow run --file deploy-app.yml --var environment=production
 
 # 监控执行状态
-ds-ops workflow status --id <execution-id>
+gops workflow status --id <execution-id>
 
 # 查看执行日志
-ds-ops workflow logs --id <execution-id>
+gops workflow logs --id <execution-id>
 ```
 
 ### 3. 程序化使用

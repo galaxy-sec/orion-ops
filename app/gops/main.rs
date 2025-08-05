@@ -29,7 +29,7 @@ impl GxOps {
     pub async fn run() -> MainResult<()> {
         setup_start_env_vars().owe_res()?;
         let cmd = GInsCmd::parse();
-        println!("ds-ops: {}", env!("CARGO_PKG_VERSION"));
+        println!("gops: {}", env!("CARGO_PKG_VERSION"));
         do_ins_cmd(cmd).await?;
         Ok(())
     }

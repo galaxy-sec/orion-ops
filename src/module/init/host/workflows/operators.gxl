@@ -5,10 +5,10 @@ mod operators : empty_operators {
     flow __into {
       gx.read_file( file : "./values/_used.json" ,  name : "SETTING" ) ;
     }
-    #[task(name="ds-ops@install")]
+    #[task(name="gops@install")]
     flow install {
     }
-    #[task(name="ds-ops@download")]
+    #[task(name="gops@download")]
     flow download {
           mod_local = "./local";
           art_local = "${SETTING.ART_PATH}";
