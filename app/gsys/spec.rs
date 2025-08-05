@@ -1,9 +1,9 @@
-use inquire::Select;
-use orion_error::{ErrorConv, ErrorOwe};
-use orion_infra::path::make_new_path;
 use galaxy_ops::error::MainResult;
 use galaxy_ops::infra::configure_dfx_logging;
 use galaxy_ops::module::ModelSTD;
+use inquire::Select;
+use orion_error::{ErrorConv, ErrorOwe};
+use orion_infra::path::make_new_path;
 
 use galaxy_ops::project::load_project_global_value;
 use galaxy_ops::system::proj::SysProject;
