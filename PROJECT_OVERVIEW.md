@@ -88,16 +88,10 @@ galaxy-ops/
 - **tokio**: 异步运行时
 - **anyhow**: 错误处理
 
-### 数据存储
-- **PostgreSQL**: 主数据库
-- **Redis**: 缓存和会话存储
-- **SQLite**: 本地存储
-- **文件系统**: 配置文件和日志
 
 ### 网络通信
 - **reqwest**: HTTP客户端
 - **tokio**: 异步网络
-- **warp**: Web框架
 
 ## 功能特性
 
@@ -140,7 +134,6 @@ galaxy-ops/
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # 安装依赖
-brew install postgresql redis
 ```
 
 ### 2. 项目构建
@@ -157,37 +150,14 @@ cargo build --release
 cargo test
 ```
 
-### 3. 配置设置
 
-```yaml
-# config.yaml
-app:
-  name: "galaxy-ops"
-  version: "0.10.2"
-  environment: "development"
 
-database:
-  url: "postgresql://localhost/galaxy_ops"
-  pool_size: 10
-
-cache:
-  redis_url: "redis://localhost:6379"
-  ttl: 3600
-
-logging:
-  level: "info"
-  format: "json"
-```
 
 ### 4. 启动服务
 
 ```bash
-# 启动数据库
-pg_ctl -D /usr/local/var/postgres start
-redis-server
-
 # 启动应用
-cargo run --bin ds-ops
+cargo run --bin gops
 ```
 
 ## 开发指南
@@ -294,48 +264,10 @@ COPY --from=builder /app/target/release/ds-ops /usr/local/bin/
 CMD ["ds-ops"]
 ```
 
-### 2. Kubernetes 部署
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: galaxy-ops
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: galaxy-ops
-  template:
-    metadata:
-      labels:
-        app: galaxy-ops
-    spec:
-      containers:
-      - name: galaxy-ops
-        image: galaxy-ops:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: galaxy-ops-secrets
-              key: database-url
-```
 
-### 3. 监控和告警
 
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 15s
 
-scrape_configs:
-  - job_name: 'galaxy-ops'
-    static_configs:
-      - targets: ['localhost:8080']
-```
 
 ## 贡献指南
 

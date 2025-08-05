@@ -5,19 +5,19 @@ edition = "2024"
 
 [[bin]]
 name = "gsys"
-path = "app/ds-sys/main.rs"
+path = "app/gsys/main.rs"
 
 [[bin]]
 name = "gmod"
-path = "app/ds-mod/main.rs"
+path = "app/gmod/main.rs"
 
 [[bin]]
 name = "gops"
-path = "app/ds-ops/main.rs"
+path = "app/gops/main.rs"
 
 #[[bin]]
-#name = "ds-mcp"
-#path = "app/ds-mcp/main.rs"
+#name = "gmcp"
+#path = "app/gmcp/main.rs"
 
 [workspace]
 members = ["."]
