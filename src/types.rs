@@ -28,7 +28,7 @@ impl SysUpdateValue {
 #[async_trait]
 pub trait Updateable<T> {
     async fn update_to_local(
-        self,
+        &self,
         accessor: &impl ResourceDownloader,
         path: &Path,
         options: &DownloadOptions,

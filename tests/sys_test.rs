@@ -11,7 +11,7 @@ use galaxy_ops::{
 use orion_error::{ErrorOwe, TestAssertWithMsg};
 use orion_infra::path::make_clean_path;
 use orion_variate::{
-    addr::{Address, HttpResource, types::EnvVarPath},
+    addr::{Address, HttpResource, types::PathTemplate},
     archive::compress,
     tools::test_init,
     update::DownloadOptions,
@@ -79,7 +79,7 @@ fn make_sys_prj_testins(prj_path: &Path) -> MainResult<SysProject> {
             Address::from(HttpResource::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
-            EnvVarPath::from(prj_path.join("test_res")),
+            PathTemplate::from(prj_path.join("test_res")),
         )
         .with_rename("bit-common"),
     );

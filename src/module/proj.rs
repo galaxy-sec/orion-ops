@@ -169,7 +169,7 @@ pub fn make_mod_prj_testins(prj_path: &Path) -> MainResult<ModProject> {
     res.push(
         Dependency::new(
             Address::from(HttpResource::from(BITNAMI_COMMON_GIT_URL)),
-            EnvVarPath::from(prj_path.join("test_res")),
+            PathTemplate::from(prj_path.join("test_res")),
         )
         .with_rename("bit-common"),
     );
