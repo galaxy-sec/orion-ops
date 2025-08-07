@@ -60,7 +60,7 @@ use galaxy_ops::error::{MainReason, MainResult};
 fn example_function() -> MainResult<String> {
     // 返回成功结果
     Ok("success".to_string())
-    
+
     // 返回错误
     Err(MainReason::Element(ElementReason::Miss("required_field".to_string())).into())
 }
@@ -216,13 +216,13 @@ use galaxy_ops::{
 async fn main() -> MainResult<()> {
     // 加载配置
     let config = AppConfig::load("config.yaml").await?;
-    
+
     // 初始化系统
     let system = System::new(config);
-    
+
     // 执行操作
     system.run().await?;
-    
+
     Ok(())
 }
 ```
@@ -264,16 +264,16 @@ use galaxy_ops::conf::AppConfig;
 async fn manage_config() -> MainResult<()> {
     // 创建默认配置
     let config = AppConfig::default();
-    
+
     // 从文件加载配置
     let config = AppConfig::load("config.yaml").await?;
-    
+
     // 验证配置
     config.validate()?;
-    
+
     // 保存配置
     config.save("config.yaml").await?;
-    
+
     Ok(())
 }
 ```
@@ -309,7 +309,7 @@ async fn manage_config() -> MainResult<()> {
 ### 1. 自定义类型
 ```rust
 impl crate::types::SysUpdateable<MyType> for MyCustomType {
-    async fn update_local(self, path: &Path, options: &UpdateOptions) -> MainResult<MyType> {
+    async fn update_local(self, path: &Path, options: &DownloadOptions) -> MainResult<MyType> {
         // 实现自定义更新逻辑
         Ok(MyType::new())
     }

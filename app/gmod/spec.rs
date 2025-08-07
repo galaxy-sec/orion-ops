@@ -6,7 +6,7 @@ use galaxy_ops::project::load_project_global_value;
 use galaxy_ops::types::{Localizable, LocalizeOptions};
 use orion_common::serde::Persistable;
 use orion_error::{ErrorConv, ErrorOwe};
-use orion_variate::update::UpdateOptions;
+use orion_variate::update::DownloadOptions;
 use orion_variate::vars::ValueDict;
 use std::path::PathBuf;
 
@@ -29,7 +29,7 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> MainResult<()> {
         args::GxModCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let spec = ModProject::load(&current_dir).err_conv()?;
-            let options = UpdateOptions::from((dfx.force, ValueDict::default()));
+            let options = DownloadOptions::from((dfx.force, ValueDict::default()));
             spec.update(&options).await.err_conv()?;
         }
         args::GxModCmd::Localize(args) => {

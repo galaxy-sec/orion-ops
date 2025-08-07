@@ -11,10 +11,10 @@ use galaxy_ops::{
 use orion_error::{ErrorOwe, TestAssertWithMsg};
 use orion_infra::path::make_clean_path;
 use orion_variate::{
-    addr::{AddrType, GitAddr, types::EnvVarPath},
+    addr::{Address, HttpResource, types::EnvVarPath},
     archive::compress,
     tools::test_init,
-    update::UpdateOptions,
+    update::DownloadOptions,
 };
 #[tokio::test]
 async fn test_full_flow() -> MainResult<()> {
@@ -26,12 +26,12 @@ async fn test_full_flow() -> MainResult<()> {
     ops_proj
         .import_sys(
             out_path.display().to_string().as_str(),
-            &UpdateOptions::for_test(),
+            &DownloadOptions::for_test(),
         )
         .await?;
     let sys_path = ops_proj.root_local().join("example_sys_x");
     let sys_proj = SysProject::load(&sys_path)?;
-    sys_proj.update(&UpdateOptions::default()).await?;
+    sys_proj.update(&DownloadOptions::default()).await?;
     sys_proj.localize(LocalizeOptions::for_test()).await?;
     Ok(())
     //sys_proj.
@@ -44,7 +44,7 @@ async fn make_workins_example() -> MainResult<OpsProject> {
     project.save().assert("save workins_prj");
     let project = OpsProject::load(&prj_path).assert("workins-prj");
     let project = project
-        .update(&UpdateOptions::default())
+        .update(&DownloadOptions::default())
         .await
         .assert("spec.update_local");
     Ok(project)
@@ -61,7 +61,7 @@ async fn make_sys_prj_example() -> MainResult<SysProject> {
     project.save().assert("save dss_prj");
     let project = SysProject::load(&prj_path).assert("dss-project");
     project
-        .update(&UpdateOptions::default())
+        .update(&DownloadOptions::default())
         .await
         .assert("spec.update_local");
     project
@@ -76,7 +76,7 @@ fn make_sys_prj_testins(prj_path: &Path) -> MainResult<SysProject> {
     let mut res = DependencySet::default();
     res.push(
         Dependency::new(
-            AddrType::from(GitAddr::from(
+            Address::from(HttpResource::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
             EnvVarPath::from(prj_path.join("test_res")),

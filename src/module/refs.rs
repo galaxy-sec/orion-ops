@@ -11,7 +11,7 @@ use crate::{const_vars::MOD_DIR, error::MainResult, module::model::ModModelSpec}
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleSpecRef {
     name: String,
-    addr: AddrType,
+    addr: Address,
     #[serde(alias = "node")]
     model: ModelSTD,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -21,7 +21,7 @@ pub struct ModuleSpecRef {
 }
 
 impl ModuleSpecRef {
-    pub fn from<S: Into<String>, A: Into<AddrType>>(
+    pub fn from<S: Into<String>, A: Into<Address>>(
         name: S,
         addr: A,
         node: ModelSTD,
@@ -69,7 +69,7 @@ impl ModuleSpecRef {
     pub async fn update(
         &self,
         _sys_root: &Path,
-        options: &UpdateOptions,
+        options: &DownloadOptions,
     ) -> MainResult<UpdateUnit> {
         //trace!(target: "spec/mod/",  "{:?}",self );
         if let Some(local) = &self.local {

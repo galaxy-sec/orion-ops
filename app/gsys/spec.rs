@@ -8,7 +8,7 @@ use orion_infra::path::make_new_path;
 use galaxy_ops::project::load_project_global_value;
 use galaxy_ops::system::proj::SysProject;
 use galaxy_ops::types::LocalizeOptions;
-use orion_variate::update::UpdateOptions;
+use orion_variate::update::DownloadOptions;
 use orion_variate::vars::ValueDict;
 
 use crate::args::GSysCmd;
@@ -50,7 +50,7 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> MainResult<()> {
         }
         GSysCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
-            let options = UpdateOptions::from((dfx.force, ValueDict::default()));
+            let options = DownloadOptions::from((dfx.force, ValueDict::default()));
             let spec = SysProject::load(&current_dir).err_conv()?;
             spec.update(&options).await.err_conv()?;
         }

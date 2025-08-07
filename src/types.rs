@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use getset::Getters;
 use orion_infra::path::{PathResult, ensure_path};
 use orion_variate::{
-    update::UpdateOptions,
+    types::ResourceDownloader,
+    update::{DownloadOptions, DownloadOptions},
     vars::{EnvDict, EnvEvalable, ValueDict, VarCollection},
 };
 
@@ -25,9 +26,19 @@ impl SysUpdateValue {
 }
 
 #[async_trait]
+pub trait Updateable<T> {
+    async fn update_to_local(
+        self,
+        accessor: &impl ResourceDownloader,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<T>;
+}
+
+#[async_trait]
 pub trait SysUpdateable<T> {
     //pub type UpdateObj = T;
-    async fn update_local(self, path: &Path, options: &UpdateOptions) -> MainResult<T>;
+    async fn update_local(self, path: &Path, options: &DownloadOptions) -> MainResult<T>;
 }
 
 #[derive(Clone, Debug, Default)]

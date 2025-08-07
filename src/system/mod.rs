@@ -9,7 +9,7 @@ use std::{net::Ipv4Addr, path::PathBuf};
 use crate::types::{Localizable, LocalizeOptions, SysUpdateValue, ValuePath};
 use async_trait::async_trait;
 use derive_more::Deref;
-use orion_variate::update::UpdateOptions;
+use orion_variate::update::DownloadOptions;
 use orion_variate::vars::{ValueDict, ValueType, VarCollection};
 
 use crate::module::refs::ModuleSpecRef;
@@ -56,7 +56,7 @@ impl ModulesList {
     pub async fn update(
         &self,
         sys_root: &Path,
-        options: &UpdateOptions,
+        options: &DownloadOptions,
     ) -> MainResult<SysUpdateValue> {
         let mut vars = VarCollection::default();
         for m in &self.mods {

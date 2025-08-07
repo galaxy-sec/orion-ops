@@ -2,14 +2,13 @@ use crate::predule::*;
 
 use async_trait::async_trait;
 use orion_variate::{
-    addr::{AddrResult, AddrType, GitAddr, LocalAddr, types::EnvVarPath},
-    types::{LocalUpdate, UpdateUnit},
-    update::UpdateOptions,
+    addr::{AddrResult, Address, GitRepository, LocalPath},
+    update::DownloadOptions,
 };
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency {
-    addr: AddrType,
+    addr: Address,
     local: EnvVarPath,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     rename: Option<String>,
@@ -27,13 +26,13 @@ impl DependencySet {
     pub fn example() -> Self {
         let depends = vec![
             Dependency {
-                addr: AddrType::from(LocalAddr::from("./example/data")),
+                addr: Address::from(LocalPath::from("./example/data")),
                 local: EnvVarPath::from("env_res".to_string()),
                 rename: Some("mysql2".to_string()),
                 enable: Some(false),
             },
             Dependency {
-                addr: AddrType::from(GitAddr::from("https://github.com/xxx")),
+                addr: Address::from(GitRepository::from("https://github.com/xxx")),
                 local: EnvVarPath::from("env_res".to_string()),
                 rename: Some("mylib".to_string()),
                 enable: Some(false),
@@ -47,7 +46,7 @@ impl DependencySet {
     }
     pub fn for_test() -> Self {
         let depends = vec![Dependency {
-            addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+            addr: Address::from(LocalPath::from("./example/knowlege/mysql")),
             local: EnvVarPath::from("env_res".to_string()),
             rename: Some("mysql_x86".to_string()),
             enable: Some(true),
@@ -58,8 +57,8 @@ impl DependencySet {
             dep_root: EnvVarPath::from("./depends".to_string()),
         }
     }
-    pub async fn update(&self, options: &UpdateOptions) -> AddrResult<()> {
-        //let options = UpdateOptions::for_depend();
+    pub async fn update(&self, options: &DownloadOptions) -> AddrResult<()> {
+        //let options = DownloadOptions::for_depend();
         //options.
         for dep in self.deps().iter() {
             if dep.is_enable() {
@@ -72,21 +71,10 @@ impl DependencySet {
     pub fn push(&mut self, item: Dependency) {
         self.deps.push(item);
     }
-    /*
-    pub fn check_exists(&self) -> Result<(), PathBuf> {
-        for x in &self.deps {
-            let path = self.dep_root().path().join(x.local().path());
-            if !path.exists() {
-                return Err(path.clone());
-            }
-        }
-        Ok(())
-    }
-    */
 }
 
 impl Dependency {
-    pub fn new(addr: AddrType, local: EnvVarPath) -> Self {
+    pub fn new(addr: Address, local: EnvVarPath) -> Self {
         Self {
             addr,
             local,
@@ -102,13 +90,13 @@ impl Dependency {
 
 #[async_trait]
 impl LocalUpdate for Dependency {
-    async fn update_local(&self, path: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
+    async fn update_local(&self, path: &Path, options: &DownloadOptions) -> AddrResult<UpdateUnit> {
         self.addr.update_local(path, options).await
     }
 }
 
 impl Dependency {
-    pub async fn update(&self, root: &Path, options: &UpdateOptions) -> AddrResult<UpdateUnit> {
+    pub async fn update(&self, root: &Path, options: &DownloadOptions) -> AddrResult<UpdateUnit> {
         //let item_path = path.join(self.local());
         let path = root.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {
@@ -128,8 +116,8 @@ pub mod tests {
 
     use orion_error::TestAssertWithMsg;
     use orion_variate::{
-        addr::{AddrType, LocalAddr},
-        update::UpdateOptions,
+        addr::{Address, LocalPath},
+        update::DownloadOptions,
     };
 
     use crate::module::depend::{Dependency, DependencySet, EnvVarPath};
@@ -142,11 +130,11 @@ pub mod tests {
         }
         std::fs::create_dir_all(&prj_path).assert("create prj_path");
         let item = Dependency::new(
-            AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+            Address::from(LocalPath::from("./example/knowlege/mysql")),
             EnvVarPath::from("env_res".to_string()),
         )
         .with_rename("mysql2");
-        item.update(&prj_path, &UpdateOptions::for_test())
+        item.update(&prj_path, &DownloadOptions::for_test())
             .await
             .assert("update");
         assert!(prj_path.join("env_res").join("mysql2").exists())
@@ -155,7 +143,7 @@ pub mod tests {
     #[test]
     fn test_serialize_to_yaml() {
         let item = Dependency {
-            addr: AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+            addr: Address::from(LocalPath::from("./example/knowlege/mysql")),
             local: EnvVarPath::from("env_res".to_string()),
             rename: Some("mysql2".to_string()),
             enable: Some(true),

@@ -7,35 +7,35 @@ use crate::{
 use async_trait::async_trait;
 use orion_error::{UvsLogicFrom, UvsReason};
 use orion_infra::auto_exit_log;
-use orion_variate::{addr::AddrType, types::LocalUpdate, update::UpdateOptions};
+use orion_variate::{addr::Address, types::LocalUpdate, update::DownloadOptions};
 
 use crate::error::MainResult;
 
 use super::spec::SysModelSpec;
 
-fn convert_syspec_addr(origin: AddrType) -> AddrType {
+fn convert_syspec_addr(origin: Address) -> Address {
     match origin {
-        AddrType::Git(git_addr) => {
+        Address::Git(git_addr) => {
             if git_addr.path().is_none() {
-                AddrType::from(git_addr.with_path("sys"))
+                Address::from(git_addr.with_path("sys"))
             } else {
-                AddrType::from(git_addr)
+                Address::from(git_addr)
             }
         }
-        AddrType::Http(_) => origin,
-        AddrType::Local(_) => origin,
+        Address::Http(_) => origin,
+        Address::Local(_) => origin,
     }
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
 pub struct SysModelSpecRef {
     name: String,
-    addr: AddrType,
+    addr: Address,
     #[serde(skip)]
     spec: Option<SysModelSpec>,
 }
 impl SysModelSpecRef {
-    pub fn from<S: Into<String>, A: Into<AddrType>>(name: S, addr: A) -> Self {
+    pub fn from<S: Into<String>, A: Into<Address>>(name: S, addr: A) -> Self {
         Self {
             name: name.into(),
             addr: addr.into(),
@@ -67,7 +67,7 @@ impl SysModelSpecRef {
 
 #[async_trait]
 impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
-    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> MainResult<Self> {
+    async fn update_local(mut self, path: &Path, options: &DownloadOptions) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj/sys-model",

@@ -85,7 +85,7 @@ mod tests {
 
     use orion_common::serde::Configable;
     use orion_error::ErrorOwe;
-    use orion_variate::addr::LocalAddr;
+    use orion_variate::addr::LocalPath;
     use tempfile::env::temp_dir;
 
     use crate::{
@@ -139,7 +139,7 @@ mod tests {
         let artifact = Artifact::new(
             "redis-7.0.1",
             "7.0.1",
-            LocalAddr::from("redis-linux-7.tar.gz"),
+            LocalPath::from("redis-linux-7.tar.gz"),
             "redis-linux-7.tar.gz",
         );
         let redis = SoftWare::new(

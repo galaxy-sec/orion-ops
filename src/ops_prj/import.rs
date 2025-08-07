@@ -7,7 +7,7 @@ use orion_infra::path::make_clean_path;
 use orion_variate::{
     archive::decompress,
     types::LocalUpdate,
-    update::UpdateOptions,
+    update::DownloadOptions,
     vars::{EnvEvalable, ValueDict, VarCollection},
 };
 
@@ -22,7 +22,7 @@ impl OpsProject {
     pub async fn import_sys(
         &mut self,
         path: &str,
-        up_opt: &UpdateOptions,
+        up_opt: &DownloadOptions,
     ) -> MainResult<SysModelSpec> {
         // 1. 解析地址
         let addr = convert_addr(path);
@@ -147,7 +147,7 @@ impl OpsProject {
 #[cfg(test)]
 mod test {
     use orion_error::TestAssert;
-    use orion_variate::{tools::test_init, update::UpdateOptions};
+    use orion_variate::{tools::test_init, update::DownloadOptions};
 
     use crate::const_vars::EXAMPLE_ROOT;
 
@@ -163,7 +163,7 @@ mod test {
             .to_string()
             .env_eval(&ValueDict::default());
         let sys_spec = project
-            .import_sys(path.as_str(), &UpdateOptions::for_test())
+            .import_sys(path.as_str(), &DownloadOptions::for_test())
             .await
             .assert();
         println!("{}", serde_json::to_string(&sys_spec).assert());

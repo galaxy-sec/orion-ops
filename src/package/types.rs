@@ -1,12 +1,12 @@
 use derive_more::From;
 use getset::Getters;
-use orion_variate::addr::{AddrType, GitAddr, HttpAddr, LocalAddr};
+use orion_variate::addr::{Address, HttpResource, HttpResource, LocalPath};
 #[derive(Debug, Clone, Getters)]
 pub struct BinPackage {
     #[getset(get = "pub")]
     name: String,
     #[getset(get = "pub")]
-    addr: AddrType,
+    addr: Address,
 }
 
 #[derive(Debug, Clone, Getters)]
@@ -14,7 +14,7 @@ pub struct GitPackage {
     #[getset(get = "pub")]
     name: String,
     #[getset(get = "pub")]
-    addr: GitAddr,
+    addr: HttpResource,
 }
 #[derive(Debug, Clone, From)]
 pub enum PackageType {
@@ -22,19 +22,19 @@ pub enum PackageType {
     Git(GitPackage),
 }
 
-pub fn convert_addr(input: &str) -> AddrType {
+pub fn convert_addr(input: &str) -> Address {
     if input.starts_with("http") {
         if input.ends_with(".git") {
-            AddrType::Git(GitAddr::from(input.to_string()))
+            Address::Git(HttpResource::from(input.to_string()))
         } else if input.ends_with(".tar.gz") {
-            AddrType::Http(HttpAddr::from(input.to_string()))
+            Address::Http(HttpResource::from(input.to_string()))
         } else {
             panic!("Unsupported package type: {input}");
         }
     } else if input.starts_with("git@") || input.ends_with(".git") {
-        AddrType::Git(GitAddr::from(input.to_string()))
+        Address::Git(HttpResource::from(input.to_string()))
     } else if input.ends_with(".tar.gz") {
-        AddrType::Local(LocalAddr::from(input.to_string()))
+        Address::Local(LocalPath::from(input.to_string()))
     } else {
         panic!("Unsupported package type: {input}");
     }
@@ -48,25 +48,25 @@ pub fn build_pkg(input: &str) -> PackageType {
     let addr_type = convert_addr(input);
 
     match addr_type {
-        AddrType::Git(git_addr) => {
+        Address::Git(git_addr) => {
             let name = extract_name_from_url(input, ".git");
             PackageType::Git(GitPackage {
                 name,
                 addr: git_addr,
             })
         }
-        AddrType::Http(http_addr) => {
+        Address::Http(http_addr) => {
             let name = extract_name_from_url(input, ".tar.gz");
             PackageType::Bin(BinPackage {
                 name,
-                addr: AddrType::Http(http_addr),
+                addr: Address::Http(http_addr),
             })
         }
-        AddrType::Local(local_addr) => {
+        Address::Local(local_addr) => {
             let name = extract_name_from_url(input, ".tar.gz");
             PackageType::Bin(BinPackage {
                 name,
-                addr: AddrType::Local(local_addr),
+                addr: Address::Local(local_addr),
             })
         }
     }
@@ -87,7 +87,7 @@ mod tests {
         match pkg {
             PackageType::Bin(bin_pkg) => {
                 assert_eq!(bin_pkg.name(), "mac-devkit-0.1.5");
-                assert!(matches!(bin_pkg.addr(), AddrType::Local(_)));
+                assert!(matches!(bin_pkg.addr(), Address::Local(_)));
             }
             _ => panic!("Expected BinPackage"),
         }
@@ -100,7 +100,7 @@ mod tests {
         match pkg {
             PackageType::Bin(bin_pkg) => {
                 assert_eq!(bin_pkg.name(), "galaxy-flow-v0.8.4-aarch64-apple-darwin");
-                assert_eq!(bin_pkg.addr(), &AddrType::from(HttpAddr::from(input)));
+                assert_eq!(bin_pkg.addr(), &Address::from(HttpResource::from(input)));
             }
             _ => panic!("Expected BinPackage"),
         }
@@ -148,35 +148,35 @@ mod convert_addr_tests {
     fn test_convert_addr_local() {
         let input = "/Users/dayu/ds-build/mac-devkit-0.1.5.tar.gz";
         let addr = convert_addr(input);
-        assert!(matches!(addr, AddrType::Local(_)));
+        assert!(matches!(addr, Address::Local(_)));
     }
 
     #[test]
     fn test_convert_addr_http_tar() {
         let input = "https://github.com/galaxy-sec/galaxy-flow/releases/download/v0.8.4/galaxy-flow-v0.8.4-aarch64-apple-darwin.tar.gz";
         let addr = convert_addr(input);
-        assert!(matches!(addr, AddrType::Http(_)));
+        assert!(matches!(addr, Address::Http(_)));
     }
 
     #[test]
     fn test_convert_addr_https_git() {
         let input = "https://github.com/galaxy-sec/galaxy-flow.git";
         let addr = convert_addr(input);
-        assert!(matches!(addr, AddrType::Git(_)));
+        assert!(matches!(addr, Address::Git(_)));
     }
 
     #[test]
     fn test_convert_addr_ssh_git() {
         let input = "git@github.com:galaxy-sec/galaxy-flow.git";
         let addr = convert_addr(input);
-        assert!(matches!(addr, AddrType::Git(_)));
+        assert!(matches!(addr, Address::Git(_)));
     }
 
     #[test]
     fn test_convert_addr_local_git() {
         let input = "/home/user/repo.git";
         let addr = convert_addr(input);
-        assert!(matches!(addr, AddrType::Git(_)));
+        assert!(matches!(addr, Address::Git(_)));
     }
 
     #[test]

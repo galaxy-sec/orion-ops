@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use orion_common::serde::{Configable, Persistable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_variate::update::UpdateOptions;
+use orion_variate::update::DownloadOptions;
 use orion_variate::vars::{ValueDict, ValueType};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -120,7 +120,7 @@ impl SysProject {
 }
 
 impl SysConf {
-    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
+    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
         self.test_envs
             .update(options)
             .await
@@ -129,7 +129,7 @@ impl SysConf {
 }
 
 impl SysProject {
-    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
+    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
         self.conf.update(options).await?;
         self.sys_spec().update_local(options).await
     }
@@ -187,9 +187,9 @@ pub mod tests {
     use orion_error::{ErrorOwe, TestAssertWithMsg};
     use orion_infra::path::make_clean_path;
     use orion_variate::{
-        addr::{AddrType, GitAddr, types::EnvVarPath},
+        addr::{Address, HttpResource, types::EnvVarPath},
         tools::test_init,
-        update::UpdateOptions,
+        update::DownloadOptions,
     };
 
     use crate::{
@@ -226,7 +226,7 @@ pub mod tests {
         project.save().assert("save dss_prj");
         let project = SysProject::load(&prj_path).assert("dss-project");
         project
-            .update(&UpdateOptions::default())
+            .update(&DownloadOptions::default())
             .await
             .assert("spec.update_local");
         project
@@ -241,7 +241,7 @@ pub mod tests {
         let mut res = DependencySet::default();
         res.push(
             Dependency::new(
-                AddrType::from(GitAddr::from(
+                Address::from(HttpResource::from(
                     "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
                 )),
                 EnvVarPath::from(prj_path.join("test_res")),

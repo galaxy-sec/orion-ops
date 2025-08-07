@@ -16,8 +16,8 @@ use orion_common::serde::{Configable, Persistable, Yamlable};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsLogicFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_variate::{
-    addr::{GitAddr, LocalAddr},
-    update::UpdateOptions,
+    addr::{HttpResource, LocalPath},
+    update::DownloadOptions,
 };
 
 use super::{
@@ -139,7 +139,7 @@ impl SysModelSpec {
         }
     }
 
-    pub async fn update_local(&self, options: &UpdateOptions) -> MainResult<()> {
+    pub async fn update_local(&self, options: &DownloadOptions) -> MainResult<()> {
         if let Some(local) = &self.local {
             let value = self.mod_list.update(local, options).await?;
             let path = local.join("vars.yml");
@@ -187,7 +187,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 mod_name,
-                GitAddr::from("https://github.com/you-mod1").with_tag("0.1.0"),
+                HttpResource::from("https://github.com/you-mod1").with_tag("0.1.0"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -195,7 +195,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod2",
-                GitAddr::from("https://github.com/you-mod2").with_branch("beta"),
+                HttpResource::from("https://github.com/you-mod2").with_branch("beta"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -203,7 +203,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod3",
-                GitAddr::from("https://github.com/you-mod3").with_tag("v1.0.0"),
+                HttpResource::from("https://github.com/you-mod3").with_tag("v1.0.0"),
                 ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             )
             .with_enable(false),
@@ -219,7 +219,7 @@ pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> MainResult
         //let mod_name = "postgresql";
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             mod_name,
-            LocalAddr::from(format!("{MODULES_SPC_ROOT}/{mod_name}")),
+            LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}")),
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ));
     }
@@ -257,7 +257,7 @@ pub mod tests {
         spec.save_to(&spec_root).assert("spec save");
         let spec =
             SysModelSpec::load_from(&spec_root.join(spec.define().name())).assert("spec load");
-        spec.update_local(&UpdateOptions::for_test())
+        spec.update_local(&DownloadOptions::for_test())
             .await
             .assert("update");
         spec.localize(None, LocalizeOptions::for_test())

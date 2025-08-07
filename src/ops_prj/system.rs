@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use getset::Getters;
-use orion_variate::addr::AddrType;
+use orion_variate::addr::Address;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::system::spec::SysDefine;
@@ -9,11 +9,11 @@ use crate::system::spec::SysDefine;
 #[getset(get = "pub")]
 pub struct OpsSystem {
     sys: SysDefine,
-    addr: AddrType,
+    addr: Address,
 }
 
 impl OpsSystem {
-    pub fn new(sys: SysDefine, addr: AddrType) -> Self {
+    pub fn new(sys: SysDefine, addr: Address) -> Self {
         Self { sys, addr }
     }
 }

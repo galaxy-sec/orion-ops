@@ -2372,8 +2372,7 @@ dependencies = [
 
 [[package]]
 name = "orion_variate"
-version = "0.5.9"
-source = "git+https://github.com/galaxy-sec/orion-variate?tag=v0.5.9#6c58923e56f143f6789876cdf51a9edae31b4e03"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2409,6 +2408,7 @@ dependencies = [
  "toml",
  "tracing",
  "url",
+ "wildmatch",
  "winnow 0.7.12",
 ]
 

@@ -15,7 +15,7 @@ use getset::MutGetters;
 use orion_common::serde::{Configable, Persistable};
 use orion_infra::auto_exit_log;
 use orion_infra::path::{ensure_path, make_clean_path};
-use orion_variate::update::UpdateOptions;
+use orion_variate::update::DownloadOptions;
 use orion_variate::vars::{ValueDict, ValueType};
 
 use super::conf::ProjectConf;
@@ -108,7 +108,7 @@ impl OpsProject {
 
 #[async_trait]
 impl SysUpdateable<OpsProject> for OpsProject {
-    async fn update_local(mut self, path: &Path, options: &UpdateOptions) -> MainResult<Self> {
+    async fn update_local(mut self, path: &Path, options: &DownloadOptions) -> MainResult<Self> {
         self.conf = self.conf.update_local(path, options).await?;
         self.save()?;
         Ok(self)
@@ -116,7 +116,7 @@ impl SysUpdateable<OpsProject> for OpsProject {
 }
 
 impl OpsProject {
-    pub async fn update(self, options: &UpdateOptions) -> MainResult<Self> {
+    pub async fn update(self, options: &DownloadOptions) -> MainResult<Self> {
         let path = self.root_local().clone();
         self.update_local(&path, options).await
     }
@@ -149,7 +149,7 @@ pub mod tests {
 
     use orion_error::{ErrorOwe, TestAssertWithMsg};
     use orion_infra::path::make_clean_path;
-    use orion_variate::{tools::test_init, update::UpdateOptions};
+    use orion_variate::{tools::test_init, update::DownloadOptions};
 
     use crate::{const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject};
 
@@ -162,7 +162,7 @@ pub mod tests {
         project.save().assert("save workins_prj");
         let project = OpsProject::load(&prj_path).assert("workins-prj");
         project
-            .update(&UpdateOptions::default())
+            .update(&DownloadOptions::default())
             .await
             .assert("spec.update_local");
         Ok(())

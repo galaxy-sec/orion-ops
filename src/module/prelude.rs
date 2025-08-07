@@ -5,7 +5,7 @@ pub use orion_infra::path::{ensure_path, get_sub_dirs, make_clean_path};
 pub use orion_variate::{
     addr::{AddrResult, path_file_name},
     types::{LocalUpdate, UpdateUnit},
-    update::UpdateOptions,
+    update::DownloadOptions,
     vars::{OriginDict, ValueDict, VarCollection},
 };
 
@@ -17,7 +17,7 @@ pub use crate::{
 };
 
 pub use orion_variate::addr::types::EnvVarPath;
-pub use orion_variate::addr::{AddrType, GitAddr};
+pub use orion_variate::addr::{Address, GitRepository};
 pub use orion_variate::vars::ValueType;
 
 pub use orion_common::serde::{Configable, JsonAble, ValueConfable};

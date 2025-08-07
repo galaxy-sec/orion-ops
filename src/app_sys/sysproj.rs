@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
 use crate::{
-    addr::{AddrType, GitAddr},
+    addr::{Address, HttpResource},
     error::SpecResult,
-    module::depend::{Dependency, DependVec},
+    module::depend::{DependVec, Dependency},
     system::{refs::SysModelSpecRef, spec::SysModelSpec},
-    types::{AsyncUpdateable, Localizable, LocalizePath, UpdateOptions},
+    types::{AsyncUpdateable, DownloadOptions, Localizable, LocalizePath},
 };
 
 use async_trait::async_trait;
@@ -37,7 +37,7 @@ pub struct LocalRes {
 impl SysCustProject {
     pub async fn update(&self) -> SpecResult<()> {
         let path = &self.root_local;
-        let options = &UpdateOptions::default();
+        let options = &DownloadOptions::default();
         self.model_spec
             .update_rename(path, "system", options)
             .await?;
@@ -49,7 +49,7 @@ impl SysCustProject {
 #[async_trait]
 impl Localizable for SysCustProject {
     async fn localize(&self, _dst_path: Option<LocalizePath>) -> SpecResult<()> {
-        let options = &UpdateOptions::default();
+        let options = &DownloadOptions::default();
         let sys_path = self.root_local().join("system");
         let spec = SysModelSpec::load_from(&sys_path)?;
         spec.update_local(options).await?;
@@ -63,13 +63,13 @@ pub fn make_sys_cust_example(prj_path: PathBuf) -> SpecResult<SysCustProject> {
     let target = "example-sys-x1";
     let spec_ref = SysModelSpecRef::from(
         target,
-        GitAddr::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git")
+        HttpResource::from("https://e.coding.net/dy-sec/galaxy-open/spec_example_sys.git")
             .path("example-sys-x1"),
     );
     let mut res = DependVec::default();
     res.push(
         Dependency::new(
-            AddrType::from(GitAddr::from(
+            Address::from(HttpResource::from(
                 "https://e.coding.net/dy-sec/galaxy-open/bitnami-common.git",
             )),
             prj_path.join("env_res"),
@@ -85,16 +85,16 @@ pub mod tests {
 
     use orion_error::TestAssertWithMsg;
 
+    use crate::app_sys::sysproj::SysCustProject;
     use crate::{
-        addr::{AddrType, LocalAddr},
+        addr::{Address, LocalPath},
         const_vars::{SYS_MODEL_INS_ROOT, SYS_MODEL_SPC_ROOT},
         error::SpecResult,
-        module::depend::{Dependency, DependVec},
+        module::depend::{DependVec, Dependency},
         system::refs::SysModelSpecRef,
         tools::test_init,
         types::{Configable, Localizable},
     };
-    use crate::app_sys::sysproj::SysCustProject;
 
     #[tokio::test]
     async fn test_cust_prj_running() -> SpecResult<()> {
@@ -103,13 +103,13 @@ pub mod tests {
         let target = "example-sys";
         let spec_ref = SysModelSpecRef::from(
             target,
-            LocalAddr::from(format!("{}/{}", SYS_MODEL_SPC_ROOT, "example-sys")),
+            LocalPath::from(format!("{}/{}", SYS_MODEL_SPC_ROOT, "example-sys")),
         );
 
         let mut res = DependVec::default();
         res.push(
             Dependency::new(
-                AddrType::from(LocalAddr::from("./example/knowlege/mysql")),
+                Address::from(LocalPath::from("./example/knowlege/mysql")),
                 prj_path.join("env_res"),
             )
             .with_rename("mysql2"),

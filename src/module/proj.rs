@@ -103,7 +103,7 @@ impl ModProject {
 }
 
 impl ModConf {
-    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
+    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
         self.test_envs
             .update(options)
             .await
@@ -112,7 +112,7 @@ impl ModConf {
 }
 
 impl ModProject {
-    pub async fn update(&self, options: &UpdateOptions) -> MainResult<()> {
+    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
         self.conf.update(options).await?;
         self.mod_spec()
             .update_local(self.root_local(), options)
@@ -168,7 +168,7 @@ pub fn make_mod_prj_testins(prj_path: &Path) -> MainResult<ModProject> {
     let mut res = DependencySet::default();
     res.push(
         Dependency::new(
-            AddrType::from(GitAddr::from(BITNAMI_COMMON_GIT_URL)),
+            Address::from(HttpResource::from(BITNAMI_COMMON_GIT_URL)),
             EnvVarPath::from(prj_path.join("test_res")),
         )
         .with_rename("bit-common"),
@@ -183,7 +183,7 @@ pub mod tests {
 
     use orion_error::TestAssertWithMsg;
     use orion_infra::path::make_clean_path;
-    use orion_variate::{tools::test_init, update::UpdateOptions};
+    use orion_variate::{tools::test_init, update::DownloadOptions};
 
     use crate::{
         const_vars::MODULES_SPC_ROOT,
@@ -213,7 +213,7 @@ pub mod tests {
         project.save().assert("save dss_prj");
         let project = ModProject::load(&prj_path).assert("dss-project");
         project
-            .update(&UpdateOptions::default())
+            .update(&DownloadOptions::default())
             .await
             .assert("spec.update_local");
 
