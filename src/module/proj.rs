@@ -1,3 +1,5 @@
+use orion_variate::addr::HttpResource;
+
 use super::prelude::*;
 use crate::const_vars::{
     BITNAMI_COMMON_GIT_URL, MOD_PRJ_CONF_FILE_V1, MOD_PRJ_CONF_FILE_V2, MOD_PRJ_TEST_ROOT,

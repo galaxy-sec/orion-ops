@@ -1,4 +1,4 @@
-use orion_variate::ext::ArtifactPackage;
+use orion_variate::{ext::ArtifactPackage, types::ResourceDownloader};
 
 use super::prelude::*;
 use crate::{
@@ -64,8 +64,13 @@ impl ModModelSpec {
 }
 
 #[async_trait]
-impl LocalUpdate for ModModelSpec {
-    async fn update_local(&self, path: &Path, options: &DownloadOptions) -> AddrResult<UpdateUnit> {
+impl Updateable<UpdateUnit> for ModModelSpec {
+    async fn update_to_local(
+        &self,
+        accessor: &impl ResourceDownloader,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> AddrResult<UpdateUnit> {
         //self.conf_spec.update_local(path, options).await?;
         self.depends.update(options).await?;
         Ok(UpdateUnit::new(path.to_path_buf(), self.vars.clone()))

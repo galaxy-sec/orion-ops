@@ -6,7 +6,6 @@ use orion_error::{ErrorOwe, ErrorWith, UvsConfFrom};
 use orion_infra::path::make_clean_path;
 use orion_variate::{
     archive::decompress,
-    types::LocalUpdate,
     update::DownloadOptions,
     vars::{EnvEvalable, ValueDict, VarCollection},
 };

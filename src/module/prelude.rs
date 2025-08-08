@@ -16,8 +16,8 @@ pub use crate::{
     workflow::{act::ModWorkflows, prj::GxlProject},
 };
 
+pub use orion_variate::addr::Address;
 pub use orion_variate::addr::types::PathTemplate;
-pub use orion_variate::addr::{Address, GitRepository};
 pub use orion_variate::vars::ValueType;
 
 pub use orion_common::serde::{Configable, JsonAble, ValueConfable};

@@ -9,8 +9,9 @@ use async_trait::async_trait;
 use orion_common::serde::Configable;
 use orion_infra::auto_exit_log;
 use orion_variate::{
-    addr::{AddrResult, Address},
+    addr::{AddrResult, Address, accessor::path_file_name},
     types::{ResourceDownloader, UpdateUnit},
+    update::DownloadOptions,
 };
 // 由于 `crate::tools::log_flag` 未定义，移除该导入
 #[derive(Clone, Debug, Getters, Deserialize, Serialize)]

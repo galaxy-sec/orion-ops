@@ -1,8 +1,8 @@
-use crate::{predule::*, types::Updateable};
+use crate::{predule::*, types::SysUpdateable};
 
 use async_trait::async_trait;
 use orion_variate::{
-    addr::{AddrResult, Address, GitRepository, LocalPath, types::PathTemplate},
+    addr::{Address, GitRepository, LocalPath, types::PathTemplate},
     types::{ResourceDownloader, UpdateUnit},
     update::DownloadOptions,
 };
@@ -15,6 +15,43 @@ pub struct Dependency {
     rename: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     enable: Option<bool>,
+}
+
+impl Dependency {
+    pub fn new(addr: Address, local: PathTemplate) -> Self {
+        Self {
+            addr,
+            local,
+            rename: None,
+            enable: None,
+        }
+    }
+    pub fn with_rename<S: Into<String>>(mut self, name: S) -> Self {
+        self.rename = Some(name.into());
+        self
+    }
+}
+
+#[async_trait]
+impl SysUpdateable<Dependency> for Dependency {
+    async fn update_local(
+        self,
+        accessor: &impl ResourceDownloader,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<Dependency> {
+        let path = path.join(self.local().path(options.values()));
+        if let Some(rename) = self.rename() {
+            accessor
+                .download_rename(self.addr(), &path, rename, options)
+                .await?;
+        } else {
+            accessor
+                .download_to_local(self.addr(), &path, options)
+                .await?;
+        }
+        Ok(self)
+    }
 }
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize, Default)]
@@ -62,58 +99,21 @@ impl DependencySet {
         self.deps.push(item);
     }
 }
-impl Updateable<UpdateUnit> for DependencySet {
-    async fn update_to_local(
-        &self,
+impl SysUpdateable<()> for DependencySet {
+    async fn update_local(
+        self,
         accessor: &impl ResourceDownloader,
-        path: &Path,
+        _path: &Path,
         options: &DownloadOptions,
-    ) -> MainResult<UpdateUnit> {
-
+    ) -> MainResult<()> {
         for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.update_to_local( accessor,&self.dep_root().path(options.values()), options)
+                dep.clone()
+                    .update_local(accessor, &self.dep_root().path(options.values()), options)
                     .await?;
             }
         }
         Ok(())
-    }
-
-impl Dependency {
-    pub fn new(addr: Address, local: PathTemplate) -> Self {
-        Self {
-            addr,
-            local,
-            rename: None,
-            enable: None,
-        }
-    }
-    pub fn with_rename<S: Into<String>>(mut self, name: S) -> Self {
-        self.rename = Some(name.into());
-        self
-    }
-}
-
-#[async_trait]
-impl Updateable<UpdateUnit> for Dependency {
-    async fn update_to_local(
-        &self,
-        accessor: &impl ResourceDownloader,
-        path: &Path,
-        options: &DownloadOptions,
-    ) -> MainResult<UpdateUnit> {
-        let path = path.join(self.local().path(options.values()));
-        if let Some(rename) = self.rename() {
-            accessor
-                .download_rename(self.addr(), &path, rename, options)
-                .await
-        } else {
-            accessor
-                .download_to_local(self.addr(), &path, options)
-                .await
-        }
-        //todo!();
-        //self.addr.update_local(path, options).await
     }
 }
 

@@ -1,6 +1,6 @@
 use derive_more::From;
 use getset::Getters;
-use orion_variate::addr::{Address, HttpResource, HttpResource, LocalPath};
+use orion_variate::addr::{Address, HttpResource, LocalPath};
 #[derive(Debug, Clone, Getters)]
 pub struct BinPackage {
     #[getset(get = "pub")]
