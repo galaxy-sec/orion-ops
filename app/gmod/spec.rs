@@ -1,9 +1,10 @@
+use galaxy_ops::accessor::accessor_for_default;
 use galaxy_ops::error::MainResult;
 use galaxy_ops::infra::configure_dfx_logging;
 use galaxy_ops::module::proj::ModProject;
 use galaxy_ops::module::spec::make_mod_spec_example;
 use galaxy_ops::project::load_project_global_value;
-use galaxy_ops::types::{Localizable, LocalizeOptions};
+use galaxy_ops::types::{Localizable, LocalizeOptions, RefUpdateable};
 use orion_common::serde::Persistable;
 use orion_error::{ErrorConv, ErrorOwe};
 use orion_variate::update::DownloadOptions;
@@ -30,7 +31,10 @@ pub async fn do_mod_cmd(cmd: args::GxModCmd) -> MainResult<()> {
             configure_dfx_logging(&dfx);
             let spec = ModProject::load(&current_dir).err_conv()?;
             let options = DownloadOptions::from((dfx.force, ValueDict::default()));
-            spec.update(&options).await.err_conv()?;
+            let accessor = accessor_for_default();
+            spec.update_local(accessor, &current_dir, &options)
+                .await
+                .err_conv()?;
         }
         args::GxModCmd::Localize(args) => {
             configure_dfx_logging(&args);

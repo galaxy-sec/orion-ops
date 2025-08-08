@@ -13,7 +13,7 @@ use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
 };
-use crate::types::{LocalizeOptions, ValuePath};
+use crate::types::{Accessor, LocalizeOptions, RefUpdateable, ValuePath};
 use async_trait::async_trait;
 use orion_common::serde::{Configable, Persistable};
 use orion_infra::auto_exit_log;
@@ -119,19 +119,33 @@ impl SysProject {
     }
 }
 
-impl SysConf {
-    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
+#[async_trait]
+impl RefUpdateable<()> for SysConf {
+    async fn update_local(
+        &self,
+        accessor: Accessor,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<()> {
         self.test_envs
-            .update(options)
+            .update_local(accessor, path, options)
             .await
             .owe(SysReason::Update.into())
     }
 }
 
-impl SysProject {
-    pub async fn update(&self, options: &DownloadOptions) -> MainResult<()> {
-        self.conf.update(options).await?;
-        self.sys_spec().update_local(options).await
+#[async_trait]
+impl RefUpdateable<()> for SysProject {
+    async fn update_local(
+        &self,
+        accessor: Accessor,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<()> {
+        self.conf
+            .update_local(accessor.clone(), path, options)
+            .await?;
+        self.sys_spec().update_local(accessor, path, options).await
     }
 }
 
@@ -193,6 +207,7 @@ pub mod tests {
     };
 
     use crate::{
+        accessor::accessor_for_test,
         const_vars::SYS_MODEL_PRJ_ROOT,
         error::MainResult,
         module::{
@@ -200,7 +215,7 @@ pub mod tests {
             depend::{Dependency, DependencySet},
         },
         system::{proj::SysProject, spec::SysModelSpec},
-        types::LocalizeOptions,
+        types::{LocalizeOptions, RefUpdateable},
     };
     #[tokio::test]
     async fn test_mod_prj_new() -> MainResult<()> {
@@ -225,8 +240,9 @@ pub mod tests {
         std::fs::create_dir_all(&prj_path).assert("yes");
         project.save().assert("save dss_prj");
         let project = SysProject::load(&prj_path).assert("dss-project");
+        let accessor = accessor_for_test();
         project
-            .update(&DownloadOptions::default())
+            .update_local(accessor, &prj_path, &DownloadOptions::default())
             .await
             .assert("spec.update_local");
         project

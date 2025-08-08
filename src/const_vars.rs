@@ -47,3 +47,4 @@ pub const OPS_PRJ_CONF_FILE: &str = "ops-prj.yml";
 // Constants for SysProject
 pub const SYS_PRJ_CONF_FILE_V1: &str = "sys_prj.yml";
 pub const SYS_PRJ_CONF_FILE_V2: &str = "sys-prj.yml";
+pub const REDIRECT_FILE: &str = ".galaxy/redirect.yml";

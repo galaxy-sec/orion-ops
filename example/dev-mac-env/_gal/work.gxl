@@ -1,0 +1,64 @@
+mod envs {
+
+    env default {
+        FORCE_FLAG = "";
+        LOG_LEVEL = "" ;
+        SYS_BIN =  "gops" ;
+        SYS     =  "mac-devkit" ;
+        MODULE_ENV =  "default";
+        SYS_MODEL = "arm-mac14-host";
+        CHANNEL = "alpha";
+    }
+    env force {
+        FORCE_FLAG = "-f 3";
+    }
+    env dev_debug {
+        LOG_LEVEL = "-d 4" ;
+        SYS_BIN =  "dd-ops" ;
+    }
+
+}
+mod main  {
+    
+    #[auto_load(entry)]
+    flow _into_main {
+    
+
+    }
+    flow pkg_import {
+        gx.read_file ( file : "./systems_pkg.yml" ,  name : "SETTING_LIST" ) ;
+        for ${SETTING} in ${SETTING_LIST} {
+            if ${SETTING.SYS.ENABLE} == true {
+                SYS_NAME= ${SETTING.SYS.NAME};
+                SYS_PATH    = "${GXL_PRJ_ROOT}/${SETTING.SYS.NAME}";
+                PKG_PATH    = ${SETTING.SYS.PKG.ADDR.PATH};
+                gx.cmd ("rm -rf ${SYS_PATH}; mkdir -p ${SYS_PATH}");
+                gx.cmd (" tar -xzf ${PKG_PATH}  -C ${SYS_PATH} ") ;
+                gx.cmd( "mkdir -p ./values/${SYS_NAME}");
+                gx.cmd (" ln -s ${GXL_PRJ_ROOT}/values/${SYS_NAME}  ${SYS_PATH}/values ") ;
+            }
+        }
+    }
+
+    flow git_import {
+        gx.read_file ( file : "./systems_git.yml" ,  name : "SETTING_LIST" ) ;
+        for ${SETTING} in ${SETTING_LIST} {
+
+            if ${SETTING.SYS.ENABLE} == true {
+                SYS_NAME= ${SETTING.SYS.NAME};
+                SYS_PATH    = "${GXL_PRJ_ROOT}/${SETTING.SYS.NAME}";
+                PKG_PATH    = ${SETTING.SYS.PKG.ADDR.REPO};
+                if defined(${SETTING.SYS.PKG.ADDR.TAG})  {
+                    GIT_TAG    = ${SETTING.SYS.PKG.ADDR.TAG};
+                } else {
+                    GIT_TAG    = ${SETTING.SYS.PKG.ADDR.BRANCH};
+                } 
+                gx.cmd ("rm -rf ${SYS_PATH}; mkdir -p ${SYS_PATH}");
+                gx.cmd (" git clone ${PKG_PATH}  ; cd ${SYS_NAME} ; git checkout ${GIT_TAG} ; rm -rf .git ") ;
+                gx.cmd( "mkdir -p ./values/${SYS_NAME}");
+                gx.cmd (" ln -s ${GXL_PRJ_ROOT}/values/${SYS_NAME}  ${SYS_PATH}/values ") ;
+            }
+        }
+    }
+
+}

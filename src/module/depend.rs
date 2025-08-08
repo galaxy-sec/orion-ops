@@ -1,9 +1,13 @@
-use crate::{predule::*, types::SysUpdateable};
+use crate::{
+    predule::*,
+    types::{Accessor, RefUpdateable},
+};
 
 use async_trait::async_trait;
+use orion_error::ErrorConv;
 use orion_variate::{
     addr::{Address, GitRepository, LocalPath, types::PathTemplate},
-    types::{ResourceDownloader, UpdateUnit},
+    types::ResourceDownloader,
     update::DownloadOptions,
 };
 
@@ -33,24 +37,26 @@ impl Dependency {
 }
 
 #[async_trait]
-impl SysUpdateable<Dependency> for Dependency {
+impl RefUpdateable<()> for Dependency {
     async fn update_local(
-        self,
-        accessor: &impl ResourceDownloader,
+        &self,
+        accessor: Accessor,
         path: &Path,
         options: &DownloadOptions,
-    ) -> MainResult<Dependency> {
+    ) -> MainResult<()> {
         let path = path.join(self.local().path(options.values()));
         if let Some(rename) = self.rename() {
             accessor
                 .download_rename(self.addr(), &path, rename, options)
-                .await?;
+                .await
+                .err_conv()?;
         } else {
             accessor
                 .download_to_local(self.addr(), &path, options)
-                .await?;
+                .await
+                .err_conv()?;
         }
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -99,18 +105,22 @@ impl DependencySet {
         self.deps.push(item);
     }
 }
-impl SysUpdateable<()> for DependencySet {
+#[async_trait]
+impl RefUpdateable<()> for DependencySet {
     async fn update_local(
-        self,
-        accessor: &impl ResourceDownloader,
+        &self,
+        accessor: Accessor,
         _path: &Path,
         options: &DownloadOptions,
     ) -> MainResult<()> {
         for dep in self.deps().iter() {
             if dep.is_enable() {
-                dep.clone()
-                    .update_local(accessor, &self.dep_root().path(options.values()), options)
-                    .await?;
+                dep.update_local(
+                    accessor.clone(),
+                    &self.dep_root().path(options.values()),
+                    options,
+                )
+                .await?;
             }
         }
         Ok(())
@@ -133,7 +143,11 @@ pub mod tests {
         update::DownloadOptions,
     };
 
-    use crate::module::depend::{Dependency, DependencySet, PathTemplate};
+    use crate::{
+        accessor::accessor_for_test,
+        module::depend::{Dependency, DependencySet, PathTemplate},
+        types::RefUpdateable,
+    };
 
     #[tokio::test]
     async fn test_depend() {
@@ -147,7 +161,8 @@ pub mod tests {
             PathTemplate::from("env_res".to_string()),
         )
         .with_rename("mysql2");
-        item.update(&prj_path, &DownloadOptions::for_test())
+        let accessor = accessor_for_test();
+        item.update_local(accessor, &prj_path, &DownloadOptions::for_test())
             .await
             .assert("update");
         assert!(prj_path.join("env_res").join("mysql2").exists())

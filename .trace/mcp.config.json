@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "orion-mcp": {
+      "command": "cargo run -p ds-mcp",
+      "args": [],
+      "cwd": "/Users/zuowenjian/devspace/galaxy/orion-syspec",
+      "env": {
+        "RUST_LOG": "info"
+      },
+      "autoStart": true,
+      "description": "Orion MCP Service"
+    }
+  }
+}

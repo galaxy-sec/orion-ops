@@ -3,9 +3,10 @@ use crate::error::{MainError, ModReason};
 use crate::predule::*;
 
 use orion_error::UvsLogicFrom;
+use orion_variate::types::ResourceDownloader;
 
 use super::ModelSTD;
-use crate::types::{Localizable, LocalizeOptions, ValuePath};
+use crate::types::{Localizable, LocalizeOptions, RefUpdateable, ValuePath};
 use crate::{const_vars::MOD_DIR, error::MainResult, module::model::ModModelSpec};
 
 #[derive(Getters, Clone, Debug, Serialize, Deserialize)]
@@ -64,10 +65,12 @@ impl ModuleSpecRef {
         Ok(None)
     }
 }
-impl ModuleSpecRef {
-    #[requires(self.local.is_some())]
-    pub async fn update(
+#[async_trait]
+impl RefUpdateable<UpdateUnit> for ModuleSpecRef {
+    //#[requires(self.local.is_some())]
+    async fn update_local(
         &self,
+        accessor: Accessor,
         _sys_root: &Path,
         options: &DownloadOptions,
     ) -> MainResult<UpdateUnit> {
@@ -82,9 +85,8 @@ impl ModuleSpecRef {
             let target_path = target_root.join(self.model().to_string());
             if !target_path.exists() || options.clean_cache() {
                 let tmp_name = "__mod";
-                let prj_path = self
-                    .addr
-                    .update_local_rename(local, tmp_name, options)
+                let prj_path = accessor
+                    .download_rename(self.addr(), local, tmp_name, options)
                     .await
                     .owe(MainReason::from(ModReason::Update))?;
                 let mod_path = prj_path.position().join(MOD_DIR);
@@ -106,7 +108,7 @@ impl ModuleSpecRef {
                 .with(&target_root)
                 .owe(MainReason::from(ModReason::Load))?;
             let unit = spec
-                .update_local(&target_path, options)
+                .update_local(accessor, &target_path, options)
                 .await
                 .owe(MainReason::from(ModReason::Update))?;
             ModModelSpec::clean_other(&target_root, self.model())?;
@@ -118,7 +120,9 @@ impl ModuleSpecRef {
             ))
         }
     }
+}
 
+impl ModuleSpecRef {
     pub fn spec_value_path(&self, parent: ValuePath) -> ValuePath {
         let value = PathBuf::from(self.name());
         parent.join(value)

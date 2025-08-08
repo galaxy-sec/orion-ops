@@ -1,0 +1,4 @@
+name: my_mac
+work_envs:
+  dep_root: ''
+  deps: []

@@ -6,6 +6,7 @@ use orion_error::{ErrorOwe, ErrorWith, UvsConfFrom};
 use orion_infra::path::make_clean_path;
 use orion_variate::{
     archive::decompress,
+    types::ResourceDownloader,
     update::DownloadOptions,
     vars::{EnvEvalable, ValueDict, VarCollection},
 };
@@ -15,11 +16,13 @@ use crate::{
     ops_prj::{proj::OpsProject, system::OpsSystem},
     package::types::{PackageType, build_pkg, convert_addr},
     system::spec::SysModelSpec,
+    types::Accessor,
 };
 
 impl OpsProject {
     pub async fn import_sys(
         &mut self,
+        accessor: Accessor,
         path: &str,
         up_opt: &DownloadOptions,
     ) -> MainResult<SysModelSpec> {
@@ -34,7 +37,10 @@ impl OpsProject {
                 .env_eval(&ValueDict::default()),
         );
 
-        let up_unit = addr.update_local(&work_path, up_opt).await.owe_data()?;
+        let up_unit = accessor
+            .download_to_local(&addr, &work_path, up_opt)
+            .await
+            .owe_data()?;
         let package = build_pkg(path);
         let sys_src = match package {
             //tar.gz ,tgz
@@ -148,7 +154,7 @@ mod test {
     use orion_error::TestAssert;
     use orion_variate::{tools::test_init, update::DownloadOptions};
 
-    use crate::const_vars::EXAMPLE_ROOT;
+    use crate::{accessor::accessor_for_test, const_vars::EXAMPLE_ROOT};
 
     use super::*;
 
@@ -161,8 +167,9 @@ mod test {
         let path = "${HOME}/ds-build/mac-devkit-0.1.6.tar.gz"
             .to_string()
             .env_eval(&ValueDict::default());
+        let accessor = accessor_for_test();
         let sys_spec = project
-            .import_sys(path.as_str(), &DownloadOptions::for_test())
+            .import_sys(accessor, path.as_str(), &DownloadOptions::for_test())
             .await
             .assert();
         println!("{}", serde_json::to_string(&sys_spec).assert());

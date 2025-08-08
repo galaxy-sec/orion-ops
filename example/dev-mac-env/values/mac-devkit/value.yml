@@ -1,0 +1,7 @@
+SAMPLE_KEY: SAMPLE_VAL
+WORK_ROOT: /Users/zuowenjian
+WORK_BIN: /Users/zuowenjian/bin
+ART_VER: 0.9.0
+ART_SVR: https://dy-sec-generic.pkg.coding.net/galaxy-open
+PORT_PRJ: /Users/zuowenjian/devspace/galaxy-flow
+ART_PATH: /Users/zuowenjian/devspace/sys-center/mac-devkit/artifacts

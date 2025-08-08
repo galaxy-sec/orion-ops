@@ -1,6 +1,6 @@
 use derive_more::From;
 use getset::Getters;
-use orion_variate::addr::{Address, HttpResource, LocalPath};
+use orion_variate::addr::{Address, GitRepository, HttpResource, LocalPath};
 #[derive(Debug, Clone, Getters)]
 pub struct BinPackage {
     #[getset(get = "pub")]
@@ -14,7 +14,7 @@ pub struct GitPackage {
     #[getset(get = "pub")]
     name: String,
     #[getset(get = "pub")]
-    addr: HttpResource,
+    addr: GitRepository,
 }
 #[derive(Debug, Clone, From)]
 pub enum PackageType {
@@ -25,16 +25,16 @@ pub enum PackageType {
 pub fn convert_addr(input: &str) -> Address {
     if input.starts_with("http") {
         if input.ends_with(".git") {
-            Address::Git(HttpResource::from(input.to_string()))
+            Address::Git(GitRepository::from(input.to_string()))
         } else if input.ends_with(".tar.gz") {
             Address::Http(HttpResource::from(input.to_string()))
         } else {
             panic!("Unsupported package type: {input}");
         }
     } else if input.starts_with("git@") || input.ends_with(".git") {
-        Address::Git(HttpResource::from(input.to_string()))
+        Address::Git(GitRepository::from(input.to_string()))
     } else if input.ends_with(".tar.gz") {
-        Address::Local(LocalPath::from(input.to_string()))
+        Address::Local(LocalPath::from(input))
     } else {
         panic!("Unsupported package type: {input}");
     }

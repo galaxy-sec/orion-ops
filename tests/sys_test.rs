@@ -1,12 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use galaxy_ops::{
+    accessor::accessor_for_test,
     const_vars::{SYS_MODEL_PRJ_ROOT, WORKINS_PRJ_ROOT},
     error::MainResult,
     module::depend::{Dependency, DependencySet},
     ops_prj::proj::OpsProject,
     system::{proj::SysProject, spec::SysModelSpec},
-    types::LocalizeOptions,
+    types::{InsUpdateable, LocalizeOptions, RefUpdateable},
 };
 use orion_error::{ErrorOwe, TestAssertWithMsg};
 use orion_infra::path::make_clean_path;
@@ -23,15 +24,19 @@ async fn test_full_flow() -> MainResult<()> {
     let out_path = PathBuf::from(SYS_MODEL_PRJ_ROOT).join("example_sys_x.tar.gz");
     compress(sys_proj.root_local(), &out_path).owe_sys()?;
     let mut ops_proj = make_workins_example().await?;
+    let accessor = accessor_for_test();
     ops_proj
         .import_sys(
+            accessor.clone(),
             out_path.display().to_string().as_str(),
             &DownloadOptions::for_test(),
         )
         .await?;
     let sys_path = ops_proj.root_local().join("example_sys_x");
     let sys_proj = SysProject::load(&sys_path)?;
-    sys_proj.update(&DownloadOptions::default()).await?;
+    sys_proj
+        .update_local(accessor, &sys_path, &DownloadOptions::default())
+        .await?;
     sys_proj.localize(LocalizeOptions::for_test()).await?;
     Ok(())
     //sys_proj.
@@ -43,8 +48,9 @@ async fn make_workins_example() -> MainResult<OpsProject> {
     let project = OpsProject::for_test("workins_sys_x").assert("make workins");
     project.save().assert("save workins_prj");
     let project = OpsProject::load(&prj_path).assert("workins-prj");
+    let accessor = accessor_for_test();
     let project = project
-        .update(&DownloadOptions::default())
+        .update_local(accessor, &prj_path, &DownloadOptions::default())
         .await
         .assert("spec.update_local");
     Ok(project)
@@ -60,8 +66,9 @@ async fn make_sys_prj_example() -> MainResult<SysProject> {
     std::fs::create_dir_all(&prj_path).assert("yes");
     project.save().assert("save dss_prj");
     let project = SysProject::load(&prj_path).assert("dss-project");
+    let accessor = accessor_for_test();
     project
-        .update(&DownloadOptions::default())
+        .update_local(accessor, &prj_path, &DownloadOptions::default())
         .await
         .assert("spec.update_local");
     project

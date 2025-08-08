@@ -1,3 +1,4 @@
+use galaxy_ops::accessor::accessor_for_default;
 use galaxy_ops::error::MainResult;
 use galaxy_ops::infra::configure_dfx_logging;
 use galaxy_ops::module::ModelSTD;
@@ -7,7 +8,7 @@ use orion_infra::path::make_new_path;
 
 use galaxy_ops::project::load_project_global_value;
 use galaxy_ops::system::proj::SysProject;
-use galaxy_ops::types::LocalizeOptions;
+use galaxy_ops::types::{LocalizeOptions, RefUpdateable};
 use orion_variate::update::DownloadOptions;
 use orion_variate::vars::ValueDict;
 
@@ -52,7 +53,10 @@ pub async fn do_sys_cmd(cmd: GSysCmd) -> MainResult<()> {
             configure_dfx_logging(&dfx);
             let options = DownloadOptions::from((dfx.force, ValueDict::default()));
             let spec = SysProject::load(&current_dir).err_conv()?;
-            spec.update(&options).await.err_conv()?;
+            let accessor = accessor_for_default();
+            spec.update_local(accessor, &current_dir, &options)
+                .await
+                .err_conv()?;
         }
         GSysCmd::Localize(args) => {
             configure_dfx_logging(&args);

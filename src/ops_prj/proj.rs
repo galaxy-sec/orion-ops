@@ -9,7 +9,7 @@ const OPS_PRJ_ADM: &str = include_str!("init/_gal/adm.gxl");
 const OPS_PRJ_FILE: &str = "ops-prj.yml";
 const PRJ_OPS_TARGET: &str = "ops-systems.yml";
 
-use crate::types::{SysUpdateable, ValuePath};
+use crate::types::{Accessor, InsUpdateable, ValuePath};
 use async_trait::async_trait;
 use getset::MutGetters;
 use orion_common::serde::{Configable, Persistable};
@@ -107,18 +107,16 @@ impl OpsProject {
 }
 
 #[async_trait]
-impl SysUpdateable<OpsProject> for OpsProject {
-    async fn update_local(mut self, path: &Path, options: &DownloadOptions) -> MainResult<Self> {
-        self.conf = self.conf.update_local(path, options).await?;
+impl InsUpdateable<OpsProject> for OpsProject {
+    async fn update_local(
+        mut self,
+        accessor: Accessor,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<Self> {
+        self.conf = self.conf.update_local(accessor, path, options).await?;
         self.save()?;
         Ok(self)
-    }
-}
-
-impl OpsProject {
-    pub async fn update(self, options: &DownloadOptions) -> MainResult<Self> {
-        let path = self.root_local().clone();
-        self.update_local(&path, options).await
     }
 }
 
@@ -151,7 +149,10 @@ pub mod tests {
     use orion_infra::path::make_clean_path;
     use orion_variate::{tools::test_init, update::DownloadOptions};
 
-    use crate::{const_vars::WORKINS_PRJ_ROOT, error::MainResult, ops_prj::proj::OpsProject};
+    use crate::{
+        accessor::accessor_for_test, const_vars::WORKINS_PRJ_ROOT, error::MainResult,
+        ops_prj::proj::OpsProject, types::InsUpdateable,
+    };
 
     #[tokio::test]
     async fn test_workins_example() -> MainResult<()> {
@@ -161,8 +162,9 @@ pub mod tests {
         let project = OpsProject::for_test("workins_sys_1").assert("make workins");
         project.save().assert("save workins_prj");
         let project = OpsProject::load(&prj_path).assert("workins-prj");
+        let accessor = accessor_for_test();
         project
-            .update(&DownloadOptions::default())
+            .update_local(accessor, &prj_path, &DownloadOptions::default())
             .await
             .assert("spec.update_local");
         Ok(())

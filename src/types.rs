@@ -1,10 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use async_trait::async_trait;
 use getset::Getters;
 use orion_infra::path::{PathResult, ensure_path};
 use orion_variate::{
-    types::ResourceDownloader,
+    addr::accessor::UniversalAccessor,
     update::DownloadOptions,
     vars::{EnvDict, EnvEvalable, ValueDict, VarCollection},
 };
@@ -25,12 +28,24 @@ impl SysUpdateValue {
     }
 }
 
+pub type Accessor = Arc<UniversalAccessor>;
 #[async_trait]
-pub trait SysUpdateable<T> {
+pub trait InsUpdateable<T> {
     //pub type UpdateObj = T;
     async fn update_local(
         self,
-        accessor: &impl ResourceDownloader,
+        accessor: Accessor,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<T>;
+}
+
+#[async_trait]
+pub trait RefUpdateable<T> {
+    //pub type UpdateObj = T;
+    async fn update_local(
+        &self,
+        accessor: Accessor,
         path: &Path,
         options: &DownloadOptions,
     ) -> MainResult<T>;

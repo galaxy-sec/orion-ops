@@ -1,13 +1,13 @@
 use crate::{
     error::{MainReason, SysReason, ToErr},
     predule::*,
-    types::{Localizable, LocalizeOptions, SysUpdateable, ValuePath},
+    types::{Accessor, InsUpdateable, Localizable, LocalizeOptions, RefUpdateable, ValuePath},
 };
 
 use async_trait::async_trait;
 use orion_error::{UvsLogicFrom, UvsReason};
 use orion_infra::auto_exit_log;
-use orion_variate::{addr::Address, update::DownloadOptions};
+use orion_variate::{addr::Address, types::ResourceDownloader, update::DownloadOptions};
 
 use crate::error::MainResult;
 
@@ -66,8 +66,13 @@ impl SysModelSpecRef {
 }
 
 #[async_trait]
-impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
-    async fn update_local(mut self, path: &Path, options: &DownloadOptions) -> MainResult<Self> {
+impl InsUpdateable<SysModelSpecRef> for SysModelSpecRef {
+    async fn update_local(
+        mut self,
+        accessor: Accessor,
+        path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<Self> {
         let mut flag = auto_exit_log!(
             info!(
                 target : "ops-prj/sys-model",
@@ -79,12 +84,12 @@ impl SysUpdateable<SysModelSpecRef> for SysModelSpecRef {
             )
         );
         let spec_addr = convert_syspec_addr(self.addr.clone());
-        let update_v = spec_addr
-            .update_local_rename(path, self.name.as_str(), options)
+        let update_v = accessor
+            .download_rename(&spec_addr, path, self.name.as_str(), options)
             .await
             .owe(SysReason::Update.into())?;
         let spec = SysModelSpec::load_from(update_v.position())?;
-        spec.update_local(options).await?;
+        spec.update_local(accessor, path, options).await?;
         self.spec = Some(spec);
         flag.mark_suc();
         Ok(self)

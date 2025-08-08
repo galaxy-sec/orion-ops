@@ -1,5 +1,6 @@
 use derive_more::From;
-use orion_error::{DomainReason, ErrorCode, StructError, StructErrorTrait, UvsReason};
+use orion_error::{DomainReason, ErrorCode, StructError, StructErrorTrait, UvsReason, UvsResFrom};
+use orion_variate::addr::AddrReason;
 use serde_derive::Serialize;
 use thiserror::Error;
 #[derive(Clone, Debug, Serialize, PartialEq, Error, From)]
@@ -154,6 +155,14 @@ where
     }
 }
 
+impl From<AddrReason> for MainReason {
+    fn from(value: AddrReason) -> Self {
+        match value {
+            AddrReason::Brief(msg) => Self::Uvs(UvsReason::from_res(msg)),
+            AddrReason::Uvs(uvs_reason) => Self::Uvs(uvs_reason),
+        }
+    }
+}
 pub type MainResult<T> = Result<T, StructError<MainReason>>;
 pub type MainError = StructError<MainReason>;
 

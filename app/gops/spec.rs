@@ -1,6 +1,8 @@
+use galaxy_ops::accessor::accessor_for_default;
 use galaxy_ops::error::MainResult;
 use galaxy_ops::infra::configure_dfx_logging;
 use galaxy_ops::ops_prj::proj::OpsProject;
+use galaxy_ops::types::InsUpdateable;
 use orion_error::{ErrorConv, ErrorOwe};
 use orion_infra::path::make_new_path;
 use orion_variate::update::DownloadOptions;
@@ -21,13 +23,19 @@ pub async fn do_ins_cmd(cmd: GInsCmd) -> MainResult<()> {
             configure_dfx_logging(&args);
             let options = DownloadOptions::from((args.force, ValueDict::default()));
             let mut prj = OpsProject::load(&current_dir).err_conv()?;
-            prj.import_sys(args.path(), &options).await.err_conv()?;
+            let accessor = accessor_for_default();
+            prj.import_sys(accessor, args.path(), &options)
+                .await
+                .err_conv()?;
         }
         GInsCmd::Update(dfx) => {
             configure_dfx_logging(&dfx);
             let options = DownloadOptions::from((dfx.force, ValueDict::default()));
             let spec = OpsProject::load(&current_dir).err_conv()?;
-            spec.update(&options).await.err_conv()?;
+            let accessor = accessor_for_default();
+            spec.update_local(accessor, &current_dir, &options)
+                .await
+                .err_conv()?;
         }
         GInsCmd::Localize(_args) => {
             todo!();

@@ -2,7 +2,7 @@ use crate::{
     error::{MainError, SysReason},
     predule::*,
     system::path::SysTargetPaths,
-    types::ValuePath,
+    types::{Accessor, RefUpdateable, ValuePath},
 };
 use std::path::{Path, PathBuf};
 
@@ -16,7 +16,7 @@ use orion_common::serde::{Configable, Persistable, Yamlable};
 use orion_error::{ErrorOwe, ErrorWith, StructError, UvsConfFrom, UvsLogicFrom, WithContext};
 use orion_infra::auto_exit_log;
 use orion_variate::{
-    addr::{HttpResource, LocalPath},
+    addr::{GitRepository, LocalPath},
     update::DownloadOptions,
 };
 
@@ -138,10 +138,17 @@ impl SysModelSpec {
             workflow: actions,
         }
     }
-
-    pub async fn update_local(&self, options: &DownloadOptions) -> MainResult<()> {
+}
+#[async_trait]
+impl RefUpdateable<()> for SysModelSpec {
+    async fn update_local(
+        &self,
+        accessor: Accessor,
+        _path: &Path,
+        options: &DownloadOptions,
+    ) -> MainResult<()> {
         if let Some(local) = &self.local {
-            let value = self.mod_list.update(local, options).await?;
+            let value = self.mod_list.update_local(accessor, local, options).await?;
             let path = local.join("vars.yml");
             if path.exists() {
                 std::fs::remove_file(&path).owe_sys()?;
@@ -187,7 +194,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 mod_name,
-                HttpResource::from("https://github.com/you-mod1").with_tag("0.1.0"),
+                GitRepository::from("https://github.com/you-mod1").with_tag("0.1.0"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -195,7 +202,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod2",
-                HttpResource::from("https://github.com/you-mod2").with_branch("beta"),
+                GitRepository::from("https://github.com/you-mod2").with_branch("beta"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false),
@@ -203,7 +210,7 @@ impl SysModelSpec {
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
                 "you_mod3",
-                HttpResource::from("https://github.com/you-mod3").with_tag("v1.0.0"),
+                GitRepository::from("https://github.com/you-mod3").with_tag("v1.0.0"),
                 ModelSTD::new(CpuArch::X86, OsCPE::UBT22, RunSPC::K8S),
             )
             .with_enable(false),
@@ -219,7 +226,7 @@ pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> MainResult
         //let mod_name = "postgresql";
         modul_spec.add_mod_ref(ModuleSpecRef::from(
             mod_name,
-            LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}")),
+            LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}").as_str()),
             ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
         ));
     }
@@ -234,7 +241,9 @@ pub mod tests {
     use orion_infra::path::make_clean_path;
     use orion_variate::tools::test_init;
 
-    use crate::{const_vars::SYS_MODEL_SPC_ROOT, module::proj::ModProject};
+    use crate::{
+        accessor::accessor_for_test, const_vars::SYS_MODEL_SPC_ROOT, module::proj::ModProject,
+    };
 
     use super::*;
 
@@ -254,10 +263,11 @@ pub mod tests {
         let spec_root = PathBuf::from(SYS_MODEL_SPC_ROOT);
         let spec_path = spec_root.join(spec.define().name());
         make_clean_path(&spec_path).owe_logic()?;
+        let accessor = accessor_for_test();
         spec.save_to(&spec_root).assert("spec save");
-        let spec =
-            SysModelSpec::load_from(&spec_root.join(spec.define().name())).assert("spec load");
-        spec.update_local(&DownloadOptions::for_test())
+        let spec_path = spec_root.join(spec.define().name());
+        let spec = SysModelSpec::load_from(&spec_path).assert("spec load");
+        spec.update_local(accessor, &spec_path, &DownloadOptions::for_test())
             .await
             .assert("update");
         spec.localize(None, LocalizeOptions::for_test())
