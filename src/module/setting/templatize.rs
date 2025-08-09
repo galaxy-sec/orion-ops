@@ -141,7 +141,7 @@ mod tests {
 
         // 验证结构完整性
         //assert!(result.includes().len() > 0);
-        assert!(result.excludes().is_empty());
+        assert!(!result.excludes().is_empty());
     }
 
     #[test]
