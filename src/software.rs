@@ -1,6 +1,5 @@
-use crate::{conf::ConfSpecRef, spec::WorkSpec};
+use crate::{artifact::Artifact, conf::ConfSpecRef, spec::WorkSpec};
 use derive_getters::Getters;
-use orion_variate::ext::Artifact;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Getters, Clone, Debug, Deserialize, Serialize)]

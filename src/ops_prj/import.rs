@@ -12,9 +12,9 @@ use orion_variate::{
 };
 
 use crate::{
+    artifact::types::{PackageType, build_pkg, convert_addr},
     error::{MainError, MainResult},
     ops_prj::{proj::OpsProject, system::OpsSystem},
-    package::types::{PackageType, build_pkg, convert_addr},
     system::spec::SysModelSpec,
     types::Accessor,
 };

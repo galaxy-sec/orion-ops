@@ -14,9 +14,9 @@ const POSTGRESQL_MD5_URL: &str =
 const POSTGRESQL_README_URL: &str = "https://mirrors.aliyun.com/postgresql/README";
 const POSTGRESQL_ARCHIVE: &str = "postgresql-17.4.tar.gz";
 const POSTGRESQL_MD5_ARCHIVE: &str = "postgresql-17.4.tar.gz.md5";
+use crate::artifact::{Artifact, ArtifactPackage};
 use async_trait::async_trait;
 use indexmap::IndexMap;
-use orion_variate::ext::{Artifact, ArtifactPackage};
 use orion_variate::{addr::HttpResource, vars::VarDefinition};
 
 use super::{

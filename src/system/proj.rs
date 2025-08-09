@@ -9,6 +9,7 @@ use crate::{
     types::Localizable, workflow::prj::GxlProject,
 };
 
+use super::local::LocalizeSet;
 use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
@@ -33,6 +34,7 @@ pub struct SysProject {
     project: GxlProject,
     root_local: PathBuf,
     val_dict: ValueDict,
+    sys_local: LocalizeSet,
 }
 impl SysConf {
     pub fn new(local_res: DependencySet) -> Self {
@@ -52,6 +54,7 @@ impl SysProject {
             project: GxlProject::from((SYS_PRJ_WORK, SYS_PRJ_ADM)),
             root_local,
             val_dict,
+            sys_local: LocalizeSet::default(),
         }
     }
     pub fn load(root_local: &Path) -> MainResult<Self> {
@@ -73,8 +76,8 @@ impl SysProject {
         }
         let conf = SysConf::from_conf(&conf_file_v2).owe_res()?;
         let root_local = root_local.to_path_buf();
-        let sys_local = root_local.join("sys");
-        let sys_spec = SysModelSpec::load_from(&sys_local)?;
+        let sys_path = root_local.join("sys");
+        let sys_spec = SysModelSpec::load_from(&sys_path)?;
         let project = GxlProject::load_from(&root_local).owe(SysReason::Load.into())?;
         let value_root = ensure_path(root_local.join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
@@ -83,6 +86,12 @@ impl SysProject {
         } else {
             ValueDict::new()
         };
+        let sys_local_path = root_local.join("sys_local.yml");
+        let sys_local = if sys_local_path.exists() {
+            LocalizeSet::from_conf(&sys_local_path).owe_res()?
+        } else {
+            LocalizeSet::default()
+        };
         flag.mark_suc();
         Ok(Self {
             conf,
@@ -90,6 +99,7 @@ impl SysProject {
             project,
             root_local,
             val_dict,
+            sys_local,
         })
     }
     pub fn save(&self) -> MainResult<()> {
@@ -109,6 +119,10 @@ impl SysProject {
         self.project
             .save_to(self.root_local(), None)
             .owe(SysReason::Save.into())?;
+
+        // 保存 sys_local 配置
+        let sys_local_file = self.root_local().join("sys_local.yml");
+        self.sys_local.save_conf(&sys_local_file).owe_res()?;
 
         let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
@@ -159,19 +173,18 @@ impl Localizable for SysConf {
         Ok(())
     }
 }
-
 impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> MainResult<()> {
         let value_path = self.value_path().ensure_exist().owe_res()?;
-        //let value_file = value_path.value_file();
-        //let dict = ValueDict::from_valconf(&value_file).owe_res()?;
-        //let options = options.with_global(dict);
         let dst_path = Some(value_path);
 
         self.conf
             .localize(dst_path.clone(), options.clone())
             .await?;
-        self.sys_spec().localize(dst_path, options).await?;
+        self.sys_spec()
+            .localize(dst_path.clone(), options.clone())
+            .await?;
+        self.sys_local.localize(dst_path, options).await?;
         Ok(())
     }
     pub fn value_path(&self) -> ValuePath {

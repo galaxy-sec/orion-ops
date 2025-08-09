@@ -1,7 +1,6 @@
-use orion_variate::ext::ArtifactPackage;
-
 use super::prelude::*;
 use crate::{
+    artifact::ArtifactPackage,
     const_vars::{
         DEFAULT_VALUE_FILE, LOCAL_DIR, SAMPLE_VALUE_FILE, USED_JSON, USED_READABLE_FILE,
         USER_VALUE_FILE, VALUE_DIR,

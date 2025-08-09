@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::LocalizeConf;
 
-#[derive(Clone, Debug, Serialize, Deserialize, Getters)]
+#[derive(Clone, Debug, Serialize, Deserialize, Getters, Default)]
 pub struct Setting {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     localize: Option<LocalizeConf>,

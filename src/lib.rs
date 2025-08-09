@@ -15,7 +15,6 @@ pub mod accessor;
 mod app_sys;
 pub mod infra;
 pub mod ops_prj;
-pub mod package;
 pub mod predule;
 pub mod project;
 pub mod types;
