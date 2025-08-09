@@ -1,0 +1,5 @@
+### RUST开发要求
+
+* 面对具体的crate 的问题，需要先查看 Cargo.toml 里的 crate 使用的版本
+* 在解决问题，在优先使用项目已使用的crate,
+* 使用 predule 模式，避免在单一文件中过多 use mod ;
