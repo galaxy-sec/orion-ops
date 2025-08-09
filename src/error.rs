@@ -160,6 +160,26 @@ impl From<AddrReason> for MainReason {
         match value {
             AddrReason::Brief(msg) => Self::Uvs(UvsReason::from_res(msg)),
             AddrReason::Uvs(uvs_reason) => Self::Uvs(uvs_reason),
+            AddrReason::OperationTimeoutExceeded { timeout, attempts } => {
+                Self::Uvs(UvsReason::from_res(format!(
+                    "timeout:{}s attempts: {attempts}",
+                    timeout.as_secs()
+                )))
+            }
+            AddrReason::TotalTimeoutExceeded {
+                total_timeout,
+                elapsed,
+            } => Self::Uvs(UvsReason::from_res(format!(
+                "timeout:{}s elapsed: {}",
+                total_timeout.as_secs(),
+                elapsed.as_secs()
+            ))),
+            AddrReason::RetryExhausted {
+                attempts,
+                last_error,
+            } => Self::Uvs(UvsReason::from_res(format!(
+                "attempts:{attempts} last_error: {last_error}",
+            ))),
         }
     }
 }
