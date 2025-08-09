@@ -22,10 +22,10 @@ impl TemplatePath {
             if dst.starts_with(exclude) {
                 return true;
             }
-            if let Ok(pattern) = Pattern::new(exclude.to_str().unwrap()) {
-                if pattern.matches(dst.to_str().unwrap()) {
-                    return true;
-                }
+            if let Ok(pattern) = Pattern::new(exclude.to_str().unwrap())
+                && pattern.matches(dst.to_str().unwrap())
+            {
+                return true;
             }
         }
         false
@@ -38,10 +38,10 @@ impl TemplatePath {
             if dst.starts_with(include) {
                 return true;
             }
-            if let Ok(pattern) = Pattern::new(include.to_str().unwrap()) {
-                if pattern.matches(dst.to_str().unwrap()) {
-                    return true;
-                }
+            if let Ok(pattern) = Pattern::new(include.to_str().unwrap())
+                && pattern.matches(dst.to_str().unwrap())
+            {
+                return true;
             }
         }
         false

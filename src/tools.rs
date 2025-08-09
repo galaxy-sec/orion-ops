@@ -23,10 +23,10 @@ pub struct Http {}
 impl Http {}
 pub fn get_repo_name(url_str: &str) -> Option<String> {
     // 先尝试处理SSH格式的Git地址
-    if url_str.starts_with("git@") {
-        if let Some(repo_part) = url_str.split(':').next_back() {
-            return repo_part.split('/').next_back().map(String::from);
-        }
+    if url_str.starts_with("git@")
+        && let Some(repo_part) = url_str.split(':').next_back()
+    {
+        return repo_part.split('/').next_back().map(String::from);
     }
 
     // 原有HTTP/HTTPS URL处理逻辑

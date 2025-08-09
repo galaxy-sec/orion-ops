@@ -65,16 +65,16 @@ impl ModuleSpecRef {
         self.local = Some(local);
     }
     pub fn get_target_spec(&self) -> MainResult<Option<ModModelSpec>> {
-        if self.is_enable() {
-            if let Some(local) = &self.local {
-                let target_root = local.join(self.name());
-                let target_path = target_root.join(self.model().to_string());
-                if target_path.exists() {
-                    let spec = ModModelSpec::load_from(&target_path)
-                        .with(&target_root)
-                        .owe(MainReason::from(ModReason::Load))?;
-                    return Ok(Some(spec));
-                }
+        if self.is_enable()
+            && let Some(local) = &self.local
+        {
+            let target_root = local.join(self.name());
+            let target_path = target_root.join(self.model().to_string());
+            if target_path.exists() {
+                let spec = ModModelSpec::load_from(&target_path)
+                    .with(&target_root)
+                    .owe(MainReason::from(ModReason::Load))?;
+                return Ok(Some(spec));
             }
         }
         Ok(None)
