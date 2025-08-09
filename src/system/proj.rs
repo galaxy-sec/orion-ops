@@ -9,7 +9,7 @@ use crate::{
     types::Localizable, workflow::prj::GxlProject,
 };
 
-use super::local::LocalizeSet;
+use super::conf::SysConf;
 use super::{
     init::{SYS_PRJ_ADM, SYS_PRJ_WORK, sys_init_gitignore},
     spec::SysModelSpec,
@@ -22,11 +22,6 @@ use orion_infra::path::{ensure_path, make_clean_path};
 use orion_variate::update::DownloadOptions;
 use orion_variate::vars::{ValueDict, ValueType};
 
-#[derive(Getters, Clone, Debug, Serialize, Deserialize)]
-struct SysConf {
-    test_envs: DependencySet,
-}
-
 #[derive(Getters, Clone, Debug)]
 pub struct SysProject {
     conf: SysConf,
@@ -34,15 +29,8 @@ pub struct SysProject {
     project: GxlProject,
     root_local: PathBuf,
     val_dict: ValueDict,
-    sys_local: LocalizeSet,
 }
-impl SysConf {
-    pub fn new(local_res: DependencySet) -> Self {
-        Self {
-            test_envs: local_res,
-        }
-    }
-}
+
 impl SysProject {
     pub fn new(spec: SysModelSpec, local_res: DependencySet, root_local: PathBuf) -> Self {
         let conf = SysConf::new(local_res);
@@ -54,7 +42,6 @@ impl SysProject {
             project: GxlProject::from((SYS_PRJ_WORK, SYS_PRJ_ADM)),
             root_local,
             val_dict,
-            sys_local: LocalizeSet::default(),
         }
     }
     pub fn load(root_local: &Path) -> MainResult<Self> {
@@ -86,12 +73,6 @@ impl SysProject {
         } else {
             ValueDict::new()
         };
-        let sys_local_path = root_local.join("sys_local.yml");
-        let sys_local = if sys_local_path.exists() {
-            LocalizeSet::from_conf(&sys_local_path).owe_res()?
-        } else {
-            LocalizeSet::default()
-        };
         flag.mark_suc();
         Ok(Self {
             conf,
@@ -99,7 +80,6 @@ impl SysProject {
             project,
             root_local,
             val_dict,
-            sys_local,
         })
     }
     pub fn save(&self) -> MainResult<()> {
@@ -121,8 +101,6 @@ impl SysProject {
             .owe(SysReason::Save.into())?;
 
         // 保存 sys_local 配置
-        let sys_local_file = self.root_local().join("sys_local.yml");
-        self.sys_local.save_conf(&sys_local_file).owe_res()?;
 
         let value_root = ensure_path(self.root_local().join(VALUE_DIR)).owe_logic()?;
         let value_file = value_root.join(VALUE_FILE);
@@ -130,21 +108,6 @@ impl SysProject {
         sys_init_gitignore(self.root_local())?;
         flag.mark_suc();
         Ok(())
-    }
-}
-
-#[async_trait]
-impl RefUpdateable<()> for SysConf {
-    async fn update_local(
-        &self,
-        accessor: Accessor,
-        path: &Path,
-        options: &DownloadOptions,
-    ) -> MainResult<()> {
-        self.test_envs
-            .update_local(accessor, path, options)
-            .await
-            .owe(SysReason::Update.into())
     }
 }
 
@@ -163,16 +126,6 @@ impl RefUpdateable<()> for SysProject {
     }
 }
 
-#[async_trait]
-impl Localizable for SysConf {
-    async fn localize(
-        &self,
-        _dst_path: Option<ValuePath>,
-        _options: LocalizeOptions,
-    ) -> MainResult<()> {
-        Ok(())
-    }
-}
 impl SysProject {
     pub async fn localize(&self, options: LocalizeOptions) -> MainResult<()> {
         let value_path = self.value_path().ensure_exist().owe_res()?;
@@ -184,7 +137,6 @@ impl SysProject {
         self.sys_spec()
             .localize(dst_path.clone(), options.clone())
             .await?;
-        self.sys_local.localize(dst_path, options).await?;
         Ok(())
     }
     pub fn value_path(&self) -> ValuePath {

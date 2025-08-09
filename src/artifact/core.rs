@@ -75,7 +75,7 @@ mod tests {
 
     use home::home_dir;
 
-    use orion_variate::addr::{GitRepository, HttpResource, accessor::GitAccessor};
+    use orion_variate::addr::{GitRepository, HttpResource};
 
     use crate::accessor::accessor_for_test;
 

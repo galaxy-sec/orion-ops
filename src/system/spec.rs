@@ -1,5 +1,6 @@
 use crate::{
     error::{MainError, SysReason},
+    local::LocalizePath,
     predule::*,
     system::path::SysTargetPaths,
     types::{Accessor, RefUpdateable, ValuePath},
@@ -188,7 +189,7 @@ impl SysModelSpec {
 
     pub fn make_new(define: SysDefine) -> MainResult<SysModelSpec> {
         let actions = SysWorkflows::sys_tpl_init();
-        let mut modul_spec = SysModelSpec::new(define, actions);
+        let mut modul_spec = SysModelSpec::new(define.clone(), actions);
         let mod_name = "you_mod1";
 
         modul_spec.add_mod_ref(
@@ -197,7 +198,11 @@ impl SysModelSpec {
                 GitRepository::from("https://github.com/you-mod1").with_tag("0.1.0"),
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
-            .with_enable(false),
+            .with_enable(false)
+            .with_setting(LocalizePath::of_module(
+                mod_name,
+                define.model().to_string().as_str(),
+            )),
         );
         modul_spec.add_mod_ref(
             ModuleSpecRef::from(
@@ -224,11 +229,18 @@ pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> MainResult
     let mut modul_spec = SysModelSpec::new(define, actions);
     for mod_name in mod_names {
         //let mod_name = "postgresql";
-        modul_spec.add_mod_ref(ModuleSpecRef::from(
-            mod_name,
-            LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}").as_str()),
-            ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
-        ));
+        let model = ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host);
+        modul_spec.add_mod_ref(
+            ModuleSpecRef::from(
+                mod_name,
+                LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}").as_str()),
+                model.clone(),
+            )
+            .with_setting(LocalizePath::of_module(
+                mod_name,
+                model.to_string().as_str(),
+            )),
+        );
     }
 
     Ok(modul_spec)

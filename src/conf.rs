@@ -144,7 +144,7 @@ impl RefUpdateable<UpdateUnit> for ConfSpec {
                 let filename = path_file_name(&PathBuf::from(f.path.as_str())).err_conv()?;
 
                 let x = accessor
-                    .download_rename(&addr, &root, filename.as_str(), options)
+                    .download_rename(addr, &root, filename.as_str(), options)
                     .await
                     .err_conv()?;
                 is_suc.mark_suc();

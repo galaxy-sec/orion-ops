@@ -20,11 +20,48 @@ pub struct LocalizePath {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     setting: Option<Setting>,
 }
+impl LocalizePath {
+    pub fn example() -> Self {
+        Self {
+            src: PathBuf::from("${GXL_PRJ_ROOT}/sys/setting/test.md"),
+            dst: PathBuf::from("${GXL_RPJ_ROOT}/sys/mods/test.md"),
+            setting: Some(Setting::example()),
+        }
+    }
+    pub fn of_module(module: &str, model: &str) -> Self {
+        Self {
+            src: PathBuf::from(format!("${{GXL_PRJ_ROOT}}/sys/setting/{module}")),
+            dst: PathBuf::from(format!(
+                "${{GXL_PRJ_ROOT}}/sys/mods/{module}/{model}/local/",
+            )),
+            setting: None,
+        }
+    }
+}
 
 #[derive(Getters, Clone, Debug, Default, Serialize, Deserialize, Deref)]
 #[serde(transparent)]
 pub struct LocalizeSet {
     items: Vec<LocalizePath>,
+}
+
+impl LocalizeSet {
+    pub fn example() -> Self {
+        Self {
+            items: vec![
+                LocalizePath {
+                    src: PathBuf::from("/opt/galaxy/templates/nginx.conf"),
+                    dst: PathBuf::from("/etc/nginx/nginx.conf"),
+                    setting: Some(Setting::example()),
+                },
+                LocalizePath {
+                    src: PathBuf::from("/opt/galaxy/static/logo.png"),
+                    dst: PathBuf::from("/var/www/html/assets/logo.png"),
+                    setting: None,
+                },
+            ],
+        }
+    }
 }
 
 #[async_trait]
@@ -72,6 +109,11 @@ impl Localizable for LocalizePath {
             info!(target: "sys-localize", "sys-path localize {} success!", self.dst.display()),
             error!(target: "sys-localize", "sys-path localize {} fail!", self.dst.display())
         );
+        if !self.src().exists() {
+            info!(target: "sys-localize", "path localize ignore!\n src not exists : {}", self.dst.display());
+            flag.mark_suc();
+            return Ok(());
+        }
 
         // Ensure parent directory exists
         if let Some(parent) = self.dst.parent() {

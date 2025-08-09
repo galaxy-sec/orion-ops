@@ -1,5 +1,6 @@
 use super::prelude::*;
 use crate::error::{MainError, ModReason};
+use crate::local::LocalizePath;
 use crate::predule::*;
 
 use orion_error::UvsLogicFrom;
@@ -19,6 +20,8 @@ pub struct ModuleSpecRef {
     enable: Option<bool>,
     #[serde(skip)]
     local: Option<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    setting: Option<LocalizePath>,
 }
 
 impl ModuleSpecRef {
@@ -33,10 +36,21 @@ impl ModuleSpecRef {
             model: node,
             enable: None,
             local: None,
+            setting: None,
         }
     }
     pub fn with_enable(mut self, effective: bool) -> Self {
         self.enable = Some(effective);
+        self
+    }
+
+    pub fn with_setting(mut self, setting: LocalizePath) -> Self {
+        self.setting = Some(setting);
+        self
+    }
+
+    pub fn with_local(mut self, local: PathBuf) -> Self {
+        self.local = Some(local);
         self
     }
 
@@ -133,7 +147,7 @@ impl ModuleSpecRef {
 impl Localizable for ModuleSpecRef {
     async fn localize(
         &self,
-        dst_path: Option<ValuePath>,
+        val_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> MainResult<()> {
         if self.enable.is_none_or(|x| x) {
@@ -151,9 +165,12 @@ impl Localizable for ModuleSpecRef {
                 //}
                 let value = PathBuf::from(self.name());
                 //let local = PathBuf::from(self.name()).join("local");
-                let cur_dst_path = dst_path.map(|x| x.join(value));
-                spec.localize(cur_dst_path, options).await?;
+                let cur_dst_path = val_path.map(|x| x.join(value));
+                spec.localize(cur_dst_path.clone(), options.clone()).await?;
                 flag.mark_suc();
+                if let Some(setting) = &self.setting {
+                    setting.localize(cur_dst_path, options).await?;
+                }
             }
             Ok(())
         } else {

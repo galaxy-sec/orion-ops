@@ -1,6 +1,6 @@
-mod artifact;
+mod core;
 mod package;
 pub mod types;
-pub use artifact::Artifact;
+pub use core::Artifact;
 
 pub use package::ArtifactPackage;
