@@ -1,4 +1,5 @@
 pub mod init;
+pub mod local;
 mod path;
 pub mod proj;
 pub mod refs;

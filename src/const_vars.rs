@@ -48,3 +48,4 @@ pub const OPS_PRJ_CONF_FILE: &str = "ops-prj.yml";
 pub const SYS_PRJ_CONF_FILE_V1: &str = "sys_prj.yml";
 pub const SYS_PRJ_CONF_FILE_V2: &str = "sys-prj.yml";
 pub const REDIRECT_FILE: &str = ".galaxy/redirect.yml";
+pub const NET_ACCS_CTRL_FILE: &str = ".galaxy/net_accessor_ctrl.yml";

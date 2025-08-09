@@ -88,7 +88,7 @@ impl LocalizeOptions {
 pub trait Localizable {
     async fn localize(
         &self,
-        dst_path: Option<ValuePath>,
+        val_path: Option<ValuePath>,
         options: LocalizeOptions,
     ) -> MainResult<()>;
 }
