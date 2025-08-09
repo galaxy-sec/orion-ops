@@ -256,6 +256,15 @@ impl ModModelSpec {
         }
         Ok(None)
     }
+    pub fn used_value_path(&self) -> MainResult<PathBuf> {
+        let local = self
+            .local
+            .clone()
+            .ok_or(MainReason::from(ElementReason::Miss("local-path".into())).to_err())?;
+        let value_path = ensure_path(local.join(VALUE_DIR)).owe_logic()?;
+        let value_file = value_path.join(USED_JSON);
+        Ok(value_file)
+    }
 }
 
 #[async_trait]
@@ -281,8 +290,7 @@ impl Localizable for ModModelSpec {
 
         let value_root = localize_path.path(); //.join(VALUE_DIR);
         let value_paths = TargetValuePaths::from(value_root);
-        let used_value_path = ensure_path(local.join(VALUE_DIR)).owe_logic()?;
-        let used_value_file = used_value_path.join(USED_JSON);
+        let used_value_file = self.used_value_path()?;
         let local_path = local.join(LOCAL_DIR);
         debug!( target:"spec/mod/target", "localize mod-target begin: {}" ,local_path.display() );
         make_clean_path(&local_path).owe_logic()?;

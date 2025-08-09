@@ -1,10 +1,11 @@
 use super::prelude::*;
 use crate::error::{MainError, ModReason};
-use crate::local::LocalizePath;
+use crate::local::{LocalizeExecPath, LocalizeVarPath};
 use crate::predule::*;
 
 use orion_error::UvsLogicFrom;
 use orion_variate::types::ResourceDownloader;
+use orion_variate::vars::EnvEvalable;
 
 use super::ModelSTD;
 use crate::types::{Localizable, LocalizeOptions, RefUpdateable, ValuePath};
@@ -21,7 +22,7 @@ pub struct ModuleSpecRef {
     #[serde(skip)]
     local: Option<PathBuf>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    setting: Option<LocalizePath>,
+    setting: Option<LocalizeVarPath>,
 }
 
 impl ModuleSpecRef {
@@ -44,7 +45,7 @@ impl ModuleSpecRef {
         self
     }
 
-    pub fn with_setting(mut self, setting: LocalizePath) -> Self {
+    pub fn with_setting(mut self, setting: LocalizeVarPath) -> Self {
         self.setting = Some(setting);
         self
     }
@@ -169,7 +170,10 @@ impl Localizable for ModuleSpecRef {
                 spec.localize(cur_dst_path.clone(), options.clone()).await?;
                 flag.mark_suc();
                 if let Some(setting) = &self.setting {
-                    setting.localize(cur_dst_path, options).await?;
+                    let used_value_file = ValuePath::new(spec.used_value_path()?);
+                    let exe_setting =
+                        LocalizeExecPath::from(setting.clone().env_eval(options.evaled_value()));
+                    exe_setting.localize(Some(used_value_file), options).await?;
                 }
             }
             Ok(())

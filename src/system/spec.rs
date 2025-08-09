@@ -1,6 +1,6 @@
 use crate::{
     error::{MainError, SysReason},
-    local::LocalizePath,
+    local::LocalizeVarPath,
     predule::*,
     system::path::SysTargetPaths,
     types::{Accessor, RefUpdateable, ValuePath},
@@ -199,7 +199,7 @@ impl SysModelSpec {
                 ModelSTD::new(CpuArch::Arm, OsCPE::MAC14, RunSPC::Host),
             )
             .with_enable(false)
-            .with_setting(LocalizePath::of_module(
+            .with_setting(LocalizeVarPath::of_module(
                 mod_name,
                 define.model().to_string().as_str(),
             )),
@@ -236,7 +236,7 @@ pub fn make_sys_spec_test(define: SysDefine, mod_names: Vec<&str>) -> MainResult
                 LocalPath::from(format!("{MODULES_SPC_ROOT}/{mod_name}").as_str()),
                 model.clone(),
             )
-            .with_setting(LocalizePath::of_module(
+            .with_setting(LocalizeVarPath::of_module(
                 mod_name,
                 model.to_string().as_str(),
             )),
